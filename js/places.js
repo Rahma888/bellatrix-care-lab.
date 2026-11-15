@@ -29,14 +29,20 @@
      Places.canStart(value)    false only in strict mode with '–' while rooms exist
      Places.meaning(code, reason, text)   a navigation code in plain words (current language)
      Places.navLog()           the last 20 drives (any module), newest first
+     Places.navMode()          'route' (Bellatrix plans the route, the default) | 'place' (the robot's own
+                               navigation); localStorage 'bellatrix-nav-mode', sent to the bridge
+                               (robotNavMode) when the page starts and whenever it changes (PLAN-NAV.md)
+     Places.setNavMode(m)      saves and sends it; a drive that is running keeps its mode
      Places.openTest()         the "Navigation test" panel (for Basti)
    The panel: connection, localisation, battery, pose, every place with Go, Back to base, a big STOP
-   (robotStop), "Relocalize at the charging pile" (only when the app has robotRelocalize), the live drive
-   and the last 20 drives with time, target, result, duration and the code in plain words; Copy gives
-   the log as text. ES5 (Chrome 95). */
+   (robotStop), "Relocalize at the charging pile" (only when the app has robotRelocalize), the switch
+   "Route planned by Bellatrix / Robot's own navigation" (only when the app has robotNavMode), the live
+   drive (with leg / legs in mode route) and the last 20 drives with time, target, result, mode, duration
+   and the code in plain words; Copy gives the log as text. ES5 (Chrome 95). */
 window.Places = (function () {
   'use strict';
   var KEY = 'bellatrix-places', LOG = 'bellatrix-nav-log', STRICT = 'bellatrix-place-required', STORE = 'bellatrix-care-lab-v1', MAXLOG = 20;
+  var MODE = 'bellatrix-nav-mode';
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   function fill(k, v) { return String(k).replace(/\{(\w+)\}/g, function (a, n) { return v && v[n] !== undefined ? v[n] : a; }); }
@@ -66,7 +72,13 @@ window.Places = (function () {
       'No path found (obstacle or closed door).': 'Aucun chemin trouvé (obstacle ou porte fermée).', 'No way through for 5 minutes.': 'Pas de passage pendant 5 minutes.',
       'The robot connection was lost.': 'La connexion au robot a été perdue.', 'Stopped by the team.': 'Arrêté par l’équipe.',
       'Paused by the robot system.': 'Mis en pause par le système du robot.', 'Another drive is running.': 'Un autre trajet est en cours.',
-      'Waiting, then tries again.': 'Attend, puis réessaie.'
+      'Waiting, then tries again.': 'Attend, puis réessaie.',
+      'Blocked: planning a way around.': 'Bloqué : recherche d’un chemin pour contourner.',
+      'No way on the map: closed door or obstacle.': 'Aucun chemin sur la carte : porte fermée ou obstacle.',
+      'Navigation mode': 'Mode de navigation', 'Route planned by Bellatrix': 'Itinéraire planifié par Bellatrix', 'Robot’s own navigation': 'Navigation propre du robot',
+      'Bellatrix route': 'Itinéraire Bellatrix', 'Robot navigation': 'Navigation du robot', 'Mode': 'Mode', 'leg {n} of {m}': 'étape {n} sur {m}',
+      'The robot gives no map: this drive uses the robot’s own navigation.': 'Le robot ne fournit pas de carte : ce trajet utilise la navigation propre du robot.',
+      'Bellatrix could not plan this drive: it uses the robot’s own navigation.': 'Bellatrix n’a pas pu planifier ce trajet : il utilise la navigation propre du robot.'
     });
     ST.add('de', {
       'Places': 'Orte', 'Base': 'Basis', 'Room': 'Zimmer', 'Other place': 'Anderer Ort', 'No robot connected.': 'Kein Roboter verbunden.', 'Back': 'Zurück',
@@ -88,7 +100,13 @@ window.Places = (function () {
       'No path found (obstacle or closed door).': 'Kein Weg gefunden (Hindernis oder geschlossene Tür).', 'No way through for 5 minutes.': 'Seit 5 Minuten kein Durchkommen.',
       'The robot connection was lost.': 'Die Verbindung zum Roboter ist abgebrochen.', 'Stopped by the team.': 'Vom Team gestoppt.',
       'Paused by the robot system.': 'Vom Robotersystem pausiert.', 'Another drive is running.': 'Eine andere Fahrt läuft.',
-      'Waiting, then tries again.': 'Wartet und versucht es erneut.'
+      'Waiting, then tries again.': 'Wartet und versucht es erneut.',
+      'Blocked: planning a way around.': 'Blockiert: plant einen Weg drumherum.',
+      'No way on the map: closed door or obstacle.': 'Kein Weg auf der Karte: geschlossene Tür oder Hindernis.',
+      'Navigation mode': 'Navigationsmodus', 'Route planned by Bellatrix': 'Route von Bellatrix geplant', 'Robot’s own navigation': 'Eigene Navigation des Roboters',
+      'Bellatrix route': 'Bellatrix-Route', 'Robot navigation': 'Roboter-Navigation', 'Mode': 'Modus', 'leg {n} of {m}': 'Etappe {n} von {m}',
+      'The robot gives no map: this drive uses the robot’s own navigation.': 'Der Roboter gibt keine Karte heraus: diese Fahrt nutzt die eigene Navigation des Roboters.',
+      'Bellatrix could not plan this drive: it uses the robot’s own navigation.': 'Bellatrix konnte diese Fahrt nicht planen: sie nutzt die eigene Navigation des Roboters.'
     });
   }
 
@@ -214,8 +232,13 @@ window.Places = (function () {
   var REASONS = {
     'not-localized': NOLOC, 'unknown-place': 'This place does not exist on the map.', emergency: 'Emergency stop pressed.', blocked: 'No way through for 5 minutes.',
     disconnected: 'The robot connection was lost.', stopped: 'Stopped by the team.', suspended: 'Paused by the robot system.', busy: 'Another drive is running.',
-    'not-connected': 'Not connected', waiting: 'Waiting, then tries again.', retrying: 'Waiting, then tries again.', avoiding: 'Avoiding an obstacle.'
+    'not-connected': 'Not connected', waiting: 'Waiting, then tries again.', retrying: 'Waiting, then tries again.', avoiding: 'Avoiding an obstacle.',
+    replanning: 'Blocked: planning a way around.', 'no-route': 'No way on the map: closed door or obstacle.'
   };
+  /* Mode route (PLAN-NAV.md): these two say more than the SDK code of the leg that led to them (1025, -109…). */
+  var ROUTE_REASONS = { replanning: 1, 'no-route': 1 };
+  /* A route drive that runs in mode place instead puts "route: <why>, robot navigation" into codeText. */
+  var NOMAP_RE = /^route: no map\b/, NOPLAN_RE = /^route: .*, robot navigation$/;
   /* The code of a drive: an 8-digit navigation code in the SDK's text wins (20010016 comes that way), else the number. */
   function codeOf(n) {
     if (!n || typeof n !== 'object') return '';
@@ -225,10 +248,32 @@ window.Places = (function () {
   }
   function meaning(code, reason, text) {
     code = code == null ? '' : String(code);
+    text = String(text || '');
+    if (reason && ROUTE_REASONS[reason]) return S(REASONS[reason]);
     if (CODES[code]) return S(CODES[code]);
-    if (/not within the route/i.test(String(text || ''))) return S(ROUTE);
+    if (/not within the route/i.test(text)) return S(ROUTE);
+    if (NOMAP_RE.test(text)) return S('The robot gives no map: this drive uses the robot’s own navigation.');
+    if (NOPLAN_RE.test(text)) return S('Bellatrix could not plan this drive: it uses the robot’s own navigation.');
     if (reason && REASONS[reason]) return S(REASONS[reason]);
     return '';
+  }
+
+  /* ---------- the navigation mode (PLAN-NAV.md): route = Bellatrix plans the route, place = the robot's own ---------- */
+  function navMode() { return ls(MODE) === 'place' ? 'place' : 'route'; }
+  function sendMode() { if (has('robotNavMode')) bell('robotNavMode', navMode()); }
+  function setNavMode(m) {
+    m = m === 'place' ? 'place' : 'route';
+    put(MODE, m);
+    sendMode();
+    renderPanel();
+    return m;
+  }
+  function modeWord(m) { return m === 'route' ? S('Bellatrix route') : m === 'place' ? S('Robot navigation') : ''; }
+  /* "Bellatrix route · 3/15": the mode of a drive and, in mode route, how far it got */
+  function modeText(e) {
+    var w = modeWord(e && e.mode);
+    if (!w) return '';
+    return w + (e.mode === 'route' && e.legs > 0 ? ' · ' + (e.leg || 0) + '/' + e.legs : '');
   }
 
   /* ---------- the drives log: every drive of the robot, whoever started it (robotNav, once a second) ---------- */
@@ -239,10 +284,17 @@ window.Places = (function () {
     if (n.state === 'failed') return 'failed';
     return 'stopped';
   }
+  /* mode route (PLAN-NAV.md): the drive's mode, and how far it got (leg of legs); old bridges send neither */
+  function legsInto(e, n) {
+    var ch = false;
+    if (typeof n.mode === 'string' && n.mode && e.mode !== n.mode) { e.mode = n.mode; ch = true; }
+    if (typeof n.legs === 'number' && (e.legs !== n.legs || e.leg !== (n.leg || 0))) { e.legs = n.legs; e.leg = n.leg || 0; ch = true; }
+    return ch;
+  }
   function tick() {
     var n = bell('robotNav');
     if (!n || typeof n !== 'object' || !n.state) return false;
-    var log = navLog(), open = null, changed = false, c = codeOf(n), i;
+    var log = navLog(), open = null, changed = false, c = codeOf(n), tx = String(n.codeText || '').slice(0, 160), i;
     for (i = 0; i < log.length && !open; i++) if (log[i] && log[i].result === 'moving') open = log[i];   /* a refusal may sit above it */
     if (n.state === 'moving') {
       if (!open || open.since !== n.since) {
@@ -251,17 +303,22 @@ window.Places = (function () {
         log.unshift(open); changed = true;
       }
       if (n.attempt && open.tries !== n.attempt) { open.tries = n.attempt; changed = true; }
-      if (c && c !== open.code) { open.code = c; open.text = String(n.codeText || '').slice(0, 160); changed = true; }
+      if (c && c !== open.code) { open.code = c; open.text = tx; changed = true; }
+      else if (!c && tx && tx !== open.text) { open.text = tx; changed = true; }   /* "route: no map, robot navigation" has no code */
       if ((n.reason || '') !== open.reason) { open.reason = n.reason || ''; changed = true; }
       if (typeof n.waitedS === 'number' && n.waitedS !== open.dur) { open.dur = n.waitedS; changed = true; }
+      if (legsInto(open, n)) changed = true;
     } else if (open) {
       open.result = endOf(n); open.reason = n.reason || ''; changed = true;
-      if (c) { open.code = c; open.text = String(n.codeText || '').slice(0, 160); }
+      if (c) { open.code = c; open.text = tx; } else if (tx) open.text = tx;
       open.dur = typeof n.waitedS === 'number' ? n.waitedS : Math.round((Date.now() - open.at) / 1000);
       if (n.attempt) open.tries = n.attempt;
+      legsInto(open, n);
     } else if (trk.since !== null && n.since !== trk.since && n.state === 'failed') {
       /* refused at once (not localized, emergency stop, unknown place): it never moved */
-      log.unshift({ at: Date.now(), since: n.since, place: n.place || '', result: 'refused', reason: n.reason || '', code: c, text: String(n.codeText || '').slice(0, 160), tries: 0, dur: 0 });
+      var r = { at: Date.now(), since: n.since, place: n.place || '', result: 'refused', reason: n.reason || '', code: c, text: tx, tries: 0, dur: 0 };
+      legsInto(r, n);
+      log.unshift(r);
       changed = true;
     }
     trk.since = n.since;
@@ -269,8 +326,9 @@ window.Places = (function () {
     return changed;
   }
   function refused(place, why) {
-    var log = navLog();
-    log.unshift({ at: Date.now(), since: 0, place: place || '', result: 'refused', reason: why, code: '', text: '', tries: 0, dur: 0 });
+    var log = navLog(), e = { at: Date.now(), since: 0, place: place || '', result: 'refused', reason: why, code: '', text: '', tries: 0, dur: 0 };
+    if (has('robotNavMode')) e.mode = navMode();
+    log.unshift(e);
     saveLog(log);
   }
   function resultWord(r) { return S({ arrived: 'Arrived', failed: 'Failed', stopped: 'Stopped', refused: 'Refused', moving: 'Under way' }[r] || 'Under way'); }
@@ -301,7 +359,7 @@ window.Places = (function () {
       (typeof st.battery === 'number' && st.battery >= 0 ? ' · ' + S('Battery') + ': ' + st.battery + ' %' : '') + (st.mapName ? ' · ' + S('Map') + ': ' + st.mapName : '') +
       ' · ' + S('Base') + ': ' + base());
     navLog().forEach(function (e) {
-      lines.push([hms(e.at), e.place, resultWord(e.result) + (e.tries > 1 ? ' (' + S('try {n}', { n: e.tries }) + ')' : ''), durText(e.dur), e.code || '-', meaning(e.code, e.reason, e.text) || e.text || ''].join('\t'));
+      lines.push([hms(e.at), e.place, resultWord(e.result) + (e.tries > 1 ? ' (' + S('try {n}', { n: e.tries }) + ')' : ''), modeText(e) || '-', durText(e.dur), e.code || '-', meaning(e.code, e.reason, e.text) || e.text || ''].join('\t'));
     });
     return lines.join('\n');
   }
@@ -360,8 +418,10 @@ window.Places = (function () {
     else w = n.reason === 'stopped' ? S('Stopped') : S('Idle');
     var bits = [];
     if (n.state === 'moving' || n.state === 'failed' || n.state === 'arrived') {
+      if (n.mode === 'route' && n.legs > 0) bits.push(S('leg {n} of {m}', { n: n.leg || 0, m: n.legs }));
       if (n.attempt > 1) bits.push(S('try {n}', { n: n.attempt }));
       if (typeof n.waitedS === 'number' && n.waitedS > 0) bits.push(durText(n.waitedS));
+      if (modeWord(n.mode)) bits.push(modeWord(n.mode));
     }
     var c = codeOf(n), m = n.state === 'idle' && n.reason !== 'stopped' ? '' : meaning(c, n.reason, n.codeText);
     var reloc = st && st.reloc && st.reloc.state && st.reloc.state !== 'idle' && (st.reloc.state === 'running' || !st.reloc.at || Date.now() - st.reloc.at < 120000) ? (st.reloc.state === 'running' ? S('Relocalizing…') : st.reloc.state === 'ok' ? S('Relocalized.') : S('Relocalization failed.')) : '';
@@ -380,11 +440,20 @@ window.Places = (function () {
   function logHtml() {
     var l = navLog();
     if (!l.length) return '<p class="pl-none">' + esc(S('No attempt yet.')) + '</p>';
-    return '<table><thead><tr><th>' + esc(S('Time')) + '</th><th>' + esc(S('Target')) + '</th><th>' + esc(S('Result')) + '</th><th>' + esc(S('Duration')) + '</th><th>' + esc(S('Code')) + '</th><th>' + esc(S('Meaning')) + '</th></tr></thead><tbody>' +
+    return '<table><thead><tr><th>' + esc(S('Time')) + '</th><th>' + esc(S('Target')) + '</th><th>' + esc(S('Result')) + '</th><th>' + esc(S('Mode')) + '</th><th>' + esc(S('Duration')) + '</th><th>' + esc(S('Code')) + '</th><th>' + esc(S('Meaning')) + '</th></tr></thead><tbody>' +
       l.map(function (e) {
         return '<tr class="pl-r-' + esc(e.result) + '"><td>' + esc(hms(e.at)) + '</td><td>' + esc(e.place) + '</td><td>' + esc(resultWord(e.result)) + (e.tries > 1 ? ' <small>' + esc(S('try {n}', { n: e.tries })) + '</small>' : '') + '</td>' +
-          '<td>' + esc(durText(e.dur)) + '</td><td>' + esc(e.code || '–') + '</td><td>' + esc(meaning(e.code, e.reason, e.text) || e.text || '') + '</td></tr>';
+          '<td>' + esc(modeText(e) || '–') + '</td><td>' + esc(durText(e.dur)) + '</td><td>' + esc(e.code || '–') + '</td><td>' + esc(meaning(e.code, e.reason, e.text) || e.text || '') + '</td></tr>';
       }).join('') + '</tbody></table>';
+  }
+  /* The switch (only with a head app that has robotNavMode): saved on this head, sent to the bridge */
+  function modeHtml() {
+    if (!has('robotNavMode')) return '';
+    var m = navMode();
+    return '<div class="pl-mode"><h2 class="pl-h">' + esc(S('Navigation mode')) + '</h2><div class="pl-seg" role="radiogroup" aria-label="' + esc(S('Navigation mode')) + '">' +
+      [['route', S('Route planned by Bellatrix')], ['place', S('Robot’s own navigation')]].map(function (o) {
+        return '<label><input type="radio" name="plMode" data-pl-mode="' + o[0] + '"' + (m === o[0] ? ' checked' : '') + '><span>' + esc(o[1]) + '</span></label>';
+      }).join('') + '</div></div>';
   }
   function panelHtml() {
     var st = bell('robotState') || {}, n = bell('robotNav') || st.nav || {}, moving = n.state === 'moving';
@@ -392,7 +461,8 @@ window.Places = (function () {
       '<h1>' + esc(S('Navigation test')) + '</h1><button type="button" class="pl-stop" data-pl="stop">' + esc(S('STOP')) + '</button></header>' +
       '<div class="pl-grid"><div class="pl-col"><div id="plState">' + stateHtml(st) + '</div><div id="plLive">' + liveHtml(n, st) + '</div>' +
       '<div class="pl-acts"><button type="button" class="go" data-pl="base"' + (moving ? ' disabled' : '') + '>' + esc(S('Back to base')) + ' · ' + esc(base()) + '</button>' +
-      (has('robotRelocalize') ? '<button type="button" class="ghost" data-pl="reloc"' + (moving ? ' disabled' : '') + '>' + esc(S('Relocalize at the charging pile')) + '</button>' : '') + '</div></div>' +
+      (has('robotRelocalize') ? '<button type="button" class="ghost" data-pl="reloc"' + (moving ? ' disabled' : '') + '>' + esc(S('Relocalize at the charging pile')) + '</button>' : '') + '</div>' +
+      modeHtml() + '</div>' +
       '<div class="pl-col"><h2 class="pl-h">' + esc(S('Places')) + '</h2><div class="pl-list" id="plList">' + listHtml(moving) + '</div></div></div>' +
       '<div class="pl-logbar"><h2 class="pl-h">' + esc(S('Last attempts')) + '</h2><button type="button" class="ghost" data-pl="copy">' + esc(S('Copy')) + '</button></div>' +
       '<div class="st-jtable pl-log" id="plLog">' + logHtml() + '</div></div>';
@@ -401,7 +471,7 @@ window.Places = (function () {
     var el = typeof document !== 'undefined' && document.getElementById ? $('plPanel') : null;
     if (!el || el.hidden) return;
     var st = bell('robotState') || {}, n = bell('robotNav') || st.nav || {}, moving = n.state === 'moving';
-    var sig = all().join('|') + '#' + moving + '#' + has('robotRelocalize') + '#' + base();
+    var sig = all().join('|') + '#' + moving + '#' + has('robotRelocalize') + '#' + base() + '#' + has('robotNavMode') + navMode();
     if (sig !== panelSig || !$('plState')) { panelSig = sig; el.innerHTML = panelHtml(); return; }
     $('plState').innerHTML = stateHtml(st); $('plLive').innerHTML = liveHtml(n, st); $('plLog').innerHTML = logHtml();
   }
@@ -449,6 +519,8 @@ window.Places = (function () {
       if (who && t.value && !rawRoom(who) && rooms().indexOf(t.value) >= 0) setRoom(who, t.value);
       return;
     }
+    /* the Navigation test panel's switch: route planned by Bellatrix / the robot's own navigation */
+    if (t.getAttribute('data-pl-mode')) { setNavMode(t.getAttribute('data-pl-mode')); toast(S('Saved.')); return; }
     if (!t.getAttribute('data-pl-role')) return;
     if (setRole(t.getAttribute('data-pl-place'), t.getAttribute('data-pl-role'))) toast(S('Saved.'));
     repaintSettings();
@@ -456,6 +528,7 @@ window.Places = (function () {
   function boot() {
     document.addEventListener('click', onClick);
     document.addEventListener('change', onChange);
+    sendMode();   /* the switch saved on this head goes to the bridge when the page starts */
     /* the drives are logged even while the panel is closed (an activity's trip, the return to base) */
     if (has('robotNav')) { tick(); tickT = setInterval(tick, 1000); }
   }
@@ -466,7 +539,7 @@ window.Places = (function () {
   return {
     configured: configured, all: all, rooms: rooms, base: base, role: role, roomOf: roomOf, setRoom: setRoom, setRole: setRole, label: label,
     pickerHtml: pickerHtml, strict: strict, canStart: canStart, meaning: meaning, navLog: navLog, openTest: openTest, closeTest: closeTest,
-    settingsHtml: settingsHtml,
+    settingsHtml: settingsHtml, navMode: navMode, setNavMode: setNavMode,
     _tick: tick, _go: go, _stop: stop, _relocalize: relocalize, _panelHtml: panelHtml, _logText: logText, _codeOf: codeOf, _boot: boot, _onChange: onChange
   };
 })();

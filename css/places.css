@@ -55,7 +55,11 @@
 .pl-logbar .pl-h { margin: 0; }
 .pl-log td { font-size: 15px; padding: 8px 10px; }
 .pl-log th { padding: 8px 10px; color: var(--muted); }
-.pl-log td:nth-child(5) { font-variant-numeric: tabular-nums; }
+.pl-log td:nth-child(6) { font-variant-numeric: tabular-nums; }
+.pl-log td:nth-child(4) { color: var(--muted); }
+/* the navigation mode switch (PLAN-NAV.md): route planned by Bellatrix / the robot's own navigation */
+.pl-mode { margin-top: 18px; }
+.pl-mode .pl-seg span { min-height: 54px; text-align: center; }
 .pl-log .pl-r-arrived td:nth-child(3) { color: var(--accent); font-weight: 700; }
 .pl-log .pl-r-failed td:nth-child(3), .pl-log .pl-r-refused td:nth-child(3) { font-weight: 700; }
 @media (max-width: 760px) {

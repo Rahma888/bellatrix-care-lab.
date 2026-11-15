@@ -1,6 +1,7 @@
 <#
   Off-robot check (installs nothing): the head APKs carry Gson and Orionstar's RobotApi in their dex,
-  the bridge is there, the manifest asks for the SDK permission, and the patient APK stays small.
+  the bridge is there, the route planner (Vergil, Kotlin runtime, RouteDrive) is in the one dex,
+  the manifest asks for the SDK permission, and the patient APK stays small.
   Run after build.ps1:  powershell -NoProfile -ExecutionPolicy Bypass -File android\check-dex.ps1
 #>
 $ErrorActionPreference = 'Stop'
@@ -19,8 +20,22 @@ foreach ($apk in 'Bellatrix.apk', 'BellatrixTablet.apk') {
         'Lorg/tensorflow/lite/gpu/GpuDelegateFactory$Options;', 'Lde/labland/bellatrix/hands/Hands;', 'Lde/labland/bellatrix/hands/HandsCamera;') {
       Check ($text.Contains($c)) "$apk dex contains $c"
     }
+    # Mode "route" (PLAN-NAV.md): LabLand's Vergil planner, the Kotlin runtime it needs, and the drive itself.
+    foreach ($c in 'Lde/labland/vergil/navigation/RoutePlanner;', 'Lde/labland/vergil/navigation/PgmMap;',
+        'Lde/labland/vergil/navigation/GridPathfinder;', 'Lde/labland/vergil/navigation/NavLog;', 'Lkotlin/jvm/internal/Intrinsics;',
+        'Lde/labland/bellatrix/RouteDrive;', 'Lde/labland/bellatrix/RobotBridge$RouteHost;', 'Lde/labland/bellatrix/RobotBridge$RouteNav;') {
+      Check ($text.Contains($c)) "$apk dex contains $c"
+    }
     # Only one dex goes into the APK (build.ps1 adds classes.dex): a second one would be lost.
     Check (-not ($zip.Entries | Where-Object { $_.FullName -eq 'classes2.dex' })) "$apk has a single dex"
+    # ... and d8 wrote only one: aapt add packs classes.dex alone, a classes2.dex would vanish without an error.
+    $dexDir = Join-Path $Here ('build\' + $(if ($apk -eq 'Bellatrix.apk') { 'care' } else { 'care-tablet' }) + '\dex')
+    if (Test-Path $dexDir) {
+      $more = @(Get-ChildItem $dexDir -Filter 'classes*.dex' | Where-Object { $_.Name -ne 'classes.dex' })
+      Check ($more.Count -eq 0) ("$apk d8 wrote one dex only" + $(if ($more.Count) { ' (also ' + (($more | ForEach-Object { $_.Name }) -join ', ') + ')' } else { '' }))
+    } else {
+      Write-Host "note  $apk no build folder ($dexDir): the d8 output cannot be checked"
+    }
     # The hand tracking: TensorFlow Lite's native parts and the two lite hand models.
     foreach ($e in 'lib/arm64-v8a/libtensorflowlite_jni.so', 'lib/arm64-v8a/libtensorflowlite_gpu_jni.so',
         'assets/models/palm_detection_lite.tflite', 'assets/models/hand_landmark_lite.tflite') {

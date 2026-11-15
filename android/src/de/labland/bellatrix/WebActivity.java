@@ -303,10 +303,19 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
             try { return RobotBridge.get().stop(); } catch (Throwable t) { return "ok"; }
         }
 
-        /** {"state":"idle|moving|arrived|failed","place":..,"reason":..,"since":epochMs} */
+        /** {"state":"idle|moving|arrived|failed","place":..,"reason":..,"since":epochMs,"attempt":..,"waitedS":..,
+         *  "code":..,"codeText":..,"mode":"route|place","leg":..,"legs":..} */
         @JavascriptInterface
         public String robotNav() {
             try { return RobotBridge.get().navJson(); } catch (Throwable t) { return "{\"state\":\"idle\",\"place\":\"\",\"reason\":\"\",\"since\":0}"; }
+        }
+
+        /** Navigation mode for the next drives (PLAN-NAV.md): "route" (Bellatrix plans the route, the default) or
+         *  "place" (the robot's own navigation, as before). A running drive keeps its mode. Returns the mode in
+         *  effect; anything else changes nothing. robotState().navMode reports it too. */
+        @JavascriptInterface
+        public String robotNavMode(String mode) {
+            try { return RobotBridge.get().setNavMode(mode); } catch (Throwable t) { return ""; }
         }
 
         /** Navigation test (js/places.js): relocalise at the charging pile (the robot must stand on it; it

@@ -47,6 +47,17 @@ function fakeRobot(opts) {
     robotStop: () => { r.calls.push('stop'); if (r.nav.state === 'moving') r.nav = Object.assign({}, r.nav, { state: 'idle', reason: 'stopped', since: r.nav.since + 1 }); return 'ok'; },
   };
   if (o.reloc) app.robotRelocalize = () => { r.calls.push('reloc'); r.state.reloc = { state: 'running', text: '', at: 1 }; return 'ok'; };
+  /* PLAN-NAV.md: the head app with the navigation mode (robotNavMode, stateJson().navMode, navJson().mode/leg/legs) */
+  if (o.navMode) {
+    r.mode = 'route';
+    app.robotNavMode = (m) => { r.calls.push('mode:' + m); if (m === 'route' || m === 'place') r.mode = m; return r.mode; };
+    app.robotGo = (p) => {
+      r.calls.push('go:' + p); if (r.nav.state === 'moving') return 'busy';
+      r.nav = { state: 'moving', place: p, reason: '', since: r.nav.since + 1, attempt: 1, waitedS: 0, code: 0, codeText: '', mode: r.mode, leg: 0, legs: 0 };
+      return 'ok';
+    };
+    r.state.navMode = 'route';
+  }
   r.app = app;
   return r;
 }
@@ -375,6 +386,133 @@ test('the settings block lists the map places with Base / Room / Other and opens
   assert.match(head({}).P.settingsHtml(), /No robot connected/);
 });
 
+/* PLAN-NAV.md piece 6: the switch "Route planned by Bellatrix / Robot's own navigation" */
+const bootDom = () => ({ addEventListener() {}, getElementById: () => null, readyState: 'complete' });
+test('the navigation mode switch: default route, saved on the head, sent to the bridge when the page starts and on change', () => {
+  const R = fakeRobot({ navMode: true });
+  const H = head({ robot: R, lang: 'fr', dom: bootDom() });
+  assert.equal(H.P.navMode(), 'route', 'default: route');
+  H.P._boot();
+  assert.deepEqual(R.calls, ['mode:route'], 'sent when the page starts');
+  let h = H.P._panelHtml();
+  assert.match(h, /<h2 class="pl-h">Mode de navigation<\/h2>/);
+  assert.match(h, /data-pl-mode="route" checked><span>Itinéraire planifié par Bellatrix<\/span>/);
+  assert.match(h, /data-pl-mode="place"><span>Navigation propre du robot<\/span>/);
+  // changed in the panel: saved in localStorage, sent, a toast
+  H.P._onChange({ target: { getAttribute: (k) => (k === 'data-pl-mode' ? 'place' : null) } });
+  assert.equal(H.ls.getItem('bellatrix-nav-mode'), 'place');
+  assert.equal(R.calls.at(-1), 'mode:place'); assert.equal(R.mode, 'place');
+  assert.deepEqual(H.toasts, ['Enregistré.']);
+  assert.match(H.P._panelHtml(), /data-pl-mode="place" checked/);
+  // a drive started now runs in mode place; switching while it runs changes the next drive only (the bridge's job)
+  H.P._go('Salon');
+  assert.equal(R.nav.mode, 'place');
+  // the saved mode goes to the bridge of the next page start
+  const R2 = fakeRobot({ navMode: true });
+  const H2 = head({ robot: R2, dom: bootDom(), ls: { 'bellatrix-nav-mode': 'place' } });
+  H2.P._boot();
+  assert.deepEqual(R2.calls, ['mode:place']);
+  assert.equal(H2.P.setNavMode('nonsense'), 'route', 'anything else: route');
+  // German, and an old head app without robotNavMode: no switch, nothing sent
+  assert.match(head({ robot: fakeRobot({ navMode: true }), lang: 'de' }).P._panelHtml(), /Navigationsmodus.*Route von Bellatrix geplant.*Eigene Navigation des Roboters/);
+  const R3 = fakeRobot();
+  const H3 = head({ robot: R3, dom: bootDom() });
+  H3.P._boot();
+  assert.deepEqual(R3.calls, [], 'no robotNavMode: nothing sent');
+  assert.doesNotMatch(H3.P._panelHtml(), /data-pl-mode/, 'no switch');
+});
+
+test('mode route in the panel and the log: leg / legs of the running drive, the mode of each logged drive', () => {
+  const R = fakeRobot({ navMode: true });
+  const { P } = head({ robot: R, lang: 'fr' });
+  P._tick();
+  R.app.robotGo('Zimmer 12'); P._tick();
+  R.nav = Object.assign({}, R.nav, { leg: 3, legs: 15, waitedS: 20 }); P._tick();
+  let h = P._panelHtml();
+  assert.match(h, /En route vers Zimmer 12<\/b><span> · étape 3 sur 15 · 20 s · Itinéraire Bellatrix<\/span>/);
+  assert.equal(P.navLog()[0].mode, 'route'); assert.equal(P.navLog()[0].leg, 3); assert.equal(P.navLog()[0].legs, 15);
+  // blocked: replanning (attempt 2), the new route has 9 legs
+  R.nav = Object.assign({}, R.nav, { reason: 'replanning', attempt: 2, leg: 1, legs: 9, code: 1025, codeText: 'sim' }); P._tick();
+  h = P._panelHtml();
+  assert.match(h, /étape 1 sur 9 · essai 2/);
+  assert.match(h, /<b>1025<\/b> Bloqué : recherche d’un chemin pour contourner\./, 'replanning says more than the code of the leg');
+  R.nav = Object.assign({}, R.nav, { state: 'arrived', reason: '', since: R.nav.since + 1, leg: 9, legs: 9, waitedS: 75 }); P._tick();
+  let e = P.navLog()[0];
+  assert.equal(e.result, 'arrived'); assert.equal(e.mode, 'route'); assert.equal(e.leg, 9); assert.equal(e.tries, 2);
+  assert.match(P._panelHtml(), /<td>Zimmer 12<\/td><td>Arrivé <small>essai 2<\/small><\/td><td>Itinéraire Bellatrix · 9\/9<\/td><td>1 min 15 s<\/td>/);
+  // a drive in mode place: its mode, no legs
+  R.app.robotNavMode('place');
+  R.app.robotGo('Salon'); P._tick();
+  assert.match(P._panelHtml(), /En route vers Salon<\/b><span> · Navigation du robot<\/span>/);
+  R.nav = Object.assign({}, R.nav, { state: 'arrived', since: R.nav.since + 1, waitedS: 30 }); P._tick();
+  assert.match(P._panelHtml(), /<td>Salon<\/td><td>Arrivé<\/td><td>Navigation du robot<\/td>/);
+  // entries of an older bridge (no mode): '–'; the Copy text has the mode too
+  const O = fakeRobot();
+  const H = head({ robot: O, lang: 'fr' });
+  O.app.robotGo('Salon'); H.P._tick();
+  assert.match(H.P._panelHtml(), /<td>Salon<\/td><td>En cours<\/td><td>–<\/td>/);
+  assert.match(P._logText(), /\tArrivé \(essai 2\)\tItinéraire Bellatrix · 9\/9\t1 min 15 s\t1025\t/);
+  assert.match(P._logText(), /\tNavigation du robot\t30 s\t/);
+});
+
+test('the two new reasons (replanning, no-route) in English, French and German, before the SDK code', () => {
+  const want = {
+    en: ['Blocked: planning a way around.', 'No way on the map: closed door or obstacle.'],
+    fr: ['Bloqué : recherche d’un chemin pour contourner.', 'Aucun chemin sur la carte : porte fermée ou obstacle.'],
+    de: ['Blockiert: plant einen Weg drumherum.', 'Kein Weg auf der Karte: geschlossene Tür oder Hindernis.'],
+  };
+  for (const [lang, [rp, nr]] of Object.entries(want)) {
+    const { P } = head({ lang });
+    assert.equal(P.meaning('', 'replanning'), rp, lang + ' replanning');
+    assert.equal(P.meaning('1025', 'replanning', ''), rp, lang + ': the reason wins over the leg\'s code');
+    assert.equal(P.meaning('', 'no-route'), nr, lang + ' no-route');
+    assert.equal(P.meaning('-109', 'no-route', ''), nr);
+  }
+  // the old reasons and codes still mean what they meant (mode place)
+  const { P } = head({ lang: 'de' });
+  assert.equal(P.meaning('1025', 'waiting'), 'Kein Weg gefunden (Hindernis oder geschlossene Tür).');
+  assert.equal(P.meaning('', 'blocked'), 'Seit 5 Minuten kein Durchkommen.');
+  // the end of a route drive with no way: failed, "no-route" in the panel and the log
+  const R = fakeRobot({ navMode: true });
+  const H = head({ robot: R, lang: 'de' });
+  R.app.robotGo('Zimmer 14'); H.P._tick();
+  R.nav = Object.assign({}, R.nav, { state: 'failed', reason: 'no-route', since: R.nav.since + 1, waitedS: 3 }); H.P._tick();
+  assert.equal(H.P.navLog()[0].result, 'failed');
+  assert.match(H.P._panelHtml(), /Fehlgeschlagen: Zimmer 14.*Kein Weg auf der Karte: geschlossene Tür oder Hindernis\./);
+});
+
+test('a route drive without a map runs in mode place: the panel and the log say so ("route: no map, robot navigation")', () => {
+  const R = fakeRobot({ navMode: true });
+  const { P } = head({ robot: R, lang: 'fr' });
+  R.app.robotGo('Zimmer 12');
+  R.nav = Object.assign({}, R.nav, { mode: 'place', codeText: 'route: no map, robot navigation' }); P._tick();
+  assert.match(P._panelHtml(), /Navigation du robot<\/span><p class="pl-code">Le robot ne fournit pas de carte : ce trajet utilise la navigation propre du robot\.<\/p>/);
+  assert.equal(P.navLog()[0].text, 'route: no map, robot navigation', 'logged although it has no code');
+  assert.equal(P.navLog()[0].mode, 'place');
+  R.nav = Object.assign({}, R.nav, { state: 'arrived', since: R.nav.since + 1 }); P._tick();
+  assert.match(P._panelHtml(), /<td>Navigation du robot<\/td><td>0 s<\/td><td>–<\/td><td>Le robot ne fournit pas de carte/);
+  // another reason the planner could not drive: the general text
+  const { P: D } = head({ lang: 'de' });
+  assert.equal(D.meaning('', '', 'route: no place pose, robot navigation'), 'Bellatrix konnte diese Fahrt nicht planen: sie nutzt die eigene Navigation des Roboters.');
+  // later SDK codes of the place drive still win, as before
+  assert.equal(D.meaning('1025', '', 'route: no map, robot navigation'), 'Kein Weg gefunden (Hindernis oder geschlossene Tür).');
+});
+
+test('every text of js/places.js has a French and a German entry (the static part of tests/i18n.test.mjs, for this file)', () => {
+  const s = src('js/places.js');
+  const keys = new Set();
+  for (const m of s.matchAll(/(?<![\w$.])S\(\s*('(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*")\s*[,)]/g)) keys.add(vm.runInNewContext(m[1]));
+  for (const m of s.matchAll(/(?:CODES|REASONS)\s*=\s*\{([\s\S]*?)\};/g)) for (const v of m[1].matchAll(/:\s*'((?:[^'\\\n]|\\.)*)'/g)) keys.add(v[1]);
+  for (const k of ['ROUTE', 'NOLOC']) { const m = new RegExp('var ' + k + " = '([^']+)'").exec(s); keys.add(m[1]); }
+  assert.ok(keys.size > 60, 'the texts are found (' + keys.size + ')');
+  for (const lang of ['fr', 'de']) {
+    const H = head({ lang });
+    const dict = H.win.ST.dict[lang];
+    const miss = [...keys].filter((k) => /[A-Za-z]/.test(k) && !Object.prototype.hasOwnProperty.call(dict, k));
+    assert.deepEqual(miss, [], lang + ': no translation for ' + miss.join(' | '));
+  }
+});
+
 test('the robot bridge exposes the code of a drive and the relocalisation (Java, Java 8 style: no lambdas)', () => {
   const rb = src('android/src/de/labland/bellatrix/RobotBridge.java');
   const wa = src('android/src/de/labland/bellatrix/WebActivity.java');
@@ -382,7 +520,13 @@ test('the robot bridge exposes the code of a drive and the relocalisation (Java,
   assert.match(rb, /resetEstimate\(reqIds\.getAndIncrement\(\), RELOC_RETRIES, l\)/);
   assert.match(rb, /o\.put\("reloc", r\)/); assert.match(rb, /o\.put\("charging", charging\)/); assert.match(rb, /o\.put\("pose", p\)/);
   assert.match(wa, /public String robotRelocalize\(\)/);
-  const code = rb.replace(/"(?:[^"\\\n]|\\.)*"/g, '""').replace(/\/\/[^\n]*/g, '');   /* no strings, no comments */
-  assert.doesNotMatch(code, /->/, 'no lambdas');
-  assert.doesNotMatch(code, /new [A-Z]\w*\s*\([^)]*\)\s*\{/, 'no anonymous inner classes');
+  // PLAN-NAV.md: the switch and the new fields (new, the old ones stay)
+  assert.match(wa, /public String robotNavMode\(String mode\)/);
+  assert.match(rb, /o\.put\("navMode", navMode\)/);
+  assert.match(rb, /n\.put\("mode", navDriveMode\)/); assert.match(rb, /n\.put\("leg", navLeg\)/); assert.match(rb, /n\.put\("legs", navLegs\)/);
+  for (const f of [rb, src('android/src/de/labland/bellatrix/RouteDrive.java')]) {
+    const code = f.replace(/"(?:[^"\\\n]|\\.)*"/g, '""').replace(/\/\/[^\n]*/g, '');   /* no strings, no comments */
+    assert.doesNotMatch(code, /->/, 'no lambdas');
+    assert.doesNotMatch(code, /new [A-Z]\w*\s*\([^)]*\)\s*\{/, 'no anonymous inner classes');
+  }
 });

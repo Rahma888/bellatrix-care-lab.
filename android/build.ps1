@@ -12,7 +12,10 @@ $Bt = Join-Path $Here 'sdk\build-tools\android-14'
 $Jar = Join-Path $Here 'sdk\platforms\android-9\android.jar'
 $Out = Join-Path $Here 'build'
 # Orionstar's RobotApi and Gson (needed by it): only the head apps (care, care-tablet) use them.
-$Vendor = @((Join-Path $Here 'vendor\robotservice.jar'), (Join-Path $Here 'vendor\gson.jar'))
+# LabLand's Vergil route planner and the Kotlin runtime it needs (PLAN-NAV.md, mode "route": RobotBridge, RouteDrive).
+# See vendor\SOURCES.md; the two jars stay exactly as delivered.
+$Vendor = @((Join-Path $Here 'vendor\robotservice.jar'), (Join-Path $Here 'vendor\gson.jar'),
+  (Join-Path $Here 'vendor\vergil-navigation.jar'), (Join-Path $Here 'vendor\kotlin-stdlib-2.0.20.jar'))
 # TensorFlow Lite 2.16.1 (Maven Central .aar files in vendor\tflite): the app's own hand tracking
 # (src\de\labland\bellatrix\hands). Each .aar gives its classes.jar (javac, d8) and its
 # jni\arm64-v8a\*.so (lib/arm64-v8a in the APK). Extracted below into build\tflite.
@@ -157,6 +160,8 @@ function Build-Apk($name, $manifest, $src, $res, $assets, $apk, $libs, $jars = @
   if ($LASTEXITCODE) { throw "jar failed ($name)" }
   & "$Bt\d8.bat" --release --min-api 26 --lib $Jar --output "$w\dex" "$w\app-classes.jar" @jars
   if ($LASTEXITCODE) { throw "d8 failed ($name)" }
+  # aapt add below packs only classes.dex: a second dex would be missing from the APK without any error.
+  if (Test-Path "$w\dex\classes2.dex") { throw "d8 wrote classes2.dex ($name): over 65,536 method references, the APK would lose classes" }
 
   # The icons (res\mipmap-*\ic_launcher.png).
   & "$Bt\aapt2.exe" compile --dir $res -o "$w\res.zip"

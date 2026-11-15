@@ -309,7 +309,7 @@ test('the sentence in FR, DE and EN, one day and several', () => {
 
 test('the phone and the portal: service worker buttons, cache version, banner and date picker in three languages', () => {
   const sw = fs.readFileSync(path.join(ROOT, 'sw-portail.js'), 'utf8');
-  assert.match(sw, /var CACHE = 'bellatrix-portail-5';/, 'the cache version was raised');
+  assert.match(sw, /var CACHE = 'bellatrix-portail-6';/, 'the cache version was raised');
   assert.match(sw, /opts\.actions = /);
   assert.match(sw, /e\.action/);
   const js = fs.readFileSync(path.join(ROOT, 'js', 'portail-calls.js'), 'utf8');

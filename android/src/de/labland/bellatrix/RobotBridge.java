@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import com.ainirobot.coreservice.client.ApiListener;
@@ -12,13 +13,20 @@ import com.ainirobot.coreservice.client.Definition;
 import com.ainirobot.coreservice.client.RobotApi;
 import com.ainirobot.coreservice.client.StatusListener;
 import com.ainirobot.coreservice.client.actionbean.Pose;
+import com.ainirobot.coreservice.client.ashmem.ShareMemoryApi;
 import com.ainirobot.coreservice.client.listener.ActionListener;
 import com.ainirobot.coreservice.client.listener.CommandListener;
 import com.ainirobot.coreservice.client.module.ModuleCallbackApi;
 
+import de.labland.vergil.navigation.NavLog;
+import de.labland.vergil.navigation.NavLogLevel;
+import de.labland.vergil.navigation.NavLogSink;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +45,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  *   3 tries at most. 1014 = started, 1018/1019 = harmless avoidance, 1020 = "outside the map" (does not
  *   end a drive by itself), 1025 = no path. Arrival (1, or -113) is success.
  * - Nothing starts when the robot is not localised, or while the emergency stop is pressed.
+ *
+ * Two navigation modes (PLAN-NAV.md), switched by robotNavMode; a running drive keeps its mode:
+ * - "route" (default): Bellatrix reads the robot's map, plans the route with LabLand's Vergil planner and
+ *   drives it waypoint by waypoint ({@link RouteDrive}, one thread per drive; log tag RobotRoute). No map,
+ *   or one that does not parse: that one drive runs in mode "place".
+ * - "place": today's navigation, unchanged: the place name goes to the robot's own navigation, with
+ *   stop, wait and try again for 5 minutes.
  *
  * Build note: only static nested classes, no lambdas (JDK 25 + d8, see WebActivity).
  */
@@ -71,7 +86,14 @@ public final class RobotBridge {
     static final int RELOC_RETRIES = 3;                   // resetEstimate: relocalisation at the charging pile
     static final long RELOC_TIMEOUT_MS = 60000L;
 
+    // Mode "route" (RouteDrive; every number of PLAN-NAV.md's table is a constant there, with its reason).
+    static final String ROUTE_TAG = "RobotRoute";         // one logcat tag for the whole route drive (PLAN-NAV.md, "Log")
+    static final String MODE_ROUTE = RouteDrive.MODE_ROUTE;
+    static final String MODE_PLACE = RouteDrive.MODE_PLACE;
+    static final int MAP_READ_BUFFER = 65536;             // bytes per read of the map file (a map is about 1 MB)
+
     private static final RobotBridge INSTANCE = new RobotBridge();
+    private static volatile boolean routeLogSet;          // the planner's own lines go to logcat once a drive needed it
 
     public static RobotBridge get() { return INSTANCE; }
 
@@ -111,11 +133,18 @@ public final class RobotBridge {
     private int retryCount;          // backoff step; back to 0 when the robot makes progress
     private long navStartedAt, navEndedAt;
 
+    // Navigation mode (PLAN-NAV.md): the switch (robotNavMode), and the mode of the current / last drive
+    private volatile String navMode = MODE_ROUTE;
+    private String navDriveMode = MODE_ROUTE;
+    private int navLeg, navLegs;     // mode route: the leg being driven, of how many (0 of 0 in mode place)
+    private volatile int suspensions;   // counts onSuspend: the route drive sees a suspension shorter than one look
+
     // Listeners held in fields on purpose (weak references in the CoreService).
     private ApiListener apiListener;
     private ModuleCallbackApi moduleCallback;
     private StatusListener estopListener;
     private ActionListener navListener;
+    private ActionListener routeListener;   // the route drive's current start
 
     private RobotBridge() { }
 
@@ -202,8 +231,9 @@ public final class RobotBridge {
     void onSuspend() {
         synchronized (this) {
             suspended = true;
+            suspensions++;
             if ("moving".equals(navState)) {
-                curAttempt = -1;                 // answers of the interrupted action are ignored
+                curAttempt = -1;                 // answers of the interrupted action are ignored (mode route: RouteDrive ignores the leg)
                 navReason = "suspended";
                 Log.i(TAG, "SUSPENDED while moving to \"" + navPlace + "\": waiting for onRecovery");
             }
@@ -214,9 +244,14 @@ public final class RobotBridge {
         synchronized (this) {
             suspended = false;
             if ("moving".equals(navState) && work != null) {
-                Log.i(TAG, "RECOVERY: restarting the drive to \"" + navPlace + "\" in " + RESUME_DELAY_MS + " ms");
                 navReason = "waiting";
-                work.postDelayed(new Attempt(this, navToken), RESUME_DELAY_MS);
+                if (MODE_ROUTE.equals(navDriveMode)) {
+                    // the drive thread sees it, waits RESUME_DELAY_MS and plans again from the fresh pose
+                    Log.i(TAG, "RECOVERY: the route to \"" + navPlace + "\" is planned again in " + RESUME_DELAY_MS + " ms");
+                } else {
+                    Log.i(TAG, "RECOVERY: restarting the drive to \"" + navPlace + "\" in " + RESUME_DELAY_MS + " ms");
+                    work.postDelayed(new Attempt(this, navToken), RESUME_DELAY_MS);
+                }
             }
         }
     }
@@ -300,11 +335,12 @@ public final class RobotBridge {
         }
         String name = place == null ? "" : place.trim();
         boolean known = true;   // unknown only when the list could be read and the name is not in it
+        Pose goal = null;       // mode route: the place's pose (x, y and theta) is the goal
         try {
             List<Pose> list = RobotApi.getInstance().getPlaceList();
             if (list != null && !list.isEmpty()) {
                 known = false;
-                for (Pose p : list) if (p != null && name.equals(p.getName())) { known = true; break; }
+                for (Pose p : list) if (p != null && name.equals(p.getName())) { known = true; goal = p; break; }
             }
         } catch (Throwable t) {
             fail("getPlaceList", t);
@@ -315,6 +351,9 @@ public final class RobotBridge {
             navCode = 0;                                    // a new drive (or a refusal): its own code and time
             navCodeText = "";
             navTries = 0;
+            navLeg = 0;
+            navLegs = 0;
+            navDriveMode = navMode;                         // the switch as it is now; the drive keeps it
             navStartedAt = System.currentTimeMillis();
             if (name.isEmpty() || !known) { setNavLocked("failed", name, "unknown-place"); return "ok"; }
             if (Boolean.TRUE.equals(estop)) { setNavLocked("failed", name, "emergency"); return "ok"; }
@@ -325,9 +364,182 @@ public final class RobotBridge {
             retryCount = 0;
             navStartedAt = System.currentTimeMillis();
             setNavLocked("moving", name, suspended ? "suspended" : "");
+            if (MODE_ROUTE.equals(navDriveMode)) {
+                if (goal != null && startRouteLocked(navToken, name, goal)) return "ok";
+                // no pose to plan to (the place list could not be read) or no planner: this drive in mode place
+                navDriveMode = MODE_PLACE;
+                navCodeText = goal == null ? "route: no place pose, robot navigation" : "route: no planner, robot navigation";
+                Log.i(ROUTE_TAG, "drive to \"" + name + "\" runs in mode place: " + navCodeText);
+            }
             if (!suspended) work.post(new Attempt(this, navToken));   // else onRecovery starts it
         }
         return "ok";
+    }
+
+    /** "route" or "place" for the next drives (robotNavMode); anything else changes nothing. Returns the mode in effect. */
+    public String setNavMode(String mode) {
+        String m = mode == null ? "" : mode.trim().toLowerCase(Locale.ROOT);
+        if (MODE_ROUTE.equals(m) || MODE_PLACE.equals(m)) {
+            if (!m.equals(navMode)) Log.i(TAG, "navigation mode: " + m + " (a running drive keeps its mode)");
+            navMode = m;
+        }
+        return navMode;
+    }
+
+    /* ---------------------------------------------------------------- mode route (RouteDrive) */
+
+    /** Starts the drive thread of a route drive. False when the planner cannot even start (then mode place). */
+    private boolean startRouteLocked(int token, String place, Pose goal) {
+        try {
+            if (!routeLogSet) {   // optional: without it the planner stays silent
+                NavLog.INSTANCE.setSink(new RouteLog());
+                routeLogSet = true;
+            }
+            navTries = 1;          // mode route: attempt = replans + 1
+            RouteDrive d = new RouteDrive(new RouteHost(this), token, place, goal.getX(), goal.getY(), goal.getTheta(),
+                    navStartedAt, GLOBAL_LIMIT_MS, RESUME_DELAY_MS);
+            Thread t = new Thread(d, "robot-route-" + token);
+            t.setDaemon(true);
+            t.start();
+            return true;
+        } catch (Throwable t) {
+            fail("route", t);
+            navTries = 0;
+            return false;
+        }
+    }
+
+    /** The route drive of this token is still the robot's current drive. */
+    boolean routeAlive(int token) {
+        synchronized (this) { return token == navToken && "moving".equals(navState) && MODE_ROUTE.equals(navDriveMode); }
+    }
+
+    boolean navMoving() {
+        synchronized (this) { return "moving".equals(navState); }
+    }
+
+    boolean isSuspended() {
+        synchronized (this) { return suspended; }
+    }
+
+    int suspensionCount() { return suspensions; }
+
+    boolean estopPressed() {
+        synchronized (this) { return Boolean.TRUE.equals(estop); }
+    }
+
+    /** The pose now (binder call: drive thread only), or null. Also keeps the Navigation test panel's pose fresh. */
+    double[] routePose() {
+        try {
+            Pose p = RobotApi.getInstance().getCurrentPose();
+            if (p == null) return null;
+            poseX = p.getX(); poseY = p.getY(); poseTheta = p.getTheta();
+            return new double[] {p.getX(), p.getY(), p.getTheta()};
+        } catch (Throwable t) {
+            fail("getCurrentPose", t);
+            return null;
+        }
+    }
+
+    /** One start of a leg: startNavigation to a Pose, with the start's own listener. Null when it went out. */
+    String routeStart(RouteDrive.Start s, double x, double y, double theta, double tolerance, long timeoutMs) {
+        RouteNav l = new RouteNav(s);
+        synchronized (this) { routeListener = l; }
+        try {
+            int id = reqIds.getAndIncrement();
+            Log.i(ROUTE_TAG, "leg " + s.leg + " start " + s.n + ": startNavigation(Pose " + RouteDrive.f2(x) + ", " + RouteDrive.f2(y)
+                    + ", " + RouteDrive.f2(theta) + ") tolerance " + tolerance + " timeout " + timeoutMs + " req=" + id);
+            RobotApi.getInstance().startNavigation(id, new Pose((float) x, (float) y, (float) theta), tolerance, timeoutMs, l);
+            return null;
+        } catch (Throwable t) {
+            fail("startNavigation", t);
+            return t.getClass().getSimpleName();
+        }
+    }
+
+    /** Port of NovaDriver.readMapPgm: the robot's current map as PGM bytes, read again for every drive; null when none. */
+    byte[] readMapPgm() {
+        long t0 = System.currentTimeMillis();
+        ShareMemoryApi api = null;
+        try {
+            String name = RobotApi.getInstance().getMapName();
+            if (name == null || name.isEmpty()) { Log.w(ROUTE_TAG, "map: no map loaded"); return null; }
+            api = ShareMemoryApi.getInstance();
+            ParcelFileDescriptor pfd = api.getMapPgmPFD(name);
+            if (pfd == null) { Log.w(ROUTE_TAG, "map: the robot hands out no file for \"" + name + "\""); return null; }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            FileInputStream in = new FileInputStream(pfd.getFileDescriptor());
+            try {
+                byte[] buf = new byte[MAP_READ_BUFFER];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            } finally {
+                in.close();
+            }
+            byte[] bytes = out.toByteArray();
+            Log.i(ROUTE_TAG, "map read: \"" + name + "\", " + bytes.length + " bytes, " + (System.currentTimeMillis() - t0) + " ms");
+            return bytes;
+        } catch (Throwable t) {
+            fail("getMapPgmPFD", t);
+            Log.w(ROUTE_TAG, "map: " + t);
+            return null;
+        } finally {
+            // always, also after an error: otherwise the shared memory stays taken and the next call gets nothing
+            try { if (api != null) api.releaseGetMapPgmPFD(); } catch (Throwable t) { Log.w(ROUTE_TAG, "map: release failed (" + t + ")"); }
+        }
+    }
+
+    void routeLeg(int token, int leg, int legs) {
+        synchronized (this) { if (routeCurrent(token)) { navLeg = leg; navLegs = legs; } }
+    }
+
+    /** The reason while moving; "suspended" (set by onSuspend) stays until the recovery. */
+    void routeReason(int token, String reason) {
+        synchronized (this) {
+            if (routeCurrent(token) && !suspended && reason != null && !reason.equals(navReason)) navReason = reason;
+        }
+    }
+
+    void routeAttempt(int token, int attempt) {
+        synchronized (this) { if (routeCurrent(token)) navTries = attempt; }
+    }
+
+    void routeCode(int token, int code, String text) {
+        synchronized (this) {
+            if (!routeCurrent(token)) return;
+            navCode = code;
+            String s = text == null ? "" : text;
+            navCodeText = s.length() > 200 ? s.substring(0, 200) : s;
+        }
+    }
+
+    boolean routeEnd(int token, String state, String reason) {
+        synchronized (this) {
+            if (!routeCurrent(token)) return false;
+            navToken++;
+            setNavLocked(state, navPlace, reason);
+            return true;
+        }
+    }
+
+    /** This one drive runs in mode place (today's code) instead: no map, or the planner cannot start. */
+    void routeToPlace(int token, String text) {
+        synchronized (this) {
+            if (!routeCurrent(token)) return;
+            navDriveMode = MODE_PLACE;
+            navCode = 0;
+            navCodeText = text == null ? "" : text;
+            navLeg = 0;
+            navLegs = 0;
+            navTries = 0;
+            curAttempt = -1;
+            retryCount = 0;
+            if (!suspended && work != null) work.post(new Attempt(this, navToken));   // else onRecovery starts it
+        }
+    }
+
+    private boolean routeCurrent(int token) {
+        return token == navToken && "moving".equals(navState) && MODE_ROUTE.equals(navDriveMode);
     }
 
     /** Stops the current drive (if any): the team's cancel, immediate. */
@@ -546,6 +758,7 @@ public final class RobotBridge {
                 o.put("disabled", disabled);
                 o.put("suspended", suspended);
                 if (estop != null) o.put("estop", estop.booleanValue());
+                o.put("navMode", navMode);
                 o.put("nav", navObject());
                 JSONObject r = new JSONObject();
                 r.put("state", relocState);
@@ -591,6 +804,9 @@ public final class RobotBridge {
         n.put("waitedS", navStartedAt == 0 || end < navStartedAt ? 0 : (end - navStartedAt) / 1000);
         n.put("code", navCode);
         n.put("codeText", navCodeText);
+        n.put("mode", navDriveMode);     // new fields (PLAN-NAV.md piece 5): old readers ignore them
+        n.put("leg", navLeg);
+        n.put("legs", navLegs);
         return n;
     }
 
@@ -736,6 +952,71 @@ public final class RobotBridge {
             else if (status == ST_NO_PATH) { b.sdkCode(token, att, status, data); b.retry(token, att, "status 1025 no path"); }
             else if (status == ST_OUT_MAP) b.sdkCode(token, att, status, data);
             // 1014 started, 1020 "outside the map": only logged (and shown); the 8 s progress watch decides.
+        }
+    }
+
+    /** The robot and the bridge's state for one route drive (RouteDrive.Host). Called on the drive thread only. */
+    static final class RouteHost implements RouteDrive.Host {
+        final RobotBridge b;
+        RouteHost(RobotBridge b) { this.b = b; }
+        @Override public long now() { return System.currentTimeMillis(); }
+        @Override public void sleep(long ms) {
+            try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        }
+        @Override public void await(RouteDrive.Start s, long ms) { s.awaitAnswer(ms); }
+        @Override public boolean alive(int token) { return b.routeAlive(token); }
+        @Override public boolean moving() { return b.navMoving(); }
+        @Override public boolean suspended() { return b.isSuspended(); }
+        @Override public int suspensions() { return b.suspensionCount(); }
+        @Override public boolean estop() { return b.estopPressed(); }
+        @Override public double[] pose() { return b.routePose(); }
+        @Override public byte[] map() { return b.readMapPgm(); }
+        @Override public String start(RouteDrive.Start s, double x, double y, double theta, double toleranceM, long timeoutMs) {
+            return b.routeStart(s, x, y, theta, toleranceM, timeoutMs);
+        }
+        @Override public void stop() { b.sdkStop(); }
+        @Override public void leg(int token, int leg, int legs) { b.routeLeg(token, leg, legs); }
+        @Override public void reason(int token, String reason) { b.routeReason(token, reason); }
+        @Override public void attempt(int token, int attempt) { b.routeAttempt(token, attempt); }
+        @Override public void code(int token, int code, String text) { b.routeCode(token, code, text); }
+        @Override public boolean end(int token, String state, String reason) { return b.routeEnd(token, state, reason); }
+        @Override public void toPlace(int token, String text) { b.routeToPlace(token, text); }
+        @Override public void log(String line) { Log.i(ROUTE_TAG, line); }
+    }
+
+    /** Listener of one start of a route leg: only hands the answers to its RouteDrive.Start (first answer counts). */
+    static final class RouteNav extends ActionListener {
+        final RouteDrive.Start s;
+        RouteNav(RouteDrive.Start s) { this.s = s; }
+
+        @Override
+        public void onResult(int status, String response) {
+            Log.i(ROUTE_TAG, "leg " + s.leg + " start " + s.n + ": onResult " + status + " " + response);
+            s.onResult(status, response);
+        }
+
+        @Override
+        public void onError(int code, String text) {
+            Log.i(ROUTE_TAG, "leg " + s.leg + " start " + s.n + ": onError " + code + " " + text);
+            s.onError(code, text);
+        }
+
+        @Override
+        public void onStatusUpdate(int status, String data) {
+            Log.i(ROUTE_TAG, "leg " + s.leg + " start " + s.n + ": onStatusUpdate " + status + " " + data);
+            s.onStatusUpdate(status, data);
+        }
+    }
+
+    /** The planner's own log lines (NavLog) to logcat, under RobotRoute. */
+    static final class RouteLog implements NavLogSink {
+        @Override
+        public void log(NavLogLevel level, String tag, String message) {
+            String m = tag + ": " + message;
+            if (level == NavLogLevel.ERROR) Log.e(ROUTE_TAG, m);
+            else if (level == NavLogLevel.WARN) Log.w(ROUTE_TAG, m);
+            else if (level == NavLogLevel.DEBUG) Log.d(ROUTE_TAG, m);
+            else Log.i(ROUTE_TAG, m);
         }
     }
 
