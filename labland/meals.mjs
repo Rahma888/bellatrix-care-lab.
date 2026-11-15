@@ -60,10 +60,21 @@ function viaTunnel(req) { const h = req.headers || {}; return !!(h['cf-connectin
 function loopback(req) { if (viaTunnel(req)) return false; const a = String((req.socket && req.socket.remoteAddress) || '').replace(/^::ffff:/, ''); return a === '127.0.0.1' || a === '::1'; }
 function clientIp(req) { return String((req.headers && (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'])) || (req.socket && req.socket.remoteAddress) || '').split(',')[0].trim(); }
 const pad = (n) => (n < 10 ? '0' : '') + n;
-/* Local time of this machine (the care home's clock): "2026-11-16" and "2026-11-16T18:00". */
-export function dayOf(t) { const d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-export function stampOf(t) { const d = new Date(t); return dayOf(t) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
-export function addDays(day, n) { const p = day.split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2] + n, 12); return dayOf(d.getTime()); }
+/* The care home's wall clock (Germany): "2026-11-16" and "2026-11-16T18:00". 15 Nov: the robot head's Node has no
+   time-zone data and its system zone is China (UTC+8), so the local getters gave 20:50 at 13:50 and the kitchen's
+   choice looked closed. The German offset is computed here: CET +1 h, CEST +2 h (last Sunday of March to last
+   Sunday of October, 01:00 UTC). MEALS_UTC_OFFSET_MIN overrides it (e.g. for tests or another country). */
+function lastSunday(y, m) { const x = new Date(Date.UTC(y, m + 1, 0, 1)); x.setUTCDate(x.getUTCDate() - x.getUTCDay()); return x.getTime(); }
+export function clinicOffset(t) {
+  const fixed = Number(process.env.MEALS_UTC_OFFSET_MIN);
+  if (process.env.MEALS_UTC_OFFSET_MIN !== undefined && isFinite(fixed)) return fixed * 60000;
+  const y = new Date(t).getUTCFullYear();
+  return t >= lastSunday(y, 2) && t < lastSunday(y, 9) ? 7200000 : 3600000;
+}
+function wall(t) { return new Date(Number(t) + clinicOffset(Number(t))); }
+export function dayOf(t) { const d = wall(t); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+export function stampOf(t) { const d = wall(t); return dayOf(t) + 'T' + pad(d.getUTCHours()) + ':' + pad(d.getUTCMinutes()); }
+export function addDays(day, n) { const p = day.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n, 12)); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
 /* Orders for a day close the evening before (the kitchen can change it). */
 export function defaultDeadline(day) { return addDays(day, -1) + 'T18:00'; }
 
@@ -208,7 +219,8 @@ export function allergyHits(dish, allergies) {
 export function createMeals(opts = {}) {
   const DIR = opts.dataDir || process.env.MEALS_DATA || (process.env.BELLATRIX_DATA ? path.join(path.resolve(process.env.BELLATRIX_DATA), 'meals') : path.join(HERE, 'data', 'meals'));
   const games = opts.games || createGames({ dataDir: opts.gamesDir, log: () => {} });
-  const now = opts.now || (() => Date.now());
+  /* globalThis.__bellatrixClockOffset: set by store-server.mjs when the device clock is wrong (robot head, 15 Nov). */
+  const now = opts.now || (() => Date.now() + (globalThis.__bellatrixClockOffset || 0));
   const log = opts.log || ((t) => console.log(new Date(now()).toLocaleTimeString('en-GB') + '  meals: ' + t));
   const limitOn = opts.rateLimit !== false;
   const F = { menus: path.join(DIR, 'menus.json'), card: path.join(DIR, 'card.json'), orders: path.join(DIR, 'orders.json'), profiles: path.join(DIR, 'profiles.json'), tickets: path.join(DIR, 'tickets.json') };
@@ -307,7 +319,9 @@ export function createMeals(opts = {}) {
       rows.push(row);
     }
     for (const m of Object.keys(totals)) for (const c of Object.keys(totals[m])) totals[m][c].dishes = totals[m][c].dishes.filter((d) => !d.card || d.n > 0);
-    const coll = new Intl.Collator('de', { numeric: true, sensitivity: 'base' });
+    /* The Node of the robot head may have no Intl (built without ICU): a plain comparison then (15 Nov, kitchen 500). */
+    let coll;
+    try { coll = new Intl.Collator('de', { numeric: true, sensitivity: 'base' }); } catch (e) { coll = { compare: (a, b) => { const x = String(a || '').toLowerCase(), y = String(b || '').toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; } }; }
     rows.sort((a, b) => coll.compare(a.room || '~', b.room || '~') || coll.compare(a.name, b.name) || coll.compare(a.code, b.code));
     const answered = rows.filter((r) => r.status !== 'open').length;
     return { date, today: dayOf(now()), tomorrow: tomorrow(), now: stampOf(now()), menu, daily: !!menu, deadline: info.deadline, courses, open: info.open, totals, rows, counts: { residents: rows.length, answered } };

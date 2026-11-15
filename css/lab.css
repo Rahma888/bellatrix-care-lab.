@@ -719,15 +719,8 @@ details.more > * + * { margin-top: 8px; }
 .stage:not(.bp-on) .top #chipPreview { background: var(--apricot); color: var(--on-apricot); border-radius: 5px; padding: 4px 22px; font-size: 26px; font-weight: 700; letter-spacing: .04em; }
 .stage #caption { background: var(--deep); color: var(--cream); border-radius: 5px; padding: 16px 28px; font-size: 38px; line-height: 1.3; margin: 0; }
 
-/* Bellatrix's face in the clinic palette: Suavia blue, white eyes, light blue cheeks (light and dark alike). */
-.bface .fhead { fill: #00519E; }
-.bface .fwhite, .bface .fshine { fill: #FFFFFF; }
-.bface .fpupil { fill: #00325F; }
-.bface .fcheek { fill: #9FD3F5; opacity: .95; }
-.bface .fsmile { stroke: #FFFFFF; }
-.bface .fmouth { fill: #00325F; stroke: #FFFFFF; }
-/* The waiting and Ready screens: the face as a medallion, a soft ring around it. */
-.picture.facebox .bface { border-radius: 50%; box-shadow: 0 0 0 30px var(--hero), 0 0 0 32px #E0E0E0, 0 0 0 80px rgba(159, 211, 245, .35); }
+/* 15 Nov: Rahma wants Bellatrix's face back as it was before the clinic rebrand (its own teal head, pink
+   cheeks, no rings around it): the colours of the .bface rules above apply again. */
 /* Upright, the box is tall: the width decides; wide, the height decides (the face stays round). */
 .stage:not(.land) .picture.facebox .bface { width: 74%; height: auto; max-width: none; max-height: 78%; }
 .stage:not(.insession) #screen > header { align-items: center; text-align: center; padding-top: 40px; }

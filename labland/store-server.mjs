@@ -22,6 +22,26 @@ import { portalApi } from './family-portal.mjs';
 import { atelierApi } from './atelier.mjs';
 import { gamesApi } from './games.mjs';
 import { mealsApi } from './meals.mjs';
+/* 15 Nov: the robot head's clock runs on China time (UTC+8), so "tomorrow" and the kitchen's order deadline
+   were wrong (the menu showed "closed" at 13:00 in Germany). The server always works in the clinic's time zone. */
+if (!process.env.TZ) process.env.TZ = process.env.BELLATRIX_TZ || 'Europe/Berlin';
+/* The head's own clock was also 8 hours ahead (it showed 20:47 at 12:47 UTC). The server reads the real time once
+   from an HTTPS "Date" header and keeps the difference; the meal module uses it ("tomorrow", the order deadline). */
+globalThis.__bellatrixClockOffset = 0;
+if (process.env.BELLATRIX_DATA && !process.env.BELLATRIX_NO_CLOCK) {
+  const syncClock = async () => {
+    try {
+      const r = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { method: 'GET', signal: AbortSignal.timeout(8000) });
+      const real = Date.parse(r.headers.get('date') || '');
+      if (!real) return;
+      const off = real - Date.now();
+      globalThis.__bellatrixClockOffset = Math.abs(off) > 120000 ? off : 0;
+      globalThis.__bellatrixClockSynced = true; globalThis.__bellatrixClockError = '';
+      if (globalThis.__bellatrixClockOffset) console.log('clock: this device is ' + Math.round(off / 60000) + ' min off; the server uses the real time');
+    } catch (e) { globalThis.__bellatrixClockError = String((e && (e.cause && e.cause.code || e.message)) || e).slice(0, 120); /* offline: the device clock is used */ }
+  };
+  syncClock(); setInterval(syncClock, 6 * 3600 * 1000).unref();
+}
 /* The other family-portal modules (activity feed, notifications, call requests), when present: they
    register their routes under /portal/api/ with registerRoutes (labland/family-portal.mjs). */
 for (const m of ['family-feed.mjs', 'family-notify.mjs', 'family-callreq.mjs']) {
@@ -263,7 +283,8 @@ function json(res, status, obj) {
 function headInfo() {
   let t = '';
   try { t = String(JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'head-info.json'), 'utf8')).tunnel || ''); } catch (e) { t = ''; }
-  return { node: 'running', tunnel: /^https:\/\/[A-Za-z0-9.-]{1,200}$/.test(t) ? t : null };
+  return { node: 'running', tunnel: /^https:\/\/[A-Za-z0-9.-]{1,200}$/.test(t) ? t : null,
+    clock: { offsetMin: Math.round((globalThis.__bellatrixClockOffset || 0) / 60000), synced: !!globalThis.__bellatrixClockSynced, error: globalThis.__bellatrixClockError || '' } };
 }
 
 const server = http.createServer((req, res) => {

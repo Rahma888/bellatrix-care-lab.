@@ -131,7 +131,7 @@ test('the server starts from a read-only copy with a separate data folder, like 
     assert.ok(await until(() => fs.existsSync(path.join(DATA, 'games', 'team.json')), 3000), 'games/team.json in the data folder');
   }
   /* the head's own route: Node answers "running"; the address comes from head-info.json (written by the app) */
-  assert.deepEqual(await (await fetch(base + '/head/api/info')).json(), { node: 'running', tunnel: null });
+  { const info = await (await fetch(base + '/head/api/info')).json(); assert.equal(info.node, 'running'); assert.equal(info.tunnel, null); assert.ok(info.clock && typeof info.clock.offsetMin === 'number'); }
   fs.writeFileSync(path.join(DATA, 'head-info.json'), JSON.stringify({ tunnel: 'https://quiet-river-test.trycloudflare.com', at: 1 }));
   assert.equal((await (await fetch(base + '/head/api/info')).json()).tunnel, 'https://quiet-river-test.trycloudflare.com');
   /* no LabLand key on a robot: the store signs no licence there, and never serves its data or keys */
