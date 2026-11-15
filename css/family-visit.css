@@ -1,0 +1,14 @@
+/* Care Team on the robot head (14 Nov): the family notification with ONE button (js/family-visit-staff.js).
+   Suavia: blue #00519E, light blue #9FD3F5, white, Roboto Condensed, corners 5 px at most, no shadow. */
+.fv-notes { display: flex; flex-direction: column; gap: 6px; margin: 0 0 10px; }
+.fv-notes[hidden] { display: none !important; }
+.fv-note { display: flex; align-items: center; gap: 10px; background: var(--accent, #00519E); color: var(--on-accent, #FFFFFF); border-radius: 5px; padding: 6px 6px 6px 18px; min-height: 56px; }
+.fv-text { flex: 1 1 auto; min-width: 0; font: 600 19px/1.2 var(--font, "Roboto Condensed", sans-serif); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.staffpage .fv-note .fv-go { flex: none; background: #9FD3F5; color: #00325F; border: 0; border-radius: 5px; min-height: 46px; padding: 8px 22px; font: 700 18px var(--font, "Roboto Condensed", sans-serif); box-shadow: none; }
+.staffpage .fv-note .fv-go[disabled] { opacity: .6; }
+.staffpage .fv-note .fv-photos { flex: none; background: transparent; color: #FFFFFF; border: 1px solid rgba(255, 255, 255, .55); border-radius: 5px; min-height: 46px; padding: 6px 12px; font: 500 15px var(--font, "Roboto Condensed", sans-serif); }
+.fv-x { flex: none; width: 40px; height: 46px; border: 0; background: transparent; color: rgba(255, 255, 255, .8); font: 400 26px/1 var(--font, sans-serif); cursor: pointer; border-radius: 5px; }
+.fv-x:focus-visible, .fv-note button:focus-visible, .fv-where select:focus-visible { outline: 3px solid #9FD3F5; outline-offset: 2px; }
+.fv-where { flex: none; display: flex; align-items: center; gap: 10px; font: 500 16px var(--font, "Roboto Condensed", sans-serif); }
+.fv-where select { min-height: 46px; min-width: 220px; border: 0; border-radius: 5px; padding: 6px 10px; font: 500 17px var(--font, "Roboto Condensed", sans-serif); background: #FFFFFF; color: #00325F; }
+.fv-where span { white-space: nowrap; }

@@ -1,0 +1,4 @@
+Roboto Condensed (RobotoCondensed-Regular.ttf, -Medium.ttf, -Bold.ttf)
+Copyright Google LLC. Licensed under the Apache License, Version 2.0.
+The full licence text: www.apache.org/licenses/LICENSE-2.0
+The files are copied from the Bellatrix Care Lab (fonts/), which took them from the Android platform fonts.

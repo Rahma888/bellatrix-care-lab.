@@ -1,0 +1,65 @@
+/* The import page (jeu.html) on the carer's phone or PC. Suavia identity (css/brand.css): white page, blue
+   #00519E top bar, Roboto Condensed, corners 5 px at most, no shadows, no cards, no pills. Phone first. */
+html { -webkit-text-size-adjust: 100%; }
+body.jeu { margin: 0; background: var(--bg, #FFFFFF); color: var(--ink); font: 400 17px/1.4 var(--font); }
+.jhead { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--brand, #00519E); color: #FFFFFF; }
+.jlogo { width: 26px; height: 26px; flex: none; }
+.jhead h1 { flex: 1; margin: 0; font-size: 19px; font-weight: 500; color: #FFFFFF; line-height: 1.2; }
+.jlang { display: flex; gap: 2px; }
+.jlang button { border: 0; background: transparent; color: #FFFFFF; opacity: .72; font: 700 14px var(--font); letter-spacing: .04em; padding: 10px 7px; border-radius: 5px; min-height: 40px; }
+.jlang button.on { opacity: 1; box-shadow: inset 0 -3px 0 var(--brand-light, #9FD3F5); }
+.jlang button:focus-visible { outline: 3px solid var(--brand-light, #9FD3F5); outline-offset: 1px; }
+
+.jmain { max-width: 560px; margin: 0 auto; padding: 10px 16px 40px; }
+.jstep { padding: 14px 0 18px; border-bottom: 1px solid var(--line); }
+.jstep.jlast { border-bottom: 0; padding-bottom: 6px; }
+.jstep h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px; font-size: 19px; font-weight: 500; color: var(--ink); }
+.jn { color: var(--brand, #00519E); font-weight: 700; font-size: 22px; min-width: 14px; }
+.jlast h2 { display: none; }
+
+.jfield { display: flex; flex-direction: column; gap: 5px; margin: 0 0 14px; font-size: 15px; color: var(--muted); }
+.jfield:last-child { margin-bottom: 0; }
+.jcode { padding: 14px 0 4px; }
+.jcode[hidden] { display: none; }
+.jeu input[type=text], .jeu input[type=url] { width: 100%; box-sizing: border-box; font: 400 18px/1.3 var(--font); color: var(--ink); background: var(--surface, #FFFFFF);
+  border: 2px solid var(--line); border-radius: 5px; padding: 12px; min-height: 50px; }
+.jeu input[type=text]:focus, .jeu input[type=url]:focus { outline: 0; border-color: var(--brand, #00519E); }
+#jCode { font-size: 24px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+
+.jor { margin: 10px 0; text-align: center; color: var(--muted); font-size: 15px; }
+.jfile { position: relative; display: flex; align-items: center; justify-content: center; min-height: 50px; padding: 10px 12px; box-sizing: border-box;
+  border: 2px dashed var(--line); border-radius: 5px; color: var(--brand, #00519E); font-weight: 500; text-align: center; overflow-wrap: anywhere; cursor: pointer; }
+.jfile.on { border-style: solid; border-color: var(--brand, #00519E); }
+.jfile input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.jfile:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.jlink { display: block; margin: 8px auto 0; border: 0; background: transparent; color: var(--brand, #00519E); font: 400 15px var(--font); text-decoration: underline; padding: 6px; }
+.jlink[hidden] { display: none; }
+
+.jseg { display: flex; gap: 8px; }
+.jseg label { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; border: 2px solid var(--line); border-radius: 5px; color: var(--ink); font-size: 16px; cursor: pointer; }
+.jseg label:has(input:checked) { border-color: var(--brand, #00519E); color: var(--brand, #00519E); font-weight: 700; }
+.jseg input { accent-color: var(--brand, #00519E); margin: 0; }
+
+.jgo { width: 100%; min-height: 56px; border: 0; border-radius: 5px; background: var(--brand, #00519E); color: #FFFFFF; font: 700 19px var(--font); letter-spacing: .01em; cursor: pointer; }
+.jgo:active { filter: brightness(.92); }
+.jgo:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.jerr { margin: 14px 0 0; color: var(--danger); font-size: 17px; line-height: 1.4; }
+.jerr[hidden] { display: none; }
+
+/* the progress: one line per step; done in blue with a check, the current one in bold */
+.jprog h2 { margin: 18px 0 14px; font-size: 22px; font-weight: 500; color: var(--brand, #00519E); overflow-wrap: anywhere; }
+.jsteps { list-style: none; margin: 0 0 18px; padding: 0; }
+.jsteps li { position: relative; padding: 11px 0 11px 34px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 18px; }
+.jsteps li::before { content: ""; position: absolute; left: 4px; top: 50%; width: 14px; height: 14px; margin-top: -8px; border: 2px solid var(--line); border-radius: 50%; }
+.jsteps li.done { color: var(--ink); }
+.jsteps li.done::before { width: 7px; height: 13px; margin-top: -10px; left: 8px; border: solid var(--brand, #00519E); border-width: 0 3px 3px 0; border-radius: 0; transform: rotate(45deg); }
+.jsteps li.now { color: var(--ink); font-weight: 700; }
+.jsteps li.now::after { content: "…"; }
+.jsteps li.now::before { border-color: var(--brand, #00519E); }
+.jsteps li.bad { color: var(--danger); font-weight: 700; }
+.jsteps li.bad::before { border-color: var(--danger); background: var(--danger); }
+.jdone[hidden], .jfail[hidden], .jprog[hidden], #jForm[hidden], .jwarn[hidden] { display: none; }
+.jok { margin: 0 0 8px; font-size: 21px; font-weight: 700; color: var(--ink); }
+.jnote { margin: 0 0 18px; font-size: 17px; color: var(--ink); }
+.jwarn { margin: 0 0 18px; padding-left: 12px; border-left: 3px solid var(--ochre, #8A6D1D); font-size: 16px; color: var(--ink); }
+.jfail .jerr { margin: 0 0 18px; }

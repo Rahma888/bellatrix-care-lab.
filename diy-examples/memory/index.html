@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="group" id="themes">
+      <button type="button" class="chip" data-theme="flowers" aria-pressed="true"><span class="ic"></span><span class="lbl" data-t="flowers">Blumen</span></button>
+      <button type="button" class="chip" data-theme="animals" aria-pressed="false"><span class="ic"></span><span class="lbl" data-t="animals">Tiere</span></button>
+      <button type="button" class="chip" data-theme="bavaria" aria-pressed="false"><span class="ic"></span><span class="lbl" data-t="bavaria">Bayern</span></button>
+    </div>
+    <div class="group" id="langs">
+      <button type="button" class="lang" data-lang="de" aria-pressed="true" lang="de">DE</button>
+      <button type="button" class="lang" data-lang="fr" aria-pressed="false" lang="fr">FR</button>
+      <button type="button" class="lang" data-lang="en" aria-pressed="false" lang="en">EN</button>
+    </div>
+  </div>
+  <p class="status" id="status" aria-live="polite"></p>
+  <div class="board" id="board">
+    <div class="deck" id="deck"></div>
+    <div class="end" id="end" hidden>
+      <h2 data-t="endTitle">Wunderbar!</h2>
+      <p data-t="endText">Alle Paare gefunden.</p>
+      <div class="endpics" id="endpics"></div>
+      <button type="button" class="again" id="again" data-t="again">Noch einmal</button>
+    </div>
+  </div>
+  <div class="bottom">
+    <button type="button" class="act" id="easier" data-t="easier">Leichter</button>
+    <button type="button" class="act primary" id="newgame" data-t="newGame">Neues Spiel</button>
+    <button type="button" class="act" id="harder" data-t="harder">Schwerer</button>
+  </div>
+</div>
+<script src="pictures.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

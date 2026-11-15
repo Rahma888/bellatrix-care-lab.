@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Library Admin</title>
+<link rel="stylesheet" href="/vendor/fonts/atkinson.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <p class="kick">LabLand</p>
+    <h1>Bellatrix Library · admin</h1>
+  </div>
+  <p class="demo">Demo on this PC: no login, only this computer can open it.</p>
+</header>
+<main>
+  <section class="stats" id="stats"></section>
+
+  <section class="card">
+    <h2>Requests from care homes</h2>
+    <div id="requests"></div>
+  </section>
+
+  <section class="card">
+    <h2>Care homes and their packs</h2>
+    <p class="note">Bellatrix Basics is included everywhere. A free trial lasts 30 days, once per pack and care home. Prices: on request.</p>
+    <div class="tablewrap"><table id="homes"></table></div>
+    <form id="addHome" class="row">
+      <label>New care home <input id="homeName" type="text" placeholder="Name of the care home" autocomplete="off"></label>
+      <button type="submit">Add and make a code</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Catalog and signatures</h2>
+    <p class="note">Every game is checked by LabLand before publication, then signed with LabLand's private key. A robot runs a pack only when the signature is LabLand's and the code is unchanged.</p>
+    <div id="catalog"></div>
+  </section>
+
+  <section class="card danger">
+    <h2>Security test</h2>
+    <label class="switch"><input type="checkbox" id="tamper"> <span>Serve a <b>modified</b> Board games pack, as an attacker would (one line added, not signed by LabLand)</span></label>
+    <p class="note">Then press “Download and install” in the Care Team Library: the robot must refuse it. Turn it off again after the test.</p>
+  </section>
+
+  <section class="card">
+    <h2>What happened</h2>
+    <ol id="log" class="log"></ol>
+    <div class="row"><button type="button" class="ghost" id="reset">Start the demo again</button>
+      <span class="note">Back to the demo care home only, with Memory, Movement and Music active. In the Care Team Library, press “Check for updates” afterwards.</span></div>
+  </section>
+</main>
+<script src="admin.js"></script>
+</body>
+</html>

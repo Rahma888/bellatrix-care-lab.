@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Bellatrix</title>
+<link rel="stylesheet" href="css/brand.css?v=1.16.0">
+<link rel="stylesheet" href="css/cuisine.css?v=1.16.0">
+</head>
+<!-- "Menu", the kitchen page (/cuisine, served by labland/meals.mjs) on a PC or a tablet of the kitchen: the menu of
+     a day (lunch and dinner, starter / main / dessert, 1 to 3 dishes each), the residents' orders, live: the
+     quantities for the cooks and the list per room for the trays, printable on A4, and the permanent menu card
+     ("Speisekarte": starters, main dishes, desserts, drinks, up to 6 each, always offered). Access: the care team's
+     6-character code, or #k=<token> when the robot head opens it. The code: js/cuisine.js, the texts:
+     js/i18n-cuisine.js (German by default, FR / EN on the switch). -->
+<body class="cui">
+<header class="chead">
+  <a class="cback" id="cBack" href="staff.html" hidden data-st="Back">Back</a>
+  <img class="clogo" src="img/suavia-cross-white.svg" alt="">
+  <h1 data-st="Kitchen">Kitchen</h1>
+  <nav class="cviews" id="cViews" hidden>
+    <button type="button" id="cViewMenu" data-view="menu" data-st="Menu plan">Menu plan</button>
+    <button type="button" id="cViewOrders" data-view="orders" data-st="Orders">Orders</button>
+    <button type="button" id="cViewCard" data-view="card" data-st="Menu card">Menu card</button>
+  </nav>
+  <div class="clang" id="cLang" role="group">
+    <button type="button" id="cLangFr" data-ui-lang="fr" lang="fr">FR</button>
+    <button type="button" id="cLangEn" data-ui-lang="en" lang="en">EN</button>
+    <button type="button" id="cLangDe" data-ui-lang="de" lang="de">DE</button>
+  </div>
+</header>
+
+<main class="cmain">
+  <p class="cwait" id="cWait" data-st="One moment…">One moment…</p>
+
+  <section class="clogin" id="cLoginBox" hidden>
+    <form id="cLoginForm" novalidate>
+      <label class="cfield" for="cCode"><span data-st="Code of the care team">Code of the care team</span></label>
+      <div class="crow">
+        <input id="cCode" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button type="submit" class="cbtn cprimary" id="cLogin" data-st="Open">Open</button>
+      </div>
+      <p class="chint" data-st="The 6-character code shown on the robot, the same as for adding a game.">The 6-character code shown on the robot, the same as for adding a game.</p>
+      <p class="cerr" id="cLoginErr" role="alert" hidden></p>
+    </form>
+  </section>
+
+  <section class="coffline" id="cOffline" hidden>
+    <p class="cerr" data-st="The server does not answer.">The server does not answer.</p>
+    <button type="button" class="cbtn" id="cRetry" data-st="Try again">Try again</button>
+  </section>
+
+  <div class="capp" id="cApp" hidden>
+    <div class="cday" id="cDayBar">
+      <div class="cdaynav">
+        <button type="button" class="cbtn csq" id="cPrev">&lsaquo;</button>
+        <input type="date" id="cDate" required>
+        <button type="button" class="cbtn csq" id="cNext">&rsaquo;</button>
+        <button type="button" class="cbtn" id="cToday" data-st="Today">Today</button>
+        <button type="button" class="cbtn" id="cTomorrow" data-st="Tomorrow">Tomorrow</button>
+      </div>
+      <div class="cdaytext">
+        <span class="cdaylabel" id="cDayLabel"></span>
+        <span class="crel" id="cRel" hidden></span>
+      </div>
+      <span class="cstate" id="cState"></span>
+    </div>
+    <p class="cnotice" id="cClosed" role="status" hidden></p>
+    <p class="cerr cnetline" id="cNet" role="alert" hidden></p>
+
+    <section class="cview" id="cMenu">
+      <div class="ctools">
+        <span class="ctday" hidden></span>
+        <label class="cdead"><span data-st="Order deadline">Order deadline</span><input type="datetime-local" id="cDeadline"></label>
+        <div class="ccopy">
+          <select id="cCopyFrom"></select>
+          <button type="button" class="cbtn" id="cCopy" data-st="Copy">Copy</button>
+        </div>
+        <button type="button" class="cbtn cquiet" id="cClear" data-st="Empty the day">Empty the day</button>
+        <span class="cgrow"></span>
+        <span class="csavestate" id="cSaveState" role="status"></span>
+        <button type="button" class="cbtn cprimary" id="cSave" data-st="Save">Save</button>
+      </div>
+      <p class="cnote" id="cMenuNote" hidden></p>
+      <div class="ceditor" id="cEditor"></div>
+    </section>
+
+    <section class="cview" id="cOrders" hidden>
+      <div class="ctools">
+        <span class="ctday" hidden></span>
+        <div class="ccounts" id="cCounts"></div>
+        <span class="cgrow"></span>
+        <span class="cupdated" id="cUpdated"></span>
+        <button type="button" class="cbtn cprimary" id="cPrint" data-st="Print">Print</button>
+      </div>
+      <div class="cprinthead" id="cPrintHead"></div>
+      <h2 class="csec" id="cTotalsTitle" data-st="Quantities">Quantities</h2>
+      <div class="ctotals" id="cTotals"></div>
+      <h2 class="csec csec-rooms" id="cRoomsTitle" data-st="Trays by room">Trays by room</h2>
+      <div class="crooms" id="cRooms"></div>
+    </section>
+
+    <section class="cview" id="cCard" hidden>
+      <div class="ctools">
+        <fieldset class="cfor" id="cCardMeals">
+          <legend data-st="Offered for">Offered for</legend>
+          <label class="ctag"><input type="checkbox" id="cCardLunch" data-meal="lunch"><span data-st="Lunch">Lunch</span></label>
+          <label class="ctag"><input type="checkbox" id="cCardDinner" data-meal="dinner"><span data-st="Dinner">Dinner</span></label>
+        </fieldset>
+        <label class="cdead"><span data-st="Orders close the day before at">Orders close the day before at</span><input type="time" id="cCardUntil" step="900"></label>
+        <span class="cgrow"></span>
+        <span class="csavestate" id="cCardState" role="status"></span>
+        <button type="button" class="cbtn cquiet" id="cCardReset" data-st="Restore the default card">Restore the default card</button>
+        <button type="button" class="cbtn cprimary" id="cCardSave" data-st="Save">Save</button>
+      </div>
+      <p class="cnote" id="cCardNote" data-st="The menu card is always there: on a day without a menu plan the residents choose from it; with a menu plan it is offered next to today’s special.">The menu card is always there: on a day without a menu plan the residents choose from it; with a menu plan it is offered next to today’s special.</p>
+      <div class="ceditor ccardeditor" id="cCardEditor"></div>
+    </section>
+  </div>
+</main>
+
+<script src="js/i18n.js?v=1.16.0"></script>
+<script src="js/i18n-cuisine.js?v=1.16.0"></script>
+<script src="js/cuisine.js?v=1.16.0"></script>
+</body>
+</html>

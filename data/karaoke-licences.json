@@ -1,0 +1,799 @@
+{
+  "register": "Bellatrix free group karaoke: licence register",
+  "version": "1.2.0",
+  "updated": "2026-11-11",
+  "rule": "A song is shown in the app only when its row is complete: every field below filled in, audioSource \"generated\", verifiedOn a date, and text and melody free (author dead for at least 70 full years, or for an anonymous work first published at least 70 full years ago). See KaraokeSongs.complete() in js/karaoke-songs.js. The rows are research by Claude and must be confirmed by LabLand before any commercial use.",
+  "fields": {
+    "textAuthorDeathYear": "year, or \"anonymous\" together with textFirstPublished (year)",
+    "composerDeathYear": "year, or \"anonymous\" together with melodyFirstPublished (year)",
+    "audioSource": "\"generated\": synthesised on the robot from the notes in js/karaoke-songs.js; no recording",
+    "verifiedBy": "who checked the row"
+  },
+  "songs": [
+    {
+      "id": "fr-clair-lune",
+      "title": "Au clair de la lune",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional, 18th century)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1843,
+      "composer": "Anonymous (traditional; the old attribution to Lully is not supported)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1843,
+      "textSource": "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Au_clair_de_la_lune",
+      "textVersion": "Verses 1 and 2 as in Weckerlin, Chansons et rondes enfantines (Garnier, 1870), pp. 48-49 (scan on Wikisource); melody as in the same edition, transposed from G to C.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Au_clair_de_la_lune",
+        "https://fr.wikisource.org/wiki/Au_clair_de_la_lune_(chanson)",
+        "https://fr.wikipedia.org/wiki/Au_clair_de_la_lune"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "French Wikipedia: earliest known printing of the text 1843 (Th. M. Dumersan). Weckerlin notes the first half of the tune as early as 1576 (Chardavoine). Author and composer unknown."
+    },
+    {
+      "id": "fr-frere-jacques",
+      "title": "Frère Jacques",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1811,
+      "composer": "Anonymous (disputed attribution to Jean-Philippe Rameau, died 1764)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1811,
+      "textSource": "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Fr%C3%A8re_Jacques",
+      "textVersion": "Weckerlin 1870 (p. 103): one verse, sung three times in unison (the source is a two-voice round; its short coda is left out). Wording of the source, including \"Dig’, din, don\".",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Fr%C3%A8re_Jacques",
+        "https://fr.wikipedia.org/wiki/Fr%C3%A8re_Jacques_(chanson)"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "First printed 1811 in the Recueil de Capelle (French Wikipedia); a manuscript of about 1772 attributes it to Rameau. Free either way."
+    },
+    {
+      "id": "fr-pont-avignon",
+      "title": "Sur le pont d’Avignon",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1870,
+      "composer": "Anonymous (traditional)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1870,
+      "textSource": "https://fr.wikisource.org/wiki/Sur_le_pont_d%E2%80%99Avignon_(Weckerlin_1870)",
+      "textVersion": "Refrain and first couplet (\"Les messieurs… les dames…\") as in Weckerlin 1870 (p. 34); couplets 2 and 3 use the variants listed on the same page (abbés, soldats, buveurs, gamins).",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Sur_le_pont_d%E2%80%99Avignon_(Weckerlin_1870)",
+        "https://fr.wikipedia.org/wiki/Sur_le_pont_d%27Avignon"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Anonymous, possibly 15th century; made popular in 1853 by Adolphe Adam (Le Sourd ou l’Auberge pleine). 1870 is the edition checked here."
+    },
+    {
+      "id": "fr-planter-choux",
+      "title": "Savez-vous planter les choux ?",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1870,
+      "composer": "Anonymous (traditional)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1870,
+      "textSource": "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Savez-vous_planter_les_choux",
+      "textVersion": "Weckerlin 1870 (p. 108): the first stanza sung as a refrain between the couplets main, pied, coud’ (source order). Melody transposed from F to C.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Savez-vous_planter_les_choux"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Traditional game song; 1870 is the earliest edition checked here."
+    },
+    {
+      "id": "fr-cadet-rousselle",
+      "title": "Cadet Rousselle",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous in the source (French Wikipedia credits Gaspard de Chenu, 1792; his death year was not found)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1870,
+      "composer": "Anonymous (traditional tune)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1870,
+      "textSource": "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Cadet_Rousselle",
+      "textVersion": "Weckerlin 1870 (pp. 90-94): couplets \"trois maisons\", \"trois habits\", \"trois gros chiens\", with the refrain \"Ah ! ah ! ah ! mais vraiment\". Melody transposed from B-flat to G.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Chansons_et_rondes_enfantines/Cadet_Rousselle",
+        "https://fr.wikipedia.org/wiki/Cadet_Rousselle_(chanson)"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Written 1792 (French Wikipedia). With the attribution too, the text is long free: Chenu was a notable of Auxerre born in 1717 (Wikipedia footnote). To confirm: his death year."
+    },
+    {
+      "id": "fr-claire-fontaine",
+      "title": "À la claire fontaine",
+      "language": "fr",
+      "category": "popular",
+      "textAuthor": "Anonymous (traditional, 15th to 18th century)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1848,
+      "composer": "Anonymous (traditional)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1880,
+      "textSource": "https://fr.wikisource.org/wiki/%C3%80_la_claire_fontaine",
+      "textVersion": "Verses 1-4 as in Jameson & Heacox, Chants de France (1922), p. 121, refrain after each; the refrain is written \"Il y a longtemps\" (source: \"Lui ya\", which its own footnote explains as \"il y a\"). Melody as in Gagnon, Chansons populaires du Canada (1880 ed.), the same tune as in Jameson & Heacox.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/%C3%80_la_claire_fontaine",
+        "https://fr.wikisource.org/wiki/Chansons_populaires_du_Canada,_1880/p001",
+        "https://fr.wikipedia.org/wiki/%C3%80_la_claire_fontaine"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "French Wikipedia: earliest cited printing of the text 1848 (Huston, Répertoire national). Gagnon’s first edition is 1865; the 1880 edition is the one checked."
+    },
+    {
+      "id": "fr-pres-de-ma-blonde",
+      "title": "Auprès de ma blonde",
+      "language": "fr",
+      "category": "popular",
+      "textAuthor": "Anonymous (traditional, 1704; presumed author André Joubert du Collet, death year not found)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1883,
+      "composer": "Anonymous (traditional)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1883,
+      "textSource": "https://fr.wikisource.org/wiki/Aupr%C3%A8s_de_ma_blonde",
+      "textVersion": "Rolland, Recueil de chansons populaires, t. 1 (1883), pp. 240-241 (Loiret version, with its score): verses 1-3, refrain after each. Spelling \"rafraîchir\" and \"dormir\" (source: \"rafraichir\", \"dormi\").",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Aupr%C3%A8s_de_ma_blonde",
+        "https://fr.wikipedia.org/wiki/Aupr%C3%A8s_de_ma_blonde"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Written 1704 (\"Le Prisonnier de Hollande\"), sung by soldiers by 1712 (French Wikipedia). 1883 is the edition checked here."
+    },
+    {
+      "id": "fr-divin-enfant",
+      "title": "Il est né, le divin Enfant",
+      "language": "fr",
+      "category": "christmas",
+      "textAuthor": "Anonymous (traditional carol)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1818,
+      "composer": "Anonymous (old hunting tune \"La Tête bizarde\")",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1819,
+      "textSource": "https://fr.wikisource.org/wiki/Il_est_n%C3%A9_le_divin_enfant",
+      "textVersion": "Rossat, Chansons populaires recueillies dans la Suisse romande, t. 2 (1917), p. 162, with its score: refrain (\"sonnez, musettes\") and verses 1-3. \"attendions\" sung in four syllables (at-ten-di-ons), as the score requires.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Il_est_n%C3%A9_le_divin_enfant",
+        "https://fr.wikipedia.org/wiki/Il_est_n%C3%A9_le_divin_enfant"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Text printed 1818 (Montpellier, Nouveau recueil de cantiques spirituels), tune 1819 (Sellier, Amiens), per French Wikipedia."
+    },
+    {
+      "id": "de-alle-voegel",
+      "title": "Alle Vögel sind schon da",
+      "language": "de",
+      "category": "children",
+      "textAuthor": "August Heinrich Hoffmann von Fallersleben (1798–1874)",
+      "textAuthorDeathYear": 1874,
+      "textFirstPublished": 1837,
+      "composer": "Traditional folk tune (anonymous; 18th-century farewell song “Nun so reis ich weg von hier”)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1844,
+      "textSource": "https://de.wikisource.org/wiki/Fr%C3%BChlings_Ankunft",
+      "textVersion": "All three stanzas of Hoffmann von Fallersleben’s poem (written 1835, printed in his Gedichte 1837), modern spelling (Musiziern, Tiriliern, einmarschiern as usually sung).",
+      "sources": [
+        "https://de.wikisource.org/wiki/Fr%C3%BChlings_Ankunft",
+        "https://de.wikipedia.org/wiki/Alle_V%C3%B6gel_sind_schon_da",
+        "https://de.wikisource.org/wiki/August_Heinrich_Hoffmann_von_Fallersleben",
+        "https://de.wikibooks.org/wiki/Liederbuch/_Alle_V%C3%B6gel_sind_schon_da"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Tune first printed with this text in the Liederbuch des Rauhen Hauses, Hamburg 1844. Melody checked against the Wikibooks songbook (notes only; our chords)."
+    },
+    {
+      "id": "de-haenschen-klein",
+      "title": "Hänschen klein",
+      "language": "de",
+      "category": "children",
+      "textAuthor": "Franz Wiedemann (1821–1882)",
+      "textAuthorDeathYear": 1882,
+      "textFirstPublished": 1860,
+      "composer": "Traditional folk tune (anonymous; tune of the hunting song “Jägerlust”)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1807,
+      "textSource": "https://de.wikipedia.org/wiki/H%C3%A4nschen_klein",
+      "textVersion": "Wiedemann’s three stanzas (1860, “Alte Lieder, neue Worte” in Samenkörner für Kinderherzen) in the usual school wording; modern spelling.",
+      "sources": [
+        "https://de.wikipedia.org/wiki/H%C3%A4nschen_klein",
+        "https://de.wikibooks.org/wiki/Liederbuch/_H%C3%A4nschen_klein"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Tune printed 1807 in Büsching/von der Hagen, Sammlung deutscher Volkslieder (with “Jägerlust”). Not the modern parody verses. Small wording variants exist in verse 3 (“ruft sie schon” / “spricht sie schon”); to be checked against a scan by LabLand."
+    },
+    {
+      "id": "de-mond-aufgegangen",
+      "title": "Der Mond ist aufgegangen",
+      "language": "de",
+      "category": "popular",
+      "textAuthor": "Matthias Claudius (1740–1815)",
+      "textAuthorDeathYear": 1815,
+      "textFirstPublished": 1779,
+      "composer": "Johann Abraham Peter Schulz (1747–1800)",
+      "composerDeathYear": 1800,
+      "melodyFirstPublished": 1790,
+      "textSource": "https://de.wikisource.org/wiki/Abendlied_(Matthias_Claudius)",
+      "textVersion": "Stanzas 1, 2 and 3 of Claudius’s “Abendlied” (Musen-Almanach für 1779), modern spelling.",
+      "sources": [
+        "https://de.wikisource.org/wiki/Abendlied_(Matthias_Claudius)",
+        "https://de.wikipedia.org/wiki/Abendlied_(Matthias_Claudius)",
+        "https://de.wikipedia.org/wiki/Johann_Abraham_Peter_Schulz",
+        "https://wiki.jurtenland.eu/wiki/Der_Mond_ist_aufgegangen"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Melody by Schulz, Lieder im Volkston (1790); transposed to E flat for older voices. Not the gender-neutral 2017 rewording."
+    },
+    {
+      "id": "de-gedanken-frei",
+      "title": "Die Gedanken sind frei",
+      "language": "de",
+      "category": "popular",
+      "textAuthor": "Traditional (anonymous broadsheets c. 1780–1800; version printed by Hoffmann von Fallersleben and Richter, 1842)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1842,
+      "composer": "Traditional (anonymous, c. 1810–1820)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1842,
+      "textSource": "https://de.wikisource.org/wiki/Die_Gedanken_sind_frei",
+      "textVersion": "Stanzas “Die Gedanken sind frei”, “Ich denke, was ich will” and “Und sperrt man mich ein” of the 1842 version (Schlesische Volkslieder mit Melodien, Leipzig: Breitkopf & Härtel), modern spelling.",
+      "sources": [
+        "https://de.wikisource.org/wiki/Die_Gedanken_sind_frei",
+        "https://de.wikipedia.org/wiki/Die_Gedanken_sind_frei",
+        "https://de.wikibooks.org/wiki/Liederbuch/_Die_Gedanken_sind_frei"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Text and tune first printed together in 1842 (the tune earlier in Lieder der Brienzer Mädchen, Bern). Transposed to B flat. Hoffmann von Fallersleben (died 1874) edited the 1842 version, so it is free either way."
+    },
+    {
+      "id": "de-o-tannenbaum",
+      "title": "O Tannenbaum",
+      "language": "de",
+      "category": "christmas",
+      "textAuthor": "Ernst Anschütz (1780–1861); first lines after August Zarnack (1777–1827)",
+      "textAuthorDeathYear": 1861,
+      "textFirstPublished": 1824,
+      "composer": "Traditional folk tune (anonymous; the “Lauriger Horatius” form)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1799,
+      "textSource": "https://de.wikipedia.org/wiki/O_Tannenbaum",
+      "textVersion": "Anschütz’s three-stanza Christmas text (Musikalisches Schulgesangbuch, Leipzig 1824), modern spelling; stanza 3 “gibt Trost und Kraft” as in Anschütz (often sung “Mut und Kraft”).",
+      "sources": [
+        "https://de.wikipedia.org/wiki/O_Tannenbaum",
+        "https://de.wikisource.org/wiki/Ernst_Ansch%C3%BCtz",
+        "https://de.wikisource.org/wiki/Volkslieder",
+        "https://wiki.jurtenland.eu/wiki/O_Tannenbaum"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "The tune is first printed in the Mildheimisches Liederbuch (1799); sung today in the “Lauriger Horatius” form. Transposed to E flat. Zarnack’s 1819 love-song stanzas are not used."
+    },
+    {
+      "id": "de-stille-nacht",
+      "title": "Stille Nacht, heilige Nacht",
+      "language": "de",
+      "category": "christmas",
+      "textAuthor": "Joseph Mohr (1792–1848)",
+      "textAuthorDeathYear": 1848,
+      "textFirstPublished": 1833,
+      "composer": "Franz Xaver Gruber (1787–1863)",
+      "composerDeathYear": 1863,
+      "melodyFirstPublished": 1833,
+      "textSource": "https://de.wikisource.org/wiki/Stille_Nacht!_Heilige_Nacht!",
+      "textVersion": "Mohr’s stanzas 1, 6 and 2 (order of the 1833 Dresden print) in the usual sung wording (“Christ” for “Jesus”, “von fern und nah”).",
+      "sources": [
+        "https://de.wikisource.org/wiki/Stille_Nacht!_Heilige_Nacht!",
+        "https://de.wikisource.org/wiki/Joseph_Mohr",
+        "https://de.wikipedia.org/wiki/Stille_Nacht,_heilige_Nacht"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Written 1816, set to music 1818, first printed 1833 (A. R. Friese, Dresden). Melody in the usual hymnal form, transposed to A, counted in eighths (6/8)."
+    },
+    {
+      "id": "de-aennchen-tharau",
+      "title": "Ännchen von Tharau",
+      "language": "de",
+      "category": "popular",
+      "textAuthor": "Simon Dach (1605–1659), High German version by Johann Gottfried Herder (1744–1803)",
+      "textAuthorDeathYear": 1803,
+      "textFirstPublished": 1778,
+      "composer": "Friedrich Silcher (1789–1860)",
+      "composerDeathYear": 1860,
+      "melodyFirstPublished": 1827,
+      "textSource": "https://de.wikisource.org/wiki/%C3%84nnchen_von_Tharau",
+      "textVersion": "Herder’s first two stanzas (Volkslieder, 1778), each with its closing couplet, modern spelling; Herder’s archaic rhymes “schlahn / stahn” kept.",
+      "sources": [
+        "https://de.wikisource.org/wiki/%C3%84nnchen_von_Tharau",
+        "https://de.wikisource.org/wiki/Aennchen_von_Tharau_und_Simon_Dach",
+        "https://de.wikipedia.org/wiki/%C3%84nnchen_von_Tharau",
+        "https://de.wikipedia.org/wiki/Friedrich_Silcher",
+        "https://de.wikibooks.org/wiki/Liederbuch/_Anke_van_Tharaw"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Silcher’s melody (1827; the Kommersbuch says 1825), not Heinrich Albert’s 1642 setting. Closing couplet sung to the second half of the tune. Transposed to G."
+    },
+    {
+      "id": "en-amazing-grace",
+      "title": "Amazing Grace",
+      "language": "en",
+      "category": "popular",
+      "textAuthor": "John Newton",
+      "textAuthorDeathYear": 1807,
+      "textFirstPublished": 1779,
+      "composer": "Traditional American tune NEW BRITAIN (anonymous)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1829,
+      "textSource": "https://hymnary.org/text/amazing_grace_how_sweet_the_sound",
+      "textVersion": "Newton's stanzas 1–3 (Olney Hymns, 1779, Book I no. 41) in modern spelling. The later stanza 'When we've been there ten thousand years' (not by Newton) is not used.",
+      "sources": [
+        "https://hymnary.org/text/amazing_grace_how_sweet_the_sound",
+        "https://people.bethel.edu/~rhomar/TunePages/NewBritain.html",
+        "https://en.wikipedia.org/wiki/Amazing_Grace"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Newton 1725–1807. Tune NEW BRITAIN first printed in Columbian Harmony (Cincinnati, 1829), joined to this text in Southern Harmony (1835); composer unknown. Melody transposed to F."
+    },
+    {
+      "id": "en-silent-night",
+      "title": "Silent Night",
+      "language": "en",
+      "category": "christmas",
+      "textAuthor": "Joseph Mohr (German text 1818), English translation by John Freeman Young",
+      "textAuthorDeathYear": 1885,
+      "textFirstPublished": 1863,
+      "composer": "Franz Xaver Gruber",
+      "composerDeathYear": 1863,
+      "textSource": "https://hymnary.org/text/silent_night_holy_night_all_is_calm_all",
+      "textVersion": "John Freeman Young's translation (1859, first printed 1863): his three stanzas 'Silent night… Round yon Virgin', '…Shepherds quake at the sight', '…Son of God, love's pure light'. No modern revision (e.g. the 1984 revision) is used.",
+      "sources": [
+        "https://hymnary.org/text/silent_night_holy_night_all_is_calm_all",
+        "https://hymnary.org/person/Young_JF",
+        "https://en.wikipedia.org/wiki/Silent_Night"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Mohr 1792–1848, Young 1820–1885, Gruber 1787–1863. Death year given is the later of text author and translator. Melody transposed to A."
+    },
+    {
+      "id": "en-jingle-bells",
+      "title": "Jingle Bells",
+      "language": "en",
+      "category": "christmas",
+      "textAuthor": "James Lord Pierpont",
+      "textAuthorDeathYear": 1893,
+      "textFirstPublished": 1857,
+      "composer": "James Lord Pierpont",
+      "composerDeathYear": 1893,
+      "melodyFirstPublished": 1857,
+      "textSource": "https://imslp.org/wiki/The_One_Horse_Open_Sleigh_(Pierpont,_James)",
+      "textVersion": "Verse 1 and chorus (chorus sung twice) in the wording and tune commonly sung today. Pierpont's 1857 print ('The One Horse Open Sleigh', Oliver Ditson, Boston) differs slightly (e.g. 'o'er the hills', 'what joy it is to ride'); these small changes are anonymous folk variants of unknown date. The modern interjection 'hey!' is not sung (instrumental rest).",
+      "sources": [
+        "https://imslp.org/wiki/The_One_Horse_Open_Sleigh_(Pierpont,_James)",
+        "https://themorgan.org/music-manuscripts-and-printed-music/310171",
+        "https://en.wikipedia.org/wiki/Jingle_Bells"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Pierpont 1822–1893; copyrighted 16 Sept 1857. If LabLand prefers the exact 1857 words, the three changed words can be swapped back. Melody in F."
+    },
+    {
+      "id": "en-auld-lang-syne",
+      "title": "Auld Lang Syne",
+      "language": "en",
+      "category": "popular",
+      "textAuthor": "Robert Burns",
+      "textAuthorDeathYear": 1796,
+      "textFirstPublished": 1796,
+      "composer": "Traditional Scottish melody (anonymous)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1799,
+      "textSource": "https://en.wikisource.org/wiki/Burns%27_Popular_Songs/Auld_Lang_Syne",
+      "textVersion": "Stanza 1 and chorus as in the Wikisource 'Burns' Popular Songs' text ('days o' lang syne', 'my dear'), plus Burns's stanza 'And there's a hand, my trusty fiere'. Chorus after each stanza. Scots spelling kept.",
+      "sources": [
+        "https://en.wikisource.org/wiki/Burns%27_Popular_Songs/Auld_Lang_Syne",
+        "https://en.wikipedia.org/wiki/Auld_Lang_Syne",
+        "https://abcnotation.com/tunePage?a=pghardy.net/tunebooks/pgh_songs_tunebook/0001"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Burns 1759–1796 (sent the song to the Scots Musical Museum in 1788). The tune sung today was first printed in George Thomson's Select Songs of Scotland (1799). Melody in D."
+    },
+    {
+      "id": "en-home-on-the-range",
+      "title": "Home on the Range",
+      "language": "en",
+      "category": "popular",
+      "textAuthor": "Brewster M. Higley (poem 'My Western Home'); words as collected by John A. Lomax",
+      "textAuthorDeathYear": 1911,
+      "textFirstPublished": 1873,
+      "composer": "Daniel E. Kelley",
+      "composerDeathYear": 1905,
+      "textSource": "https://www.gutenberg.org/files/21300/21300-h/21300-h.htm",
+      "textVersion": "The version printed in John A. Lomax, Cowboy Songs and Other Frontier Ballads (1910): stanza 'Oh, give me a home…', refrain 'Home, home on the range…', stanza 'How often at night…', refrain.",
+      "sources": [
+        "https://www.gutenberg.org/files/21300/21300-h/21300-h.htm",
+        "https://en.wikipedia.org/wiki/Home_on_the_Range",
+        "https://en.wikipedia.org/wiki/Daniel_E._Kelley",
+        "https://www.kansashistory.gov/kansapedia/brewster-higley/18138",
+        "https://abcnotation.com/tunePage?a=trillian.mit.edu/~jc/music/abc/mirror/musicaviva.com/tunes/usa/home-on-the-range/0000"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Higley 1823–1911 (Kansas Historical Society gives 1909; the later year is kept). Kelley 1843–1905. Lomax (collector) died 1948, also more than 70 years ago. Poem first printed in the Smith County Pioneer, 1873 or 1874. Melody in G."
+    },
+    {
+      "id": "en-swing-low",
+      "title": "Swing Low, Sweet Chariot",
+      "language": "en",
+      "category": "popular",
+      "textAuthor": "Traditional African-American spiritual (attributed to Wallace Willis, Choctaw freedman; death year not documented)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1873,
+      "composer": "Traditional spiritual (anonymous; attributed to Wallace Willis)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1873,
+      "textSource": "https://hymnary.org/text/i_looked_over_jordan_and_what_did_i_see",
+      "textVersion": "Refrain 'Swing low, sweet chariot', stanzas 'I looked over Jordan…' and 'If you get there before I do…', as printed for the Fisk Jubilee Singers (The Jubilee Singers, 1873; J. B. T. Marsh, The Story of the Jubilee Singers, 1876); standard spelling except 'comin'' as in every old print.",
+      "sources": [
+        "https://hymnary.org/text/i_looked_over_jordan_and_what_did_i_see",
+        "https://en.wikipedia.org/wiki/Swing_Low,_Sweet_Chariot",
+        "https://abcnotation.com/tunePage?a=sniff.numachi.com/~rickheit/dtrad/abc_dtrad.tar.gz/abc_dtrad/SWINGLOW/0000"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Treated as anonymous (no documented author death year); first printed 1873. Melody in E."
+    },
+    {
+      "id": "en-coming-round-the-mountain",
+      "title": "She’ll Be Coming Round the Mountain",
+      "language": "en",
+      "category": "children",
+      "textAuthor": "Traditional American (anonymous)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1927,
+      "composer": "Traditional (anonymous; tune of the spiritual 'When the Chariot Comes')",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1899,
+      "textSource": "https://archive.org/details/americansongbag00sandb",
+      "textVersion": "Stanzas 1–3 as in Carl Sandburg, The American Songbag (1927), pp. 372–73 (coming round the mountain / driving six white horses / we'll all go to meet her), with 'Oh' added before stanza 3 lines and modern spelling ('coming' for 'comin'').",
+      "sources": [
+        "https://rpo.library.utoronto.ca/poems/shell-be-comin-round-mountain",
+        "https://en.wikipedia.org/wiki/She%27ll_Be_Coming_%27Round_the_Mountain",
+        "https://abcnotation.com/tunePage?a=sniff.numachi.com/~rickheit/dtrad/abc_dtrad.tar.gz/abc_dtrad/COMRND2/0000"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Anonymous folk song; first printed 1927 (Sandburg), so free in the EU (anonymous + 70 years) and in the US (published 1927, public domain since 2023). Tune printed 1899 in Old Plantation Hymns. Modern children's-book verses (e.g. Fox 1985) are not used. Melody in G."
+    },
+    {
+      "id": "en-twinkle",
+      "title": "Twinkle, Twinkle, Little Star",
+      "language": "en",
+      "category": "children",
+      "textAuthor": "Jane Taylor (poem 'The Star', Rhymes for the Nursery, with her sister Ann Taylor)",
+      "textAuthorDeathYear": 1866,
+      "textFirstPublished": 1806,
+      "composer": "French melody 'Ah ! vous dirai-je, maman' (anonymous)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1761,
+      "textSource": "https://en.wikisource.org/wiki/Rhymes_for_the_Nursery/The_Star",
+      "textVersion": "Stanzas 1–2 of 'The Star' (1806); as usually sung, the first two lines come back at the end of each stanza.",
+      "sources": [
+        "https://en.wikisource.org/wiki/Rhymes_for_the_Nursery/The_Star",
+        "https://en.wikipedia.org/wiki/Twinkle,_Twinkle,_Little_Star"
+      ],
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-09",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)",
+      "notes": "Not in the A4 list, added as an English nursery song. Jane Taylor 1783–1824; the collection is credited to Jane and Ann Taylor, so Ann's death year (1866) is kept. Tune first printed 1761; poem and tune printed together in 1838. Melody in D."
+    },
+    {
+      "id": "fr-vous-dirai-je",
+      "title": "Ah ! vous dirai-je, maman",
+      "language": "fr",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional, 18th century)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1774,
+      "composer": "Anonymous (traditional French tune, “La Confidence naïve”, 18th century)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1774,
+      "textSource": "https://fr.wikisource.org/wiki/Ah_!_vous_dirai-je,_maman",
+      "textVersion": "First stanza of the traditional children’s text (“Papa veut que je raisonne…”), sung twice; melody in C.",
+      "sources": [
+        "https://fr.wikipedia.org/wiki/Ah_!_vous_dirai-je,_maman",
+        "https://fr.wikisource.org/wiki/Ah_!_vous_dirai-je,_maman"
+      ],
+      "notes": "Anonymous text and tune, printed in the 18th century (the tune is attested from about 1761). Same tune as Twinkle, Twinkle. The exact year of the first print was not re-checked; any print before 1955 gives the same result.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "fr-mon-beau-sapin",
+      "title": "Mon beau sapin",
+      "language": "fr",
+      "category": "christmas",
+      "textAuthor": "Anonymous (traditional French adaptation of “O Tannenbaum”; the German text is by Ernst Anschütz, 1824, died 1861)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1900,
+      "composer": "Anonymous (traditional German tune, 16th century; “Ach Tannenbaum”)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1799,
+      "textSource": "https://fr.wikipedia.org/wiki/Mon_beau_sapin",
+      "textVersion": "First stanza of the traditional French text (“Mon beau sapin, roi des forêts…”), in the key of the German O Tannenbaum already in this app.",
+      "sources": [
+        "https://fr.wikipedia.org/wiki/Mon_beau_sapin",
+        "https://de.wikipedia.org/wiki/O_Tannenbaum"
+      ],
+      "notes": "DOUBTFUL point: the author and the first print of the French words were not found; the text is treated as anonymous and “first published not later than 1900” (it is in French school songbooks of the 19th century). Please confirm. The melody is the old German folk tune.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "de-alle-entchen",
+      "title": "Alle meine Entchen",
+      "language": "de",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional children’s song)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1900,
+      "composer": "Anonymous (traditional folk tune)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1900,
+      "textSource": "https://de.wikisource.org/wiki/Alle_meine_Entchen",
+      "textVersion": "Stanza 1 (Entchen), stanza 2 (Hühner) and stanza 1 again; traditional wording as usually sung.",
+      "sources": [
+        "https://de.wikipedia.org/wiki/Alle_meine_Entchen",
+        "https://de.wikisource.org/wiki/Alle_meine_Entchen"
+      ],
+      "notes": "DOUBTFUL point: text and tune are anonymous; the earliest print was not re-checked here (the song is in German songbooks of the 19th century). Registered as “first published not later than 1900”. Please confirm.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "de-weihnachtsmann",
+      "title": "Morgen kommt der Weihnachtsmann",
+      "language": "de",
+      "category": "christmas",
+      "textAuthor": "August Heinrich Hoffmann von Fallersleben (1798–1874)",
+      "textAuthorDeathYear": 1874,
+      "textFirstPublished": 1835,
+      "composer": "Anonymous (traditional French tune “Ah ! vous dirai-je, maman”, 18th century)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1774,
+      "textSource": "https://de.wikisource.org/wiki/Morgen_kommt_der_Weihnachtsmann",
+      "textVersion": "Stanza 1 of Hoffmann von Fallersleben’s poem (1835), sung twice; the tune is the one of Ah ! vous dirai-je, maman.",
+      "sources": [
+        "https://de.wikisource.org/wiki/Morgen_kommt_der_Weihnachtsmann",
+        "https://de.wikipedia.org/wiki/Morgen_kommt_der_Weihnachtsmann"
+      ],
+      "notes": "Text 1835, Hoffmann died 1874. Only stanza 1 is used (the other stanzas were not checked against a source).",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "en-row-your-boat",
+      "title": "Row, Row, Row Your Boat",
+      "language": "en",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional nursery rhyme; first printed 1852)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1852,
+      "composer": "Anonymous (traditional; first printed 1852)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1852,
+      "textSource": "https://en.wikipedia.org/wiki/Row,_Row,_Row_Your_Boat",
+      "textVersion": "The one traditional stanza, sung three times.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Row,_Row,_Row_Your_Boat"
+      ],
+      "notes": "Wikipedia: earliest printing 1852 (Eliphalet Oram Lyte is named as the author or arranger of that printing; he died 1913, so the work is free either way). Registered as anonymous, first published 1852. The 6/8 triplets are written in simple quarter and eighth notes.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "en-london-bridge",
+      "title": "London Bridge Is Falling Down",
+      "language": "en",
+      "category": "children",
+      "textAuthor": "Anonymous (traditional nursery rhyme, printed 1744 and 1842)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1842,
+      "composer": "Anonymous (traditional nursery tune)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1850,
+      "textSource": "https://en.wikipedia.org/wiki/London_Bridge_Is_Falling_Down",
+      "textVersion": "Four of the traditional verses (falling down; wood and clay; wash away; iron bars), as in Halliwell, Nursery Rhymes of England (1842).",
+      "sources": [
+        "https://en.wikipedia.org/wiki/London_Bridge_Is_Falling_Down"
+      ],
+      "notes": "DOUBTFUL point: the text is attested in the 18th century (Tommy Thumb’s Pretty Song Book, 1744) and in Halliwell 1842; the first print of this exact tune was not re-checked, so it is registered as “not later than 1850”. Please confirm.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    },
+    {
+      "id": "en-we-wish-you",
+      "title": "We Wish You a Merry Christmas",
+      "language": "en",
+      "category": "christmas",
+      "textAuthor": "Anonymous (traditional English carol, West Country)",
+      "textAuthorDeathYear": "anonymous",
+      "textFirstPublished": 1935,
+      "composer": "Anonymous (traditional English carol tune)",
+      "composerDeathYear": "anonymous",
+      "melodyFirstPublished": 1935,
+      "textSource": "https://en.wikipedia.org/wiki/We_Wish_You_a_Merry_Christmas",
+      "textVersion": "Traditional stanzas “We wish you a merry Christmas”, “Now bring us some figgy pudding” and “We won’t go until we get some”; the “Good tidings” chorus is not used.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/We_Wish_You_a_Merry_Christmas"
+      ],
+      "notes": "DOUBTFUL point: traditional West Country carol; the best-known printed form is the 1935 arrangement by Arthur Warrell (Bristol University Madrigal Society). Only the traditional words and tune are used (own arrangement), registered as anonymous, first published 1935. Please confirm the 1935 date and that the Warrell arrangement is not copied.",
+      "audioSource": "generated",
+      "audioLicence": "Generated on the robot by Bellatrix (WebAudio synthesis of the public-domain melody and chords); no recording used. Arrangement: Labland own work.",
+      "verifiedOn": "2026-11-11",
+      "verifiedBy": "Claude (research, to be confirmed by LabLand)"
+    }
+  ],
+  "removed": [
+    {
+      "title": "Le Temps des cerises",
+      "language": "fr",
+      "reason": "Free (text Jean-Baptiste Clément, died 1903; music Antoine Renard, died 1872), but not added yet: the only text-based score found (Wikisource) has a garbled 6/8 rhythm, while the original is a 3/4 waltz. Add it once the melody is transcribed from Renard’s own score (IMSLP).",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Le_Temps_des_cerises",
+        "https://imslp.org/wiki/Le_temps_des_cerises_(Renard,_Antoine)"
+      ]
+    },
+    {
+      "title": "Alouette, gentille alouette",
+      "language": "fr",
+      "reason": "Free (anonymous, first printed 1879 in a McGill College songbook), but not added yet: no public-domain score of the verse melody was found in this pass (the Wikisource page of Jameson & Heacox 1922 has the words only). The cumulative verses also make a long song.",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Alouette",
+        "https://fr.wikipedia.org/wiki/Alouette_(chanson)"
+      ]
+    },
+    {
+      "title": "Il était un petit navire",
+      "language": "fr",
+      "reason": "Not checked in this pass: no old edition with a score was found quickly on Wikisource, and the verses vary a lot between editions.",
+      "sources": []
+    },
+    {
+      "title": "Les Compagnons de la Marjolaine",
+      "language": "fr",
+      "reason": "Not added in this pass (a long question-and-answer ronde). An old score exists: Weckerlin 1870, \"Qu’est-ce qui passe ici si tard ?\".",
+      "sources": [
+        "https://fr.wikisource.org/wiki/Compagnons_de_la_Marjolaine"
+      ]
+    },
+    {
+      "title": "Kommt ein Vogel geflogen",
+      "language": "de",
+      "reason": "Origin unclear: earliest known text is Karl von Holtei’s 1824 adaptation of older material, the 1807 Tyrolean stanzas have a different tune, and our sources give no documented first publication of today’s melody. Probably free, but not documented well enough for the register.",
+      "sources": [
+        "https://de.wikipedia.org/wiki/Kommt_ein_Vogel_geflogen"
+      ]
+    },
+    {
+      "title": "Muss i denn zum Städtele hinaus",
+      "language": "de",
+      "reason": "Not encoded yet (no verified melody source reached on 2026-11-09). Free: verse 1 traditional, verses 2–3 Heinrich Wagner (1783–1863, written 1824), melody arranged by Friedrich Silcher (1789–1860), published 1827. Not encoded tonight: no reliable text source for the melody was reachable (folktunefinder blocked); to be added later.",
+      "status": "pending",
+      "sources": [
+        "https://de.wikipedia.org/wiki/Mu%C3%9F_i_denn",
+        "https://de.wikisource.org/wiki/Allgemeines_Deutsches_Kommersbuch/Liedverzeichnis"
+      ]
+    },
+    {
+      "title": "Weißt du, wie viel Sternlein stehen",
+      "language": "de",
+      "reason": "Not encoded yet (no verified melody source reached on 2026-11-09). Free: text Wilhelm Hey (1789–1854), 1837; melody folk tune documented 1818 (Groos/Klein). Not encoded tonight: melody source seen only in garbled form; to be added later.",
+      "status": "pending",
+      "sources": [
+        "https://de.wikipedia.org/wiki/Wei%C3%9Ft_du,_wie_viel_Sternlein_stehen"
+      ]
+    },
+    {
+      "title": "Danny Boy",
+      "language": "en",
+      "reason": "Licence OK but not included now. Frederic Weatherly wrote the words (1910, set to the Londonderry Air in 1913, Boosey & Co.) and died on 7 Sept 1929, so the text is free in the EU and UK (life + 70) and in the US (published 1913); the tune is traditional (Petrie, 1855). Not encoded because the Londonderry Air spans about an octave and a sixth, wider than the G3–D5 range used for older group voices, and a long rhythmically free melody that could not be checked note by note tonight. Can be added later in a lower key if LabLand wants it.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Danny_Boy",
+        "https://en.wikipedia.org/wiki/Fred_Weatherly",
+        "https://imslp.org/wiki/Danny_Boy_(Weatherly,_Frederic_Edward)"
+      ]
+    },
+    {
+      "title": "Greensleeves",
+      "language": "en",
+      "reason": "Text and tune are anonymous 16th century (registered 1580, printed in A Handefull of Pleasant Delites, 1584), so free; not included because the syllable underlay of the old text differs between editions and could not be checked against a public-domain score tonight. Deferred, not a licence problem.",
+      "sources": [
+        "https://en.wikipedia.org/wiki/Greensleeves"
+      ]
+    }
+  ]
+}

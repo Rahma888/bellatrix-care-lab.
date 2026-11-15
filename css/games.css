@@ -1,0 +1,59 @@
+/* "Ajouter un jeu": the head (Care Team, js/games-staff.js) and the game on the patient tablet (js/games.js).
+   Suavia identity (css/brand.css): white, blue #00519E, Roboto Condensed, corners 5 px at most; no cards,
+   no shadows, no pills; very little text on the head. */
+
+/* ---------- head: the entry next to "Choose an activity" ---------- */
+.staffpage .gm-entry { border: 0; background: transparent; padding: 6px 2px; margin-left: 14px; font: 500 15px var(--font); color: var(--brand, #00519E);
+  text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.staffpage .gm-entry:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- head: the "Add a game" screen ---------- */
+.gm-add { position: fixed; inset: 0; z-index: 60; background: var(--bg, #FFFFFF); color: var(--ink); display: flex; flex-direction: column; font-family: var(--font); }
+.gm-add[hidden] { display: none; }
+.gm-head { display: flex; align-items: center; gap: 18px; padding: 10px 22px; background: var(--brand, #00519E); color: #FFFFFF; }
+.gm-head h2 { margin: 0; font-size: 24px; font-weight: 500; color: #FFFFFF; }
+.gm-back { border: 0; background: transparent; color: #FFFFFF; font: 400 17px var(--font); padding: 8px 4px; min-height: 44px; cursor: pointer; }
+.gm-back:focus-visible { outline: 3px solid var(--brand-light, #9FD3F5); outline-offset: 2px; }
+.gm-body { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 44px; padding: 18px 32px; }
+.gm-qr { width: min(46vh, 330px); height: min(46vh, 330px); flex: none; background: #FFFFFF; }
+.gm-qr svg { width: 100%; height: 100%; display: block; }
+.gm-info { display: flex; flex-direction: column; gap: 14px; max-width: 470px; }
+.gm-say { margin: 0; font-size: 19px; line-height: 1.35; color: var(--ink); }
+.gm-addr { margin: 0; font-size: 30px; font-weight: 700; color: var(--brand, #00519E); overflow-wrap: anywhere; letter-spacing: .01em; }
+.gm-code { margin: 0; font-size: 19px; color: var(--muted); display: flex; align-items: baseline; gap: 12px; }
+.gm-code b { font-size: 38px; font-weight: 700; color: var(--ink); letter-spacing: .14em; }
+.gm-got { margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.gm-got[hidden], .gm-msg[hidden] { display: none; }
+.gm-msg { margin: 0; font-size: 18px; color: var(--danger); }
+.gm-atelier { position: absolute; right: 24px; bottom: 16px; font-size: 15px; color: var(--brand, #00519E); text-decoration: underline; }
+body.gm-open { overflow: hidden; }
+
+/* ---------- head: a team game in the list and its sheet ---------- */
+.staffpage .tiles .tsec { grid-column: 1 / -1; margin: 10px 0 -4px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 16px; font-weight: 500; color: var(--brand, #00519E); }
+.staffpage .tiles .tsec[hidden] { display: none; }
+.staffpage .tile .tnew { font-size: 12px; font-weight: 700; color: var(--brand, #00519E); letter-spacing: .03em; text-transform: uppercase; margin-left: 8px; }
+.staffpage .tile .tnew[hidden] { display: none; }
+/* the heading already says it: no category tag on a team game, only "New" */
+.staffpage .tile.team .tcat { display: none; }
+.staffpage .tile.team .tnew { margin-left: 0; }
+.gm-detail { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.gm-meta { flex: 1 1 160px; color: var(--muted); font-size: 15px; }
+.staffpage .gm-detail .gm-sure { color: var(--danger); font-weight: 700; }
+
+/* ---------- head: Try (the game in the shape of the patient screen) ---------- */
+.gm-try { position: fixed; inset: 0; z-index: 70; background: var(--surface-2, #F0F0F0); display: flex; align-items: center; justify-content: center; gap: 36px; padding: 12px; }
+.gm-tryfit { position: relative; overflow: hidden; background: #FFFFFF; border: 1px solid var(--line); border-radius: 5px; flex: none; }
+.gm-tryframe { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; border: 0; transform-origin: 0 0; background: #FFFFFF; }
+.gm-tryside { display: flex; flex-direction: column; gap: 22px; max-width: 360px; }
+.gm-tryside h2 { margin: 0; font-size: 26px; font-weight: 500; color: var(--brand, #00519E); overflow-wrap: anywhere; }
+
+/* ---------- tablet: the game full screen, one big Finish button under it ---------- */
+.stage .tgbox { position: absolute; left: 0; right: 0; top: 128px; bottom: 214px; z-index: 2; background: #FFFFFF; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stage .tgframe { display: block; width: 100%; height: 100%; border: 0; background: #FFFFFF; }
+.stage.land .tgbox { top: 72px; bottom: 170px; }
+#screen.teamgame { justify-content: flex-end; }
+#screen.teamgame .tgspace { flex: 1; }
+#screen.teamgame .foot { display: none; }
+#screen.teamgame .actions { margin-top: auto; }
+#screen.teamgame .btn.tgend { min-height: 140px; font-size: 62px; }
+.stage.land #screen.teamgame .btn.tgend { min-height: 110px; font-size: 48px; }

@@ -1,0 +1,489 @@
+/* Care Team app (staff.html), 1.15 design: the "Mélodie" look of Bellatrix Play on every Care Team
+   page. Warm cream page, off-white cards with soft warm borders, the deep green for the main surfaces
+   and buttons, the apricot for active markers and highlights. Typography (1.16): LabLand's roles from
+   css/lab.css (grotesque titles, serif descriptions, upper-case labels), see the block at the end.
+   Only the shared tokens of css/lab.css (no new colours). Loaded after lab.css and the module styles,
+   so it also dresses the Family, Contents and Library sections the modules draw.
+   Chrome 95 (the robot's WebView): no :has(), no color-mix(), no filter or blend mode on images.
+   The robot's Care Team screen is about 1097 x 617 CSS px: the header stays on one line there. */
+
+.staffpage { --accent-soft: var(--surface-2); --radius: 5px; }
+
+/* ---------- page and frame ---------- */
+body.staffpage { background: var(--bg); }
+.staffpage .setup { padding: 12px 16px 0; }
+.staffpage .setup .box { width: min(100%, 1200px); background: transparent; border: 0; border-radius: 0; padding: 0 0 16px; gap: 16px; }
+.staffpage #tabsWrap { display: flex; flex-direction: column; gap: 12px; }
+.staffpage .tabpanel { display: flex; flex-direction: column; gap: 16px; }
+.staffpage .tabpanel[hidden], .staffpage .subpanel[hidden] { display: none !important; }
+.staffpage .section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; gap: 12px; box-shadow: var(--shadow); }
+.staffpage .setup .note { font-size: 14px; color: var(--muted); }
+.staffpage .grow { flex: 1 1 auto; }
+.staffpage .setup h2, .staffpage .section h2 { font: 400 26px/1.15 var(--font-display); letter-spacing: 0; text-transform: none; color: var(--accent); margin: 0; }
+.staffpage .section h3, .staffpage .setup h3 { font: 700 17px/1.3 var(--font); color: var(--ink); }
+.staffpage .setup h3.ph { font: 400 21px/1.2 var(--font-display); color: var(--accent); }
+.staffpage .warn { color: var(--danger); }
+.staffpage a { color: var(--accent); }
+
+/* ---------- buttons: deep green pills, quiet outlines ---------- */
+.staffpage .go, .staffpage .setup .go { border: 0; background: var(--accent); color: var(--on-accent); border-radius: var(--radius); font: 700 16px var(--font); padding: 12px 22px;
+  min-height: 48px; cursor: pointer; box-shadow: var(--shadow); }
+.staffpage .go:hover { background: var(--accent-2); }
+.staffpage .go:disabled { opacity: .5; cursor: default; box-shadow: none; }
+.staffpage .ghost { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--radius); font: 600 15px var(--font); padding: 10px 18px; min-height: 44px; cursor: pointer; }
+.staffpage .ghost:hover { border-color: var(--accent); }
+.staffpage .ghost.sm, .staffpage .go.sm { min-height: 36px; padding: 6px 14px; font-size: 14px; box-shadow: none; }
+.staffpage .ghost.sm { background: var(--surface-2); border-color: transparent; }
+.staffpage .ghost.danger, .staffpage .ghost.sm.danger { color: var(--danger); background: transparent; border-color: transparent; }
+
+/* ---------- fields ---------- */
+.staffpage .setup .field { margin-top: 0; gap: 6px; }
+.staffpage .setup .field > span:first-child, .staffpage .setup label.field { font-size: 13px; color: var(--muted); font-weight: 600; }
+.staffpage .setup input[type=text], .staffpage .setup input[type=number], .staffpage .setup input[type=email], .staffpage .setup input[type=time], .staffpage .setup input[type=search],
+.staffpage .setup input:not([type]), .staffpage .setup select, .staffpage .setup textarea {
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--radius); font: 16px var(--font); min-height: 46px; padding: 9px 13px; }
+.staffpage .setup textarea { min-height: 90px; }
+.staffpage .setup input:focus, .staffpage .setup select:focus, .staffpage .setup textarea:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--surface-2); outline: none; }
+.staffpage .setup input[type=checkbox], .staffpage .setup input[type=radio] { accent-color: var(--accent); }
+
+/* ---------- header: the deep green bar, the brand, pills with the apricot marker ---------- */
+.staffpage .ctop { position: relative; display: flex; flex-wrap: nowrap; align-items: center; gap: 14px; padding: 9px 12px 9px 14px; border: 0; border-radius: var(--radius);
+  background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow); }
+.staffpage .cface { display: none; }
+.cbrand { flex: none; width: 40px; height: 40px; display: grid; place-items: center; background: #FFFFFF; border-radius: var(--radius); }
+.cbrand img { width: 30px; height: 30px; display: block; }
+.staffpage { --shadow: none; }
+.staffpage .ctitle { display: flex; flex-direction: column; min-width: 0; margin-right: auto; line-height: 1.05; }
+.staffpage .setup .ctitle h1 { margin: 0; font: 400 24px/1.05 var(--font-display); color: var(--on-accent); white-space: nowrap; }
+.staffpage .ctitle .cteam { font: 600 12px/1.3 var(--font); letter-spacing: .08em; text-transform: uppercase; opacity: .78; white-space: nowrap; }
+.staffpage .ctitle .note { display: none; }
+.staffpage .ctop .tabs { display: flex; flex-wrap: nowrap; gap: 4px; padding: 0; border: 0; background: transparent; box-shadow: none; min-width: 0; }
+.staffpage .ctop .tabs button { position: relative; border: 0; border-radius: var(--radius); padding: 10px 15px 11px; background: transparent; color: var(--on-accent); opacity: .8;
+  font: 700 15px/1 var(--font); white-space: nowrap; cursor: pointer; }
+.staffpage .ctop .tabs button:hover { opacity: 1; background: var(--accent-2); }
+.staffpage .ctop .tabs button[aria-selected="true"] { opacity: 1; background: var(--accent-2); box-shadow: inset 0 -3px 0 var(--apricot); }
+.staffpage .ctop .tabs button:focus-visible { outline: 3px solid var(--apricot); outline-offset: 1px; }
+#resCount { font-weight: 600; opacity: .75; }
+.tabs button { position: relative; }
+.tabbadge, .tabs .rs-badge { position: absolute; top: -4px; right: -3px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius); background: var(--apricot); color: var(--on-apricot);
+  font: 700 12px/20px var(--font); text-align: center; box-shadow: 0 0 0 2px var(--accent); }
+.langsw { display: flex; gap: 2px; flex: none; background: transparent; border-radius: var(--radius); padding: 3px; box-shadow: inset 0 0 0 1px var(--accent-2); }
+.langsw button { border: 0; background: transparent; color: var(--on-accent); opacity: .8; font: 700 13px var(--font); letter-spacing: .04em; border-radius: var(--radius); padding: 7px 10px; min-width: 38px; cursor: pointer; }
+.langsw button.on { background: var(--apricot); color: var(--on-apricot); opacity: 1; }
+.langsw button:focus-visible { outline: 3px solid var(--apricot); outline-offset: 1px; }
+
+/* ---------- sub-sections (Family, Contents): a quiet segmented control ---------- */
+.subnav { display: flex; flex-wrap: wrap; gap: 4px; align-self: flex-start; padding: 5px; border-radius: var(--radius); background: var(--surface-2); }
+.subnav button { position: relative; border: 0; border-radius: var(--radius); padding: 10px 18px; background: transparent; color: var(--muted); font: 700 15px/1 var(--font); cursor: pointer; white-space: nowrap; }
+.subnav button:hover { color: var(--accent); }
+.subnav button[aria-selected="true"] { background: var(--surface); color: var(--accent); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
+.subnav button[aria-selected="true"]::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%; background: var(--apricot); vertical-align: 1px; }
+.subnav .tabbadge, .subnav .rs-badge { position: static; display: inline-block; margin-left: 8px; box-shadow: none; vertical-align: 1px; }
+.subpanel { display: flex; flex-direction: column; gap: 16px; }
+
+/* ---------- banners: deep green with apricot buttons, compact (several may wait at once) ---------- */
+.staffpage .banner, .staffpage .banner.xfer { position: static; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border-radius: var(--radius); padding: 7px 8px 7px 18px;
+  background: var(--accent); color: var(--on-accent); font-weight: 600; font-size: 15px; box-shadow: var(--shadow); }
+.staffpage .banner::before { content: ''; flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--apricot); }
+.staffpage .banner > span { flex: 1 1 260px; }
+.staffpage .banner b { font-weight: 700; }
+.staffpage .banner small { font-weight: 400; opacity: .8; }
+.staffpage .banner .go, .staffpage .banner.xfer .go { background: var(--apricot); color: var(--on-apricot); box-shadow: none; min-height: 42px; padding: 8px 18px; font-size: 15px; }
+.staffpage .banner .go:hover { background: var(--surface); }
+.staffpage .banner .ghost, .staffpage .banner.xfer .ghost { background: transparent; color: var(--on-accent); border: 1px solid var(--accent-2); min-height: 42px; padding: 8px 16px; }
+.staffpage .msgcount { background: var(--apricot); color: var(--on-apricot); }
+.staffpage .msgcount.zero { background: var(--surface-2); color: var(--muted); }
+.staffpage .banner .pcrown { color: var(--apricot); }
+.staffpage p.warn#storeWarn { margin: 0; font-weight: 700; }
+
+/* ---------- 1 · the patient card ---------- */
+.staffpage .pcardx .pmain { grid-template-columns: auto minmax(120px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(160px, 1.1fr); gap: 10px 18px; }
+.staffpage .pavatar { width: 56px; height: 56px; background: var(--apricot); color: var(--on-apricot); font: 400 22px var(--font-display); }
+.staffpage .pmood { border-left: 0; background: var(--surface-2); border-radius: var(--radius); padding: 8px 14px; min-height: 56px; }
+.pfolds { display: flex; flex-wrap: wrap; gap: 4px 28px; }
+.staffpage details.more { border: 0; border-radius: 0; padding: 0; }
+.staffpage details.more > summary { list-style: none; display: inline-flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 700; padding: 8px 0; cursor: pointer; }
+.staffpage details.more > summary::-webkit-details-marker { display: none; }
+.staffpage details.more > summary::before { content: ''; width: 7px; height: 7px; border-right: 2px solid var(--apricot); border-bottom: 2px solid var(--apricot); transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
+.staffpage details.more[open] > summary::before { transform: rotate(45deg); }
+.pfolds details.more[open] { flex: 1 1 100%; }
+.staffpage details.more > * + * { margin-top: 10px; }
+.staffpage details.more .grid2 { gap: 12px 18px; }
+.staffpage details.more .checks { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 14px; }
+.staffpage .setup .check { align-items: center; }
+
+/* ---------- 2 · activity tiles ---------- */
+.staffpage .shead { gap: 10px 16px; }
+.staffpage .chips { gap: 6px; }
+.staffpage .chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 8px 14px; font: 700 14px var(--font); cursor: pointer; border-radius: var(--radius); }
+.staffpage .chip:hover { border-color: var(--accent); }
+.staffpage .chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.staffpage .c-memory { --cat: var(--terracotta); } .staffpage .c-music { --cat: var(--heart); } .staffpage .c-movement { --cat: var(--sage); }
+.staffpage .c-games { --cat: var(--ochre); } .staffpage .c-social { --cat: var(--accent-2); } .staffpage .c-daily-life { --cat: var(--muted); } .staffpage .c-other { --cat: var(--muted); }
+.staffpage .c-creativity { --cat: var(--heart); }
+.staffpage .chip[class*="c-"].on { background: var(--cat); border-color: var(--cat); color: var(--on-accent); }
+.staffpage .tiles { grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 14px; }
+.staffpage .tile { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: none; transition: transform .2s, box-shadow .2s; }
+.staffpage .tile:hover { border-color: var(--line); transform: translateY(-2px); box-shadow: var(--shadow); }
+.staffpage .tile.on { border-color: var(--apricot); background: var(--surface); box-shadow: 0 0 0 3px var(--apricot), var(--shadow); }
+.staffpage .tart { background: var(--hero); }
+.staffpage .tbody { padding: 10px 12px 12px; gap: 8px; }
+.staffpage .tname { font-size: 15px; color: var(--ink); }
+.staffpage .tcat { background: var(--cat, var(--muted)); color: var(--on-accent); }
+.staffpage .tbadge { font-size: 11px; background: var(--accent); color: var(--on-accent); }
+.staffpage .tfavmark { color: var(--apricot); }
+
+/* ---------- 3 · the chosen activity ---------- */
+.staffpage .actdetail { gap: 16px; }
+.staffpage .dhead { grid-template-columns: 170px 1fr auto; gap: 18px; align-items: center; }
+.staffpage .dart { border-radius: var(--radius); background: var(--hero); }
+.staffpage .dtext { gap: 6px; }
+.staffpage .setup h2.dname { font: 400 30px/1.1 var(--font-display); color: var(--accent); }
+.staffpage .ddesc { font-size: 16px; color: var(--muted); }
+.staffpage .favbtn { border: 1px solid var(--line); background: var(--surface); color: var(--muted); width: 48px; height: 48px; border-radius: 50%; font-size: 24px; line-height: 1; cursor: pointer; align-self: start; }
+.staffpage .favbtn.on { color: var(--on-apricot); background: var(--apricot); border-color: var(--apricot); }
+.staffpage .lockmsg { border: 1px solid var(--focus); background: var(--surface-2); border-radius: var(--radius); }
+.staffpage .playtaste { border: 0; background: var(--surface-2); border-radius: var(--radius); padding: 12px 16px; }
+.staffpage .answer h3 { font-size: 16px; margin: 0 0 10px; }
+.staffpage .seg { gap: 10px; margin-bottom: 6px; }
+.staffpage .seg span { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 12px 14px; }
+.staffpage .seg input:checked + span { background: var(--surface-2); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.staffpage #camMoveRow { margin-top: 8px; }
+.staffpage .ph { border-top: 0; padding-top: 4px; margin-top: 18px; }
+.staffpage #contentBox { display: flex; flex-direction: column; gap: 12px; }
+.staffpage #contentBox .field .note { font-size: 13px; }
+.staffpage #contentBox > .field, .staffpage #contentBox > .ph-note { max-width: 680px; }
+.staffpage .mslot .thumb { border: 0; border-radius: var(--radius); }
+
+/* ---------- the launch bar: the Play "primary button" with its apricot play dot ---------- */
+.staffpage .startbar { border: 1px solid var(--line); border-radius: var(--radius); padding: 9px 9px 9px 20px; background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.18); margin-bottom: 6px; }
+.staffpage .ssum { color: var(--muted); }
+.staffpage .ssum b { color: var(--ink); }
+.staffpage .startbar .ghost { background: var(--surface-2); border-color: transparent; }
+.staffpage .startbar .go#go { display: inline-flex; align-items: center; gap: 12px; padding: 6px 24px 6px 6px; min-height: 56px; font-size: 17px; }
+.playdot { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--apricot); color: var(--on-apricot); }
+.playdot svg { width: 22px; height: 22px; margin-left: 2px; }
+body.st-staffonly .staffpage #go .playdot, body.st-staffonly #go .playdot { background: var(--surface-2); }
+
+/* ---------- results ---------- */
+.resbar { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; gap: 10px 12px; box-shadow: var(--shadow); }
+.staffpage .setup .resshow { flex-direction: row; align-items: center; gap: 10px; }
+.staffpage .resshow select { min-width: 150px; }
+.staffpage #resBody { display: flex; flex-direction: column; gap: 16px; }
+.staffpage #resBody .empty { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; text-align: center; color: var(--muted); margin: 0; }
+.staffpage .tblwrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+.staffpage .tbl th { background: var(--surface); color: var(--muted); font-size: 13px; padding: 12px 12px 8px; }
+.staffpage .tbl td { padding: 11px 12px; border-bottom-color: var(--surface-2); }
+.staffpage .tbl tr:hover td { background: var(--bg); }
+.staffpage .moodbox { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: 16px 20px; margin: 0; box-shadow: var(--shadow); }
+
+/* ---------- notes after a session ---------- */
+.staffpage #debrief { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; }
+.staffpage #debrief h1 { font: 400 30px/1.1 var(--font-display); color: var(--accent); }
+.staffpage #debrief h2 { font-size: 21px; margin-top: 6px; }
+.staffpage .pill { position: relative; border: 0; background: var(--surface-2); padding: 0; cursor: pointer; border-radius: var(--radius); }
+.staffpage .pill input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.staffpage .pill span { display: block; padding: 9px 16px; border-radius: var(--radius); }
+.staffpage .pill input:checked + span { background: var(--accent); color: var(--on-accent); }
+.staffpage .pill input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- Family and Contents: the modules' own sections, in the same cards ---------- */
+.staffpage #famBody .section { margin-top: 0; }
+.staffpage #famBody, .staffpage #msgBody, .staffpage #recoBody, .staffpage #arBody, .staffpage #kStaffHost { display: flex; flex-direction: column; gap: 16px; }
+.staffpage .msgsec, .staffpage .arsec, .staffpage .kstaff.section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.staffpage .kstaff.section h2 { margin-bottom: 4px; }
+.staffpage .msgtop h2, .staffpage .arhead h2 { font: 400 26px/1.15 var(--font-display); color: var(--accent); }
+
+/* ---------- library: an app store of premium apps (js/library.js) ---------- */
+.store { display: flex; flex-direction: column; gap: 18px; }
+.storetop { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 2px 0; }
+.staffpage .setup .storetop h2 { font: 400 36px/1.1 var(--font-display); color: var(--accent); }
+.acctbtn { position: relative; display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: var(--radius);
+  padding: 6px 15px 6px 6px; min-height: 46px; font: 700 14px var(--font); cursor: pointer; }
+.acctbtn svg { width: 32px; height: 32px; padding: 6px; border-radius: 50%; background: var(--apricot); color: var(--on-apricot); }
+.acctbtn .dot { position: absolute; top: 4px; left: 32px; width: 10px; height: 10px; border-radius: 50%; background: var(--terracotta); border: 2px solid var(--surface); }
+.staffpage .libmsg { margin: 0; }
+.feat { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); min-height: 230px; align-items: stretch; background: var(--hero); border-radius: var(--radius); overflow: hidden; cursor: pointer; }
+.feattext { position: relative; z-index: 1; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 30px 34px; min-width: 0; }
+.staffpage .setup .featkick { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre); }
+.staffpage .setup .feat h3 { margin: 0; font: 400 38px/1.05 var(--font-display); color: var(--accent); }
+.staffpage .setup .feattag { margin: 0; font-size: 16px; color: var(--muted); }
+.featrow { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.featcat { flex: 1 1 auto; font-size: 13px; color: var(--muted); }
+.featart { position: relative; min-height: 236px; background: var(--surface-2); overflow: hidden; border-radius: 0 var(--radius) var(--radius) 0; }
+.featart svg { position: absolute; top: 0; left: 0; display: block; width: 100%; height: 100%; }
+.storechips { margin-top: 2px; }
+.appgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.appcard { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 12px 14px; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+.appcard:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.appcard:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.appicon { display: block; width: 64px; height: 64px; border-radius: var(--radius); overflow: hidden; flex: none; box-shadow: inset 0 0 0 1px var(--line); }
+.appicon svg { display: block; width: 100%; height: 100%; }
+.appicon.sm { width: 40px; height: 40px; border-radius: var(--radius); }
+.appicon.big { width: 112px; height: 112px; border-radius: var(--radius); }
+.appmeta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.appmeta b { font-size: 16px; line-height: 1.25; color: var(--ink); }
+.appmeta span { font-size: 13px; color: var(--muted); }
+.pillbtn { display: inline-block; border: 0; border-radius: var(--radius); background: var(--surface-2); color: var(--accent); font: 700 14px var(--font); padding: 9px 18px; min-width: 88px; min-height: 40px;
+  text-align: center; cursor: pointer; white-space: nowrap; }
+.pillbtn:hover { background: var(--accent); color: var(--on-accent); }
+.pillbtn:disabled { opacity: .5; cursor: default; }
+.pillbtn.muted, .pillbtn.muted:hover { background: var(--bg); color: var(--muted); font-weight: 600; cursor: default; }
+.pillbtn.big { font-size: 16px; padding: 12px 22px; min-height: 48px; }
+.staffpage .setup .appgo { border-radius: var(--radius); padding: 12px 30px; font-size: 17px; }
+.pillbtn.done, .pillbtn.done:hover { background: var(--surface-2); color: var(--good); cursor: default; }
+.ashbtn { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.planline { font-size: 13px; color: var(--muted); text-align: center; }
+/* Play Premium is per resident: "Active for P1, P3" on the cards, the residents in the sheet. */
+.appmeta .premon, .featcat.premon { color: var(--good); font-weight: 700; }
+.premres { margin: 2px 0 4px; }
+.staffpage .setup .premres h4 { margin: 0 0 6px; font-size: 14px; color: var(--muted); }
+.premres ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.premres li { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.premres li b { min-width: 44px; color: var(--ink); }
+.premres li span { flex: 1 1 auto; font-size: 13px; color: var(--muted); }
+.staffpage .setup .premnone { margin: 0; }
+.staffpage .banner.premiumbanner { position: static; }
+
+/* The Premium window: the Play premium modal. */
+.pmbackdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 14px; overflow-y: auto; background: rgba(0,50,95,.72); }
+.pmodal { position: relative; width: min(590px, 100%); max-height: calc(100vh - 28px); overflow-y: auto; border-radius: var(--radius); padding: 30px 34px 24px;
+  background: var(--surface); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.18); font-family: var(--font); }
+.pmclose { position: absolute; top: 16px; right: 16px; width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--accent);
+  font: 400 26px/1 var(--font); cursor: pointer; }
+.pmhead { text-align: center; }
+.pmbadge, .pmbadge.lock { width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; background: var(--apricot); color: var(--on-apricot); }
+.pmbadge svg { width: 30px; height: 30px; }
+.pmkick { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ochre); }
+.pmodal h2 { margin: 6px 0 6px; font: 400 32px/1.1 var(--font-display); color: var(--accent); }
+.pmline { margin: 0; color: var(--muted); font-size: 15px; }
+.pmline.pmon { margin-top: 4px; color: var(--good); font-weight: 700; }
+.pmwho { display: inline-flex; align-items: center; gap: 10px; margin: 6px 0 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.pmwho select { min-width: 120px; min-height: 42px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: 700 16px var(--font); }
+.pmbenefits { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 18px 0 16px; font-size: 15px; }
+.pmbenefits span { display: flex; align-items: center; gap: 8px; }
+.pmbenefits b { color: var(--sage); }
+.pmplans { display: flex; flex-direction: column; gap: 8px; }
+.pmplan { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.pmplan.selected { border: 2px solid var(--accent); padding: 7px 15px; background: var(--surface-2); }
+.pmdot { width: 20px; height: 20px; flex: none; border: 2px solid var(--muted); border-radius: 50%; }
+.pmplan.selected .pmdot { border: 6px solid var(--accent); background: var(--apricot); }
+.pmpn { display: flex; flex-direction: column; }
+.pmpn small, .pmsummary small { color: var(--muted); font-size: 13px; }
+.pmplan > b, .pmsummary > b { margin-left: auto; font-size: 16px; text-align: right; white-space: nowrap; }
+.pmplan > b small, .pmsummary > b small { display: block; font-size: 11px; font-weight: 400; color: var(--muted); }
+.pmconfirm { display: block; width: 100%; min-height: 54px; margin-top: 16px; border: 0; border-radius: var(--radius); background: var(--accent); color: var(--on-accent);
+  font: 700 17px var(--font); cursor: pointer; }
+.pmconfirm:hover { background: var(--accent-2); }
+.pmconfirm:disabled { opacity: .6; cursor: default; }
+.pmback { display: block; margin: 8px auto 0; border: 0; background: transparent; color: var(--accent); font: 700 15px var(--font); cursor: pointer; padding: 8px 12px; }
+.pmnote { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; text-align: center; }
+.pmsummary { display: flex; align-items: center; gap: 12px; margin: 16px 0 12px; padding: 12px 16px; border-radius: var(--radius); background: var(--surface-2); }
+.pmsummary span { display: flex; flex-direction: column; }
+.pmsummary + .pmline { text-align: center; font-size: 14px; }
+.pmsuccess { text-align: center; padding: 18px 6px 4px; }
+.pmcrown { width: 88px; height: 88px; margin: 0 auto 14px; border-radius: 50%; display: grid; place-items: center; background: var(--apricot); }
+.pmcrown svg { width: 52px; height: 52px; }
+.pmsuccess p { margin: 0; color: var(--muted); font-size: 16px; }
+
+/* One app, and the account: sheets over the store. */
+.staffpage .sheet { background: rgba(0,50,95,.72); }
+.staffpage .sheetbox { background: var(--surface); border: 0; color: var(--ink); }
+.staffpage .sheetbox.appsheet, .staffpage .sheetbox.acctsheet { position: relative; display: flex; flex-direction: column; gap: 16px; width: min(780px, 100%); max-height: 92vh;
+  overflow: auto; padding: 26px 28px; border-radius: var(--radius); }
+.staffpage .sheetbox.acctsheet { width: min(640px, 100%); }
+.sheetx { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--accent);
+  font: 400 24px/1 var(--font); cursor: pointer; }
+.ashead { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding-right: 36px; }
+.ashtext { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.staffpage .setup .ashtext h3, .staffpage .setup .acctsheet h3, .ashtext h3, .acctsheet h3 { margin: 0; font: 400 30px/1.1 var(--font-display); color: var(--accent); }
+.staffpage .setup .ashtag { margin: 0; color: var(--muted); font-size: 16px; }
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.shot { border-radius: var(--radius); overflow: hidden; aspect-ratio: 16 / 10; box-shadow: inset 0 0 0 1px var(--line); }
+.shot svg { display: block; width: 100%; height: 100%; }
+.staffpage .setup .about { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.infos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); padding-top: 12px; }
+.infos > div { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; padding: 0 8px; }
+.infos > div + div { border-left: 1px solid var(--line); }
+.infos span { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.infos b { font-size: 16px; color: var(--ink); }
+.acctwho { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding-right: 36px; }
+.staffpage .setup .acctwho .libwho { margin: 0; }
+.acctsheet h4 { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.licences { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.licences li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.licences li:last-child { border-bottom: 0; }
+.licname { flex: 1 1 160px; font-weight: 700; }
+.licbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+
+@media (max-width: 760px) {
+  .feat { grid-template-columns: 1fr; }
+  .featart { min-height: 170px; order: -1; border-radius: var(--radius) var(--radius) 0 0; }
+  .ashead { grid-template-columns: 72px minmax(0, 1fr); }
+  .appicon.big { width: 72px; height: 72px; border-radius: var(--radius); }
+  .ashbtn { grid-column: 1 / -1; }
+}
+
+/* ---------- the robot's Care Team screen (about 1097 x 617) and smaller ---------- */
+@media (max-width: 1240px) {
+  .staffpage .ctop { gap: 10px; padding: 8px 10px 8px 12px; }
+  .staffpage .setup .ctitle h1 { font-size: 22px; }
+  .staffpage .ctop .tabs button { padding: 10px 12px 11px; font-size: 15px; }
+}
+@media (max-width: 1000px) {
+  .staffpage .ctop { flex-wrap: wrap; }
+  .staffpage .ctop .tabs { order: 3; flex: 1 1 100%; overflow-x: auto; }
+  .staffpage .pcardx .pmain { grid-template-columns: auto 1fr 1fr; }
+  .staffpage .pmood { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .staffpage .dhead { grid-template-columns: 1fr auto; }
+  .staffpage .dart { display: none; }
+  .staffpage .pcardx .pmain { grid-template-columns: auto 1fr; }
+}
+@media (max-height: 700px) {
+  .staffpage .setup { padding-top: 8px; }
+  .staffpage .section { padding: 16px 18px; }
+}
+
+/* ---------- section titles of the modules in the display font, like Play ---------- */
+.staffpage .section > h3:first-child, .staffpage .msgsec > h3:first-child, .staffpage details.msgsec > summary b { font: 400 22px/1.2 var(--font-display); color: var(--accent); }
+
+/* ---------- dark mode (a PC browser set to dark; the robot is light): the deep green becomes the
+   page itself, so the header and the banners take the card colour and the apricot stays the accent. ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .staffpage .ctop, :root:not([data-theme="light"]) .staffpage .banner { background: var(--surface); color: var(--ink); }
+  :root:not([data-theme="light"]) .staffpage .ctop .tabs button, :root:not([data-theme="light"]) .staffpage .setup .ctitle h1,
+  :root:not([data-theme="light"]) .langsw button, :root:not([data-theme="light"]) .st-toolsbtn, :root:not([data-theme="light"]) .staffpage .banner .ghost { color: var(--ink); }
+  :root:not([data-theme="light"]) .staffpage .ctop .tabs button[aria-selected="true"], :root:not([data-theme="light"]) .staffpage .ctop .tabs button:hover { background: var(--surface-2); }
+  :root:not([data-theme="light"]) .playdot { background: var(--surface); color: var(--ink); }
+}
+:root[data-theme="dark"] .staffpage .ctop, :root[data-theme="dark"] .staffpage .banner { background: var(--surface); color: var(--ink); }
+:root[data-theme="dark"] .staffpage .ctop .tabs button, :root[data-theme="dark"] .staffpage .setup .ctitle h1,
+:root[data-theme="dark"] .langsw button, :root[data-theme="dark"] .st-toolsbtn, :root[data-theme="dark"] .staffpage .banner .ghost { color: var(--ink); }
+:root[data-theme="dark"] .staffpage .ctop .tabs button[aria-selected="true"], :root[data-theme="dark"] .staffpage .ctop .tabs button:hover { background: var(--surface-2); }
+:root[data-theme="dark"] .playdot { background: var(--surface); color: var(--ink); }
+.staffpage .banner.msgofferbanner { margin-bottom: 0; }
+.staffpage .banner .pcrown, .staffpage .msgofferbanner .pcrown { color: var(--apricot); }
+
+/* ---------- the banners folded into one line (staff.js, foldTray) ---------- */
+.btray { display: flex; flex-direction: column; gap: 10px; }
+.btray[hidden] { display: none !important; }
+.traylist { display: flex; flex-direction: column; gap: 10px; }
+.btray.open .traylist { padding: 0 0 2px 14px; box-shadow: inset 3px 0 0 var(--apricot); }
+.staffpage .banner.trayline { width: 100%; min-height: 54px; border: 0; cursor: pointer; text-align: left; font: 700 16px var(--font); padding: 8px 16px 8px 18px; gap: 12px; flex-wrap: nowrap; }
+.staffpage .banner.trayline::before { display: none; }
+.staffpage .banner.trayline:hover { background: var(--accent-2); }
+.staffpage .banner.trayline:focus-visible { outline: 3px solid var(--apricot); outline-offset: 2px; }
+.staffpage .banner.trayline.urgent { background: var(--danger); }
+.tdots { flex: none; display: inline-flex; gap: 5px; }
+.tdots i { width: 9px; height: 9px; border-radius: 50%; background: var(--apricot); }
+.trayline .tlabel { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.trayline .tcount { flex: none; font-weight: 600; opacity: .78; font-size: 14px; }
+.trayline .tmore { flex: none; border-radius: var(--radius); padding: 7px 16px; background: var(--apricot); color: var(--on-apricot); font-size: 14px; }
+.trayline .tchev { flex: none; width: 10px; height: 10px; margin: 0 4px 4px 2px; border-right: 3px solid var(--apricot); border-bottom: 3px solid var(--apricot); transform: rotate(45deg); transition: transform .2s; }
+.trayline[aria-expanded="true"] .tchev { transform: rotate(-135deg); margin-bottom: -4px; }
+/* The folded line's parts keep their own size (the banner rule above lets a banner's text grow). */
+.staffpage .banner.trayline > span { flex: none; }
+.staffpage .banner.trayline > .tlabel { flex: 1 1 auto; min-width: 0; }
+.staffpage .banner.trayline > .tchev { width: 10px; height: 10px; }
+
+/* ---------- 1.16 · Typography (agent V): LabLand's roles (see the end of css/lab.css) ----------
+   Titles in the grotesque, tight; descriptions in the serif; buttons, tabs and chips in the grotesque;
+   field names and section marks in upper case. Only fonts, weights, spacing and line-heights here. */
+/* section marks and field names: small upper case */
+.staffpage .section h3, .staffpage .setup h3, .staffpage .answer h3, .staffpage .setup .field > span:first-child, .staffpage .ctitle .cteam,
+.staffpage .tcat, .staffpage .tbadge, .staffpage .dkick, .staffpage .setup .featkick, .pmkick, .infos span, .staffpage .tbl th,
+.acctsheet h4, .staffpage .setup .premres h4 {
+  font-family: var(--font-label); font-weight: var(--w-ui); letter-spacing: var(--track-label); text-transform: uppercase; }
+.staffpage .section h3, .staffpage .setup h3, .staffpage .answer h3 { font-size: 14px; line-height: 1.3; }
+/* titles */
+.staffpage .setup h2, .staffpage .section h2, .staffpage .setup h3.ph, .staffpage .setup .ctitle h1, .staffpage .setup h2.dname,
+.staffpage #debrief h1, .staffpage #debrief h2, .staffpage .msgtop h2, .staffpage .arhead h2, .staffpage .setup .storetop h2,
+.staffpage .setup .feat h3, .staffpage .setup .packbody h3, .pmodal h2, .staffpage .setup .ashtext h3, .staffpage .setup .acctsheet h3,
+.ashtext h3, .acctsheet h3, .staffpage .section > h3:first-child, .staffpage .msgsec > h3:first-child, .staffpage details.msgsec > summary b {
+  font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); line-height: 1.02; text-transform: none; }
+.staffpage .section > h3:first-child, .staffpage .msgsec > h3:first-child { font-size: 22px; }
+.staffpage .setup h3.ph { font-size: 21px; }
+.staffpage .pavatar { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); }
+/* descriptions: the serif, regular weight at these small sizes */
+.staffpage .ddesc, .staffpage .setup .about, .staffpage .setup .feattag, .staffpage .setup .ashtag, .pmsuccess p {
+  font-family: var(--font-text); font-weight: var(--w-text-small); letter-spacing: -.005em; line-height: 1.3; }
+.staffpage .ddesc, .staffpage .setup .feattag, .staffpage .setup .ashtag, .staffpage .setup .about, .pmsuccess p { font-size: 17px; }
+/* buttons, tabs, chips: the grotesque, semi-bold instead of bold */
+.staffpage .go, .staffpage .setup .go, .staffpage .ctop .tabs button, .subnav button, .staffpage .chip, .pillbtn, .acctbtn,
+.staffpage .banner.trayline, .pmconfirm, .pmback, .langsw button, .staffpage details.more > summary { font-family: var(--font); font-weight: var(--w-strong); }
+.staffpage .ghost { font-family: var(--font); font-weight: var(--w-ui); }
+.staffpage .tname, .staffpage .seg b, .appmeta b, .licname { font-weight: var(--w-strong); letter-spacing: -.01em; }
+/* ---------- end of Typography 1.16 ---------- */
+
+/* ---------- 1.16 · Care Team simplification (agent T): layout and colours only; fonts are tokens ---------- */
+/* "To do": the tag, always there when something waits (staff.js, foldTray) */
+.trayline .ttag { flex: none; display: inline-flex; align-items: center; min-height: 30px; padding: 4px 13px; border-radius: var(--radius); background: var(--apricot); color: var(--on-apricot);
+  font-family: var(--font-label); font-weight: var(--w-strong, 700); font-size: 13px; letter-spacing: var(--track-label, .06em); text-transform: uppercase; white-space: nowrap; }
+.staffpage .banner.trayline > .ttag { flex: none; }
+.btray.single { flex-direction: row; align-items: stretch; gap: 8px; }
+.btray.single .traylist { flex: 1 1 auto; min-width: 0; }
+.staffpage .btray.single .banner.trayline { width: auto; flex: none; min-height: 0; padding: 8px 10px; cursor: default; }
+.staffpage .btray.single .banner.trayline:hover { background: var(--accent); }
+.staffpage .btray.single .banner.trayline.urgent:hover { background: var(--danger); }
+.btray.single .trayline .ttag { align-self: center; }
+@media (max-width: 700px) { .btray.single { flex-direction: column; } .staffpage .btray.single .banner.trayline { align-self: flex-start; } }
+
+/* Activities: the way to the resident's Results, and to the playlists from Bellatrix Play */
+.staffpage .pmood .presults { margin-top: 2px; color: var(--accent); font-weight: var(--w-strong, 700); text-decoration: none; white-space: nowrap; }
+.staffpage .pmood .presults:hover { text-decoration: underline; }
+.staffpage .playtaste .playbtns { display: flex; flex-direction: column; gap: 8px; }
+.staffpage #resBody .empty small { display: block; margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+/* Playlists (js/reco-staff.js): the playlists first, the rest under "More options" */
+.staffpage .rs-main { display: flex; flex-direction: column; gap: 14px; }
+.staffpage .rs-head { gap: 10px 18px; }
+.rs-pick button .rs-count { display: inline-block; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: var(--radius); background: var(--apricot); color: var(--on-apricot);
+  font-size: 11px; line-height: 18px; text-align: center; vertical-align: 1px; }
+.rs-consent { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface-2); }
+.rs-consent p { margin: 0; font-size: 16px; }
+.rs-pls button { min-width: 150px; }
+.rs-song small .rs-tag { margin: 0 0 0 6px; }
+.rs-approve .note { flex: 1 1 200px; }
+.rs-feedback .grow { flex: 1 1 auto; }
+.staffpage details.rs-more { border-top: 1px solid var(--line); padding-top: 4px; }
+.rs-sub { display: flex; flex-direction: column; gap: 8px; padding: 10px 0 14px; border-bottom: 1px solid var(--line); }
+.rs-sub h3 { margin: 0; }
+.rs-cfg { font-size: 12px; }
+
+/* Photos and Books (js/album-staff.js) */
+.staffpage details.armore { border-top: 1px solid var(--line); padding-top: 4px; }
+.armore .arthemes, .armore .arnotes, .armore .ardash, .armore .arday { padding: 8px 0 12px; }
+.armore h3 { margin: 4px 0 8px; }
+.arbooksprem { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; border-radius: var(--radius); background: var(--surface-2); }
+.arbooksprem p { flex: 1 1 260px; margin: 0; font-size: 16px; }
+.arbooksprem .pcrown, .arbooks .pcrown { color: var(--ochre); }
+.arbooksprem .arreq { padding: 2px 10px; border-radius: var(--radius); background: var(--apricot); color: var(--on-apricot); }
+.arbooks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; }
+.arbooks h3 { margin: 0 0 6px; }
+.arbooks .arlist { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+/* the Premium window's short line when the family portal cannot be reached (js/library.js) */
+.pmline.pmwarn { margin-top: 6px; font-size: 13px; color: var(--muted); }
+/* ---------- end of Care Team simplification 1.16 ---------- */
+
+/* ---------- 1.17: the tray for 100 residents ---------- */
+.tr-hid { display: none !important; }
+.staffpage .banner > .tr-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 200px; min-width: 0; }
+.staffpage .banner .tr-take { min-height: 42px; padding: 8px 16px; font: 600 14px var(--font-label); background: transparent; color: var(--on-accent); border: 1px solid var(--accent-2); border-radius: var(--radius); cursor: pointer; }
+.staffpage .banner .tr-take.on { background: var(--apricot); color: var(--on-apricot); border-color: var(--apricot); }
+.staffpage .tr-grp { border: 0; border-radius: var(--radius); padding: 10px 16px; text-align: left; cursor: pointer; font: 700 15px var(--font-label); background: var(--surface); color: var(--ink); box-shadow: inset 3px 0 0 var(--apricot); min-height: 44px; }
+.trayfilters { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.trayfilters[hidden] { display: none !important; }
+.trayfilters .trf { display: flex; align-items: center; gap: 8px; font: 600 14px var(--font-label); color: var(--ink); }
+.trayfilters select { min-height: 40px; max-width: 180px; font: 15px var(--font-text); }
+
+/* 15 Nov (Rahma): no "Music & photos" tab. Its parts sit inside the activity's Personalise fold
+   (staff.html .acthost: Memories photos, Book reading books, Bellatrix Play playlists, Group karaoke
+   lists): flat, under a thin line, no box in the box. */
+.staffpage #persBox .acthost { display: flex; flex-direction: column; gap: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.staffpage #persBox .acthost .arsec, .staffpage #persBox .acthost .rs-main, .staffpage #persBox .acthost .kstaff.section { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+.staffpage #persBox .acthost h3.ph, .staffpage #persBox .acthost .kstaff.section h2 { font: 400 20px/1.2 var(--font-display); color: var(--accent); margin: 0; }
+.staffpage #persBox .acthost.first { padding-top: 4px; padding-bottom: 14px; border-top: 0; border-bottom: 1px solid var(--line); }

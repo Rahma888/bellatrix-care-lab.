@@ -1,0 +1,25 @@
+# Private data and secrets: never published
+labland/data/
+labland/keys/
+from-robot/
+*.pem
+*.key
+.env
+
+# Big tools and binaries (see android/vendor/SOURCES.md to get them again)
+android/ndk/
+android/build/
+android/*.apk
+android/voices/
+android/vendor/nodejs-mobile/
+android/vendor/cloudflared/
+tools/cloudflared/
+design-brief/
+
+# Local junk
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
+android/sdk/
+android/voice/

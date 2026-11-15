@@ -1,0 +1,194 @@
+/* Free group karaoke (block A, js/karaoke.js).
+   Choosing: the usual light screens with big cards. Singing: a dark stage (class "kara-on" on the
+   stage while a song is open) with very big, high-contrast words to be read from 3 to 4 metres.
+   1.15: the "Melodie" look of the whole product: the singing stage is white (1.16 rebranding) with grey words and a blue current line.
+   Portrait 1080 x 1920 first; the head screen (.land, 1920 x 1080) puts the controls on the right.
+   Chrome 95: no :has, no color-mix. */
+
+/* ---------- choosing ---------- */
+.kchips { display: flex; flex-wrap: wrap; gap: 18px; }
+.kchip { min-height: 96px; padding: 10px 36px; border-radius: 5px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333;
+         font: 700 46px/1.1 var(--font);  }
+.kchip.on { background: #F0F0F0; color: #00519E; border-color: #00519E; }
+.knone { margin: 40px 0; font-size: 52px; line-height: 1.25; text-align: center; color: var(--muted); }
+#screen.kpick .tag { font-size: 66px; line-height: 1.08; padding: 16px 124px 16px 34px; }
+.stage.land .kchip { min-height: 76px; font-size: 36px; padding: 8px 28px; }
+.stage.land #screen.kpick .tag { font-size: 50px; padding: 10px 100px 10px 28px; }
+
+/* ---------- singing ---------- */
+.stage.kara-on { background: #FFFFFF; color: #333333; }
+#screen.ksing { gap: 18px; }
+.kara { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 22px; }
+.khead { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; }
+.ktitle { font-family: var(--font-display); font-size: 60px; font-weight: 400; line-height: 1.1; color: #666666; }
+.kstate { font-size: 30px; color: #666666; white-space: nowrap; }
+.kbar { height: 12px; flex: none; border-radius: 5px; background: #24507C; overflow: hidden; }
+.kbar i { display: block; height: 100%; width: 0; background: #9FD3F5; transition: width .2s linear; }
+
+/* Four lines: the one just sung, the one being sung (huge), the next two. Words are never cut:
+   a long line wraps between words and gets a slightly smaller size. */
+.klyrics { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: 34px; overflow: hidden; text-align: center; }
+.kl { margin: 0; line-height: 1.16; overflow-wrap: normal; word-break: normal; -webkit-hyphens: manual; hyphens: manual; }
+.kprev { font-size: 54px; color: #A9BFD6; }
+.kcur { font-size: 104px; font-weight: 700; color: #FFFFFF; }
+.kcur.kmid { font-size: 92px; }
+.kcur.klong { font-size: 78px; }
+.knext { font-size: 60px; color: #F0F6FC; }
+.knext2 { font-size: 48px; color: #A9BFD6; }
+.kempty { min-height: 1.16em; }
+.kw { transition: color .12s linear; }
+.kcur .kw.ks { color: #9FD3F5; }
+.kcur .kw.kn { color: #9FD3F5; text-decoration: underline; text-decoration-thickness: 8px; text-underline-offset: 14px; }
+.kready { color: #A9BFD6; font-weight: 400; }
+.kcount { display: inline-block; min-width: 1.2em; color: #9FD3F5; font-weight: 700; }
+/* "Chorus only": the chorus even bigger, the verses small and faint (still there for those who know them). */
+.kcur.kbig { font-size: 118px; }
+.kcur.kbig.kmid { font-size: 102px; }
+.kcur.kbig.klong { font-size: 86px; }
+.kl.kverse { font-size: 44px; font-weight: 400; color: #A9BFD6; }
+.kcur.kverse { font-size: 56px; color: #A9BFD6; }
+.kmove { animation: kslide .45s ease-out; }
+@keyframes kslide { from { transform: translateY(70px); opacity: .5; } to { transform: none; opacity: 1; } }
+.knote { margin: 0; font-size: 34px; line-height: 1.25; text-align: center; color: #9FD3F5; }
+
+/* The care team's controls: always on the screen, big, three per row. */
+.kctl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: none; }
+.kbtn { min-height: 112px; border-radius: 5px; border: 2px solid #24507C; background: #17406A; color: #FFFFFF; font: 700 38px/1.1 var(--font);
+        display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 14px; text-align: left; }
+.kbtn .kico { flex: none; width: 44px; height: 44px; }
+.kbtn .kico svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+.kbtn .klbl { min-width: 0; }
+.kbtn.kmain { background: #9FD3F5; border-color: #9FD3F5; color: #00325F;  }
+.kbtn.on { background: #17406A; border-color: #24507C; }
+.kbtn.kother { border-color: #9FD3F5; color: #9FD3F5; }
+.kbtn.kstop { background: #00519E; border-color: #00519E; color: #FFFFFF; }
+.kbtn.na { opacity: .38; }
+.kbtn.kvol .klbl { font-size: 1.12em; }
+.kbtn:active { background: #17406A; }
+.kbtn.kmain:active { background: #9FD3F5; }
+
+/* Head screen (1920 x 1080): words on the left, controls on the right. */
+.stage.land #screen.ksing.single > .kara { width: 100% !important; }
+.stage.land .kara { display: grid; grid-template-columns: minmax(0, 1fr) 600px; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 14px 44px; }
+.stage.land .khead, .stage.land .kbar { grid-column: 1 / -1; }
+.stage.land .klyrics { grid-column: 1; grid-row: 3; gap: 18px; }
+.stage.land .knote { grid-column: 1; grid-row: 4; font-size: 28px; }
+.stage.land .kctl { grid-column: 2; grid-row: 3 / 5; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 12px; }
+.stage.land .ktitle { font-size: 48px; }
+.stage.land .kstate { font-size: 24px; }
+.stage.land .kprev { font-size: 40px; }
+.stage.land .kcur { font-size: 82px; }
+.stage.land .kcur.kmid { font-size: 72px; }
+.stage.land .kcur.klong { font-size: 62px; }
+.stage.land .kcur.kbig { font-size: 92px; }
+.stage.land .kcur.kbig.kmid { font-size: 80px; }
+.stage.land .kcur.kbig.klong { font-size: 68px; }
+.stage.land .knext { font-size: 46px; }
+.stage.land .knext2 { font-size: 36px; }
+.stage.land .kl.kverse { font-size: 34px; }
+.stage.land .kcur.kverse { font-size: 44px; }
+.stage.land .kbtn { min-height: 84px; font-size: 30px; border-radius: 5px; gap: 10px; }
+.stage.land .kbtn .kico { width: 34px; height: 34px; }
+
+/* ---------- Care Team section (staff.html) ---------- */
+.kstaff .klist { margin: 8px 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+.kstaff .klist li { line-height: 1.4; }
+.kstaff .kform { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
+.kstaff .kchecks { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 14px; }
+.kstaff .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.kstaff .kmsg { color: var(--good); font-weight: 700; }
+
+/* ---------- 1.16: video karaoke (js/karaoke-yt.js) ----------
+   The source chips and "2 / 9" above the cards; a red "INTERNET" badge is drawn in the card picture.
+   The video step: the slot keeps 16:9 and at least 200 x 200 pixels (YouTube's minimum); the official
+   player sits in .kv-box on the stage, moved onto the slot by js/karaoke.js; nothing is drawn on it. */
+.ksrc { align-items: center; }
+.kpage { margin-left: auto; font-size: 36px; color: var(--muted); white-space: nowrap; }
+.stage.land .kpage { font-size: 30px; }
+.kvid .kvslot { flex: none; width: 100%; aspect-ratio: 16 / 9; min-width: 200px; min-height: 200px; border-radius: 5px; background: #0B1F33;
+                display: flex; align-items: center; justify-content: center; }
+.kvwait { margin: 0; font-size: 40px; color: #A9BFD6; }
+.kvid .kvsrc { font-size: 28px; color: #A9BFD6; }
+.kvid .kctl { margin-top: auto; }
+.kv-box { position: absolute; left: 0; top: 0; width: 200px; height: 200px; min-width: 200px; min-height: 200px; z-index: 2; border-radius: 5px; overflow: hidden; background: #000000; pointer-events: none; }
+.kv-box.kv-hide { visibility: hidden; }
+.kv-box iframe, .kv-box .kv-frame { display: block; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.stage.land .kvid .kvslot { grid-column: 1; grid-row: 3; width: auto; height: 100%; max-width: 100%; justify-self: center; align-self: center; }
+.stage.land .kvid .kvsrc { grid-column: 1; grid-row: 4; font-size: 24px; }
+
+/* ---------- 1.16 · Typography (agent V): LabLand's roles (see the end of css/lab.css) ---------- */
+.ktitle { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); line-height: 1.02; }
+/* the lyrics stay in the grotesque (read fast, from a chair), the current line bold */
+.kl { font-family: var(--font); letter-spacing: -.01em; }
+/* what Bellatrix says around the song: the serif */
+.knone, .knote { font-family: var(--font-text); font-weight: var(--w-text); letter-spacing: var(--track-text); line-height: var(--lh-text); }
+.kstate { font-family: var(--font-label); font-weight: var(--w-label); letter-spacing: var(--track-label); text-transform: uppercase; }
+.kchip, .kbtn { font-family: var(--font); font-weight: var(--w-strong); }
+/* ---------- end of Typography 1.16 ---------- */
+
+/* ---------- 1.16 · Lyrics like Spotify (patient screen), white version (1.16 rebranding, "less blue") ----------
+   White screen, text #333. Big bold left-aligned lines; the current one in Suavia blue at full strength,
+   the past and coming ones in grey #8F8F8F; the title small in #666 at the top; one round blue main button,
+   the other controls outlined in grey. Blue covers only the current line and one button. */
+.stage.kara-on, .stage.kara-on #screen { background: #FFFFFF; color: #333333; }
+.stage.kara-on .top { color: #666666; }
+.kara { gap: 14px; }
+.khead { align-items: baseline; }
+.ktitle { font-family: var(--font); font-size: 30px; font-weight: 400; letter-spacing: 0; line-height: 1.2; color: #666666; }
+.kstate { font-size: 22px; color: #666666; }
+.kbar { height: 4px; border-radius: 0; background: #E0E0E0; }
+.kbar i { background: #00519E; }
+.klyrics { justify-content: flex-start; gap: 30px; text-align: left; padding: 6px 0 0; }
+.kl { font-family: var(--font); font-weight: 700; font-size: 76px; line-height: 1.12; letter-spacing: -.015em; color: #8F8F8F; }
+.kprev, .knext, .knext2 { font-size: 76px; color: #8F8F8F; }
+.kcur { font-size: 84px; color: #00519E; }
+.kcur.kmid, .kl.kmid { font-size: 76px; }
+.kcur.klong, .kl.klong { font-size: 66px; }
+.kcur.kbig { font-size: 92px; }
+.kcur.kbig.kmid { font-size: 82px; }
+.kcur.kbig.klong { font-size: 72px; }
+.kl.kverse, .kcur.kverse { font-size: 48px; font-weight: 700; color: #8F8F8F; }
+.kcur .kw.ks { color: #00519E; }
+.kcur .kw.kn { color: #00519E; text-decoration: none; }
+.kready { color: #666666; font-weight: 700; }
+.kcount { color: #00519E; }
+.kmove { animation: kslide .6s ease-out; }
+@keyframes kslide { from { transform: translateY(110px); } to { transform: none; } }
+.knote { color: #666666; font-size: 28px; text-align: left; }
+.kvwait, .kvid .kvsrc { color: #666666; }
+.kvid .kvslot { border-radius: 0; background: #F0F0F0; }
+/* controls: one round filled blue main button, the others outlined in grey, no shadows */
+.kbtn { border-radius: 5px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; min-height: 96px; font-size: 32px; }
+.kbtn.kmain { background: #00519E; border-color: #00519E; color: #FFFFFF; border-radius: 48px; }
+.kbtn.on { background: #F0F0F0; border-color: #00519E; }
+.kbtn.kother { border-color: #E0E0E0; color: #333333; }
+.kbtn.kstop { background: #FFFFFF; border-color: #E0E0E0; color: #333333; }
+.kbtn:active { background: #F0F0F0; }
+.kbtn.kmain:active { background: #003E79; }
+.stage.kara-on .foot button { background: #FFFFFF; color: #333333; border-color: #E0E0E0; }
+.stage.land .kl, .stage.land .kprev, .stage.land .knext, .stage.land .knext2 { font-size: 52px; }
+.stage.land .kcur { font-size: 60px; }
+.stage.land .kcur.kmid, .stage.land .kl.kmid { font-size: 52px; }
+.stage.land .kcur.klong, .stage.land .kl.klong { font-size: 46px; }
+.stage.land .klyrics { gap: 18px; }
+.stage.land .ktitle { font-size: 26px; }
+.stage.land .kbtn { min-height: 76px; font-size: 28px; border-radius: 5px; }
+.stage.land .kbtn.kmain { border-radius: 38px; }
+
+/* ---------- 2026-11-14 · Fewer buttons for older residents ----------
+   Only Pause / Resume, Next song (when there is one) and Stop on the singing screen: one row of very
+   big targets, the same width each; Pause is the one filled blue button. */
+.kctl { display: flex; gap: 20px; }
+.kctl .kbtn { flex: 1 1 0; min-width: 0; min-height: 148px; font-size: 40px; gap: 18px; padding: 10px 18px; }
+.kctl .kbtn .kico { width: 52px; height: 52px; }
+.kctl .kbtn.kmain { border-radius: 74px; }
+.kstate:empty { display: none; }
+.stage.land .kctl { display: flex; flex-direction: column; justify-content: center; gap: 18px; }
+.stage.land .kctl .kbtn { flex: none; min-height: 132px; font-size: 38px; }
+.stage.land .kctl .kbtn.kmain { border-radius: 66px; }
+/* the "no sound" line stays readable when a lyric line is cut just above it */
+.knote { position: relative; background: #FFFFFF; }
+/* a lyric line that does not fit whole in the box is not shown at all (it wraps into a column
+   outside the box) instead of being cut through the middle of its letters */
+.klyrics { flex-wrap: wrap; align-content: flex-start; }
+.klyrics > .kl { flex: none; width: 100%; }

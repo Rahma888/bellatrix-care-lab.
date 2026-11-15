@@ -1,0 +1,183 @@
+/* The family's page (famille.html): phone first, also fine on a computer.
+   Suavia identity (Roboto Condensed, blue #00519E; tokens in css/brand.css, loaded after this file); light and dark follow the device.
+   The call itself is dark in both modes, like a phone call. */
+:root {
+  --bg: #FFFFFF; --surface: #FFFFFF; --ink: #333333; --muted: #666666; --line: #E0E0E0;
+  --accent: #00519E; --on-accent: #FFFFFF; --focus: #00A0E3; --danger: #B3261E; --good: #1E8A5A; --on-good: #FFFFFF;
+  --call: #0B1F33; --call-ink: #FFFFFF; --hang: #B3261E;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0B1F33; --surface: #102A45; --ink: #F0F6FC; --muted: #A9BFD6; --line: #24507C;
+    --accent: #9FD3F5; --on-accent: #00325F; --focus: #00A0E3; --danger: #FF8A80; --good: #9FD3F5; --on-good: #00325F; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0B1F33; --surface: #102A45; --ink: #F0F6FC; --muted: #A9BFD6; --line: #24507C;
+  --accent: #9FD3F5; --on-accent: #00325F; --focus: #00A0E3; --danger: #FF8A80; --good: #9FD3F5; --on-good: #00325F; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; min-height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 18px/1.45 var(--font); -webkit-text-size-adjust: 100%; }
+button { font-family: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+#app { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.card { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 28px 22px;
+        display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
+.brand { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .04em; color: var(--accent); }
+h1 { margin: 0; font-size: 26px; line-height: 1.2; text-wrap: balance; }
+.big { margin: 0; font-size: 20px; line-height: 1.4; }
+.note { margin: 0; font-size: 15px; color: var(--muted); }
+.privacy { border-top: 1px solid var(--line); padding-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.avatar { width: 112px; height: 112px; border-radius: 5px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center;
+          font-size: 52px; font-weight: 700; flex: none; }
+
+.state { margin: 0; font-size: 20px; font-weight: 700; padding: 10px 14px; border-radius: 5px; background: var(--bg); width: 100%; }
+.state.ok { color: var(--accent); }
+.state.wait { color: var(--muted); }
+.state.off { color: var(--muted); }
+
+/* One huge button: easy for anyone, on any phone. */
+.callbtn { width: 100%; min-height: 84px; border: 0; border-radius: 5px; background: var(--accent); color: var(--on-good); font-size: 26px; font-weight: 700;
+           display: flex; align-items: center; justify-content: center; gap: 14px; padding: 12px 20px; }
+.callbtn svg { width: 44px; height: 44px; flex: none; }
+.callbtn:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+.callbtn.small { width: auto; min-height: 60px; font-size: 20px; padding: 10px 24px; }
+.callbtn.small svg { width: 32px; height: 32px; }
+.callbtn:not(:disabled):active { filter: brightness(.92); }
+.ghost { min-height: 52px; border: 2px solid var(--line); background: transparent; color: var(--ink); border-radius: 5px; padding: 8px 20px; font-size: 18px; font-weight: 700; }
+.msg .big { max-width: 30em; }
+.thanks { font-weight: 700; }
+
+/* 1.16: sober, like LabLand: no pulsing rings (the "ringing" state is said in words). */
+.pulse { animation: none; }
+
+/* ---------- ringing: their own camera picture behind, mirrored like a mirror ---------- */
+#app.v-ring, #app.v-call { padding: 0; background: var(--call); color: var(--call-ink); }
+.ring, .incall { position: fixed; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; background: var(--call); color: var(--call-ink); }
+.ring .preview { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: .45; }
+.ringbox { position: absolute; left: 0; right: 0; bottom: 0; top: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: 16px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); text-align: center; }
+.ringbox h1 { font-size: 30px; }
+.ringbox p { margin: 0; font-size: 18px; }
+.ringbox .note { color: #BFE3F9; }
+
+/* ---------- in the call ---------- */
+.incall .remote { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; background: #000000; }
+.cwait { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--call); }
+.cwait p { margin: 0; font-size: 20px; }
+.ctop { position: absolute; left: 12px; right: 12px; top: calc(12px + env(safe-area-inset-top)); display: flex; justify-content: space-between; gap: 10px; pointer-events: none; }
+.ctop span { background: rgba(0, 0, 0, .55); border-radius: 5px; padding: 6px 12px; font-size: 18px; font-weight: 700; }
+.ctime { font-variant-numeric: tabular-nums; }
+.self { position: absolute; right: 12px; top: calc(60px + env(safe-area-inset-top)); width: 28vw; max-width: 200px; aspect-ratio: 3 / 4; object-fit: cover;
+        transform: scaleX(-1); border-radius: 5px; border: 2px solid rgba(255, 255, 255, .7); background: #17406A; }
+.self.off { opacity: .25; }
+.cnote { position: absolute; left: 12px; right: 12px; top: calc(60px + env(safe-area-inset-top)); margin: 0; text-align: center; font-size: 15px; color: #BFE3F9; }
+.cbar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: flex-start; gap: 18px;
+        padding: 14px 12px calc(16px + env(safe-area-inset-bottom)); background: var(--call); border-top: 1px solid rgba(255, 255, 255, .14); }
+.cbtn { width: 96px; border: 0; background: transparent; color: var(--call-ink); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; font-size: 14px; font-weight: 700; }
+.cbtn svg { width: 64px; height: 64px; padding: 14px; border-radius: 5px; background: rgba(255, 255, 255, .2); box-sizing: content-box; }
+.cbtn[aria-pressed="true"] svg { background: #FFFFFF; color: #00325F; }
+.cbtn.danger svg { background: var(--hang); color: #FFFFFF; }
+.ring .cbtn { width: auto; font-size: 18px; margin-top: 10px; }
+
+@media (min-width: 720px) {
+  body { font-size: 19px; }
+  .card { padding: 36px 40px; }
+  h1 { font-size: 30px; }
+  .self { width: 220px; max-width: none; aspect-ratio: 4 / 3; }
+  .cbtn { width: 120px; font-size: 15px; }
+  .cbtn svg { width: 70px; height: 70px; }
+}
+
+/* ---------- Ludo with the resident, during the call ----------
+   The board takes the screen; the resident's live picture stays small in the top-left corner (no
+   player has a yard there); the call buttons stay at the bottom, smaller. */
+.ginvite { position: absolute; left: 12px; right: 12px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 6; max-width: 520px; margin: 0 auto;
+           background: var(--surface); color: var(--ink); border-radius: 5px; padding: 20px 18px; display: flex; flex-direction: column; gap: 14px;
+           text-align: center; border: 1px solid var(--line); }
+.ginvite .big { font-weight: 700; }
+.gtoast { position: absolute; left: 12px; right: 12px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 6; margin: 0 auto; max-width: 520px; text-align: center;
+          background: rgba(0, 0, 0, .78); color: #FFFFFF; border-radius: 5px; padding: 12px 16px; font-size: 17px; }
+.incall.gaming .remote { left: 12px; top: calc(56px + env(safe-area-inset-top)); width: 30vw; max-width: 200px; height: auto; aspect-ratio: 4 / 3; object-fit: cover;
+                         border-radius: 5px; border: 1px solid rgba(255, 255, 255, .6); z-index: 4; }
+.incall.gaming .self, .incall.gaming .cnote, .incall.gaming .cwait { display: none; }
+.incall.gaming .cbar { padding-top: 8px; background: var(--call); }
+.incall.gaming .cbtn { width: 84px; font-size: 12px; }
+.incall.gaming .cbtn svg { width: 36px; height: 36px; padding: 10px; }
+.game { position: absolute; left: 0; right: 0; top: calc(52px + env(safe-area-inset-top)); bottom: calc(106px + env(safe-area-inset-bottom)); z-index: 3;
+        display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 4px 12px 10px; overflow-y: auto; background: var(--call); }
+.gboard { width: min(100%, 56vh); aspect-ratio: 1 / 1; flex: none; }
+.gboard svg { width: 100%; height: 100%; display: block; }
+.gside { width: 100%; max-width: 440px; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.gstatus { display: flex; align-items: center; gap: 12px; }
+.gdie { flex: none; width: 56px; height: 56px; }
+.gdie svg { width: 56px; height: 56px; display: block; }
+.gturn { margin: 0; font-size: 21px; font-weight: 700; }
+.glegend { margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 15px; color: #BFE3F9; }
+.glegend span { display: inline-flex; align-items: center; gap: 6px; }
+.glegend svg { width: 22px; height: 22px; }
+.gnote { margin: 0; min-height: 1.4em; font-size: 16px; color: #BFE3F9; text-align: center; }
+.gbtns { display: flex; flex-direction: column; gap: 8px; }
+.groll { min-height: 72px; }
+.groll svg { width: 38px; height: 38px; }
+.gtoken { min-height: 64px; border: 0; border-radius: 5px; background: #FFFFFF; color: #00325F; display: flex; align-items: center; gap: 14px;
+          padding: 8px 16px; font-size: 20px; font-weight: 700; text-align: left; }
+.gtoken svg { width: 44px; height: 44px; flex: none; }
+.gleave { color: #FFFFFF; border-color: rgba(255, 255, 255, .5); }
+/* A computer screen, wider than tall: the board on the left, the rest beside it. */
+@media (min-width: 720px) and (min-aspect-ratio: 1 / 1) {
+  .game { flex-direction: row; justify-content: center; align-items: center; gap: 28px; }
+  .gboard { width: min(54vw, calc(100vh - 170px)); }
+  .gside { width: 340px; }
+  .incall.gaming .remote { width: 220px; max-width: none; }
+}
+
+/* 1.16: iPhone (Safari) without a tap yet: one plain button for the sound, over the picture. */
+.tapsound { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 5; min-height: 56px; padding: 12px 24px;
+            border: 1px solid rgba(255, 255, 255, .6); border-radius: 5px; background: var(--call); color: var(--call-ink); font-size: 18px; font-weight: 700; cursor: pointer; }
+
+/* ---------- 1.16 · Typography (agent V): LabLand's roles, as in css/lab.css ---------- */
+:root {
+  --font: "Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-text: var(--font);
+  --font-code: var(--font);
+  --font-display: var(--font);
+  --font-label: var(--font);
+  --w-title: 500; --w-text: 400; --w-text-small: 400; --w-ui: 500; --w-strong: 600; --w-label: 400;
+  --track-title: 0; --track-text: 0; --track-label: .02em;
+}
+/* iPhone (Safari): the text keeps its size when the phone turns; the serif sets its own optical size */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-optical-sizing: auto; }
+h1 { color: var(--accent); }
+.ringbox h1 { color: #FFFFFF; }
+h1, .avatar, .ringbox h1 { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); line-height: 1.08; }
+/* what the family reads: the serif */
+.big, .ringbox p, .cwait p, .gnote { font-family: var(--font-text); font-weight: var(--w-text-small); letter-spacing: -.005em; line-height: 1.32; }
+.brand { font-family: var(--font-label); font-weight: var(--w-strong); letter-spacing: var(--track-label); }
+.callbtn, .ghost, .cbtn, .state, .thanks, .gturn, .ctop span { font-family: var(--font); font-weight: var(--w-strong); }
+/* ---------- end of Typography 1.16 ---------- */
+
+/* ---------- 1.16 · Group call (agent C): the other relatives' tiles, bigger call buttons ---------- */
+.others { position: absolute; left: 12px; right: 12px; bottom: calc(178px + env(safe-area-inset-bottom)); z-index: 2; display: flex; justify-content: center; gap: 10px; pointer-events: none; }
+.others.n0 { display: none; }
+.otile { position: relative; width: 36vw; max-width: 240px; aspect-ratio: 3 / 4; border-radius: 5px; overflow: hidden; background: #17406A; border: 2px solid rgba(255, 255, 255, .7); }
+.otile video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+.otile.on video { opacity: 1; }
+.oname { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 8px; background: rgba(0, 0, 0, .62); color: #FFFFFF; font: 700 18px/1.15 var(--font); text-align: center;
+         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.incall.gaming .others { display: none; }
+.cbar { gap: 22px; }
+.cbtn { width: 108px; font-size: 17px; }
+.cbtn svg { width: 72px; height: 72px; }
+.state.full { font-size: 30px; }
+@media (min-width: 720px) {
+  .otile { width: 200px; aspect-ratio: 4 / 3; }
+  .others { bottom: 200px; }
+  .cbtn { width: 130px; font-size: 18px; }
+}
+.incall.group .remote { height: calc(100% - 178px - 48vw - 24px); }
+@media (min-width: 720px) { .incall.group .remote { height: calc(100% - 200px - 170px); } }
+/* ---------- end of Group call ---------- */

@@ -1,0 +1,18 @@
+{
+  "name": "Bellatrix · Famille",
+  "short_name": "Bellatrix",
+  "description": "Envoyer des messages et des photos à un proche en maison de soins. Messages to a loved one in a care home. Nachrichten an einen lieben Menschen im Pflegeheim.",
+  "id": "portail.html",
+  "start_url": "portail.html",
+  "scope": "portail.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#00519E",
+  "lang": "fr",
+  "icons": [
+    { "src": "icons/portail-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/portail-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/suavia-cross.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

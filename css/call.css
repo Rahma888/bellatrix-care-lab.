@@ -1,0 +1,245 @@
+/* Family call (version 1.9): the robot's call screens (js/familycall.js) and the Care Team's Family
+   tab (js/family-staff.js). Uses the tokens of css/lab.css, so light and dark mode follow it.
+   The video area stays dark in both modes, like a phone call. Works in the robot's WebView
+   (Chrome 95): no :has(), no color-mix().
+   1.15: the "Melodie" look: the call room is deep green, answer in sage green, hang up in terracotta. */
+
+/* ---------- robot screen: ringing (the .call look of lab.css) ---------- */
+.fcring .callname { font-size: 76px; }
+.fcring .callstate { font-size: 52px; color: #666666; }
+/* Labels such as "Pas maintenant" stay inside the round buttons. */
+#screen.fcall .btn.round { padding: 0 14px; font-size: 32px; line-height: 1.05; }
+/* 1.15: a smaller symbol lifts a two-line label ("Pas maintenant") into the wide part of the circle. */
+#screen.fcall .btn.round:not(.fchang) { gap: 0; }
+#screen.fcall .btn.round:not(.fchang) .bico svg { width: 80px; height: 80px; }
+.btn.round.fcanswer, .stage .btn.round.fcanswer.primary { background: #1E8A5A; border-color: #1E8A5A; color: #FFFFFF; }
+.btn.round.fcdecline, .btn.round.fchang { background: #B3261E; border-color: #B3261E; color: #FFFFFF; }
+.btn.round.fcanswer.hot, .btn.round.fcdecline.hot, .btn.round.fchang.hot { box-shadow: 0 0 0 10px var(--focus); }
+
+/* ---------- robot screen: in the call ---------- */
+.fcvideo { position: relative; flex: 1; min-height: 0; border-radius: 5px; overflow: hidden; background: #F0F0F0; color: #333333; border: 1px solid #E0E0E0; }
+/* contain, not cover: the whole picture, so a face or a second person is never cut off. */
+.fcvideo video.fcremote { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: #F0F0F0; opacity: 0; }
+.fcvideo .fctile.on video.fcremote { opacity: 1; }
+/* 1.16: one tile per relative (1 to 3), side by side; names under the tiles when there are several. */
+.fctiles { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; gap: 14px; }
+.fctile { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.fcvbox { position: relative; flex: 1; min-height: 0; background: #F0F0F0; overflow: hidden; }
+.fctilename { display: none; }
+.fcvideo.multi .fcvbox { border-radius: 5px 5px 0 0; }
+.fcvideo.multi .fctilename { display: block; padding: 10px 16px 12px; background: #FFFFFF; color: #333333; border: 1px solid #E0E0E0; font-size: 56px; line-height: 1.1; text-align: center; border-radius: 0 0 5px 5px;
+                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fcvideo.multi .fcname { display: none; }
+.fcvideo.multi .fcnote { bottom: auto; top: 20px; left: 20px; right: 200px; font-size: 44px; }
+.fcvideo.multi .fctimer { top: 20px; right: 20px; }
+.stage.land .fcvideo.multi .fctilename { font-size: 50px; }
+.stage:not(.land) .fctiles.n3, .stage:not(.land) .fctiles.n2 { flex-direction: column; }
+.fcwait { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; padding: 40px; }
+.fcvideo.on .fcwait { display: none; }
+.fcwait .who { width: 480px; height: 480px; border-radius: 50%; overflow: hidden; background: #F0F0F0; box-shadow: 0 0 0 12px #FFFFFF; flex: none; }
+.fcwait .who img, .fcwait .who svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fcstate { font-size: 54px; line-height: 1.25; color: #666666; text-align: center; }
+.fcname, .fctimer { position: absolute; top: 28px; background: rgba(0, 0, 0, .58); color: #FFFFFF; border-radius: 5px; padding: 8px 22px; z-index: 1; }
+.fcname { left: 28px; max-width: 60%; font-size: 46px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fctimer { right: 28px; font-size: 42px; font-variant-numeric: tabular-nums; }
+.fcself { position: absolute; right: 28px; bottom: 28px; width: 300px; height: 225px; border-radius: 5px; overflow: hidden; border: 4px solid #FFFFFF; background: #F0F0F0; z-index: 1; }
+.fcself video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+.fcvideo.ended video, .fcvideo.ended .fcself, .fcvideo.ended .fctap { display: none; }
+.fcvol { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); display: flex; gap: 10px; align-items: flex-end; background: rgba(0, 0, 0, .66); border-radius: 5px; padding: 20px 26px; z-index: 2; }
+.fcvol i { display: block; width: 24px; height: 64px; border-radius: 5px; background: rgba(255, 255, 255, .22); }
+.fcvol i.on { background: #FFFFFF; }
+.fctap { position: absolute; left: 40px; right: 40px; bottom: 40px; margin: 0; text-align: center; background: rgba(0, 0, 0, .74); color: #FFFFFF; font-size: 46px; line-height: 1.3; border-radius: 5px; padding: 18px 26px; z-index: 2; }
+
+/* Four buttons in one row on the upright screen: volume down, hang up (largest), volume up; "Show me"
+   wraps below when it does not fit. */
+#screen.fcin .actions { flex-wrap: wrap; align-items: center; gap: 30px 40px; }
+#screen.fcall .btn.round.fcsoft { width: 196px; height: 196px; font-size: 32px; }
+#screen.fcall .btn.round.fchang { width: 252px; height: 252px; font-size: 37px; }
+#screen.fcall .btn.round.fchang .bico svg { width: 112px; height: 112px; }
+.btn.fcme { min-height: 88px; flex-direction: row; gap: 18px; font-size: 38px; border-width: 4px; padding: 6px 40px; }
+.btn.fcme .bico svg { width: 54px; height: 54px; display: block; }
+
+/* lab.css gives every wide-screen button rounded corners after .btn.round; call buttons stay round. */
+.stage.land #screen.fcall .btn.round { border-radius: 5px; padding: 0 10px; font-size: 26px; }
+.stage.land .fcwait .who { width: 360px; height: 360px; }
+.stage.land .fcstate { font-size: 42px; }
+.stage.land .fcname { font-size: 36px; }
+.stage.land .fctimer { font-size: 34px; }
+.stage.land .fcring .callname { font-size: 60px; }
+.stage.land .fcring .callstate { font-size: 42px; }
+.stage.land #screen.fcin .actions { gap: 24px 40px; }
+.stage.land #screen.fcall .btn.round.fcsoft { width: 160px; height: 160px; font-size: 28px; }
+.stage.land #screen.fcall .btn.round.fchang { width: 200px; height: 200px; font-size: 29px; }
+.stage.land #screen.fcall .btn.round.fchang .bico svg { width: 88px; height: 88px; }
+.stage.land .btn.fcme { min-height: 76px; font-size: 32px; }
+
+/* The waiting screen's note in a PC browser (sound needs a first click there). */
+.stage .note.fcwake { font-size: 34px; }
+
+/* ---------- robot screen: Ludo during the call ---------- */
+/* "Play together" in the call view: a wide button next to "Show me", or on its own row. */
+#screen.fcin .btn.fcplay { flex: 1 1 360px; min-height: 108px; flex-direction: row; gap: 20px; font-size: 44px; }
+.btn.fcplay .bico svg, .btn.lgroll .bico svg { width: 68px; height: 68px; display: block; }
+.fcnote { position: absolute; left: 28px; right: 28px; bottom: 28px; margin: 0; text-align: center; background: rgba(0, 0, 0, .74); color: #FFFFFF;
+          font-size: 44px; line-height: 1.3; border-radius: 5px; padding: 16px 24px; z-index: 2; }
+/* The board fills the picture; the caller's live picture sits in its top-left corner, where no player
+   has a yard (the resident plays the top arm, the caller the bottom one). */
+.lgboard { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.picture.ludoboard .lgboard svg { width: 100%; height: 100%; display: block; }
+.fcpip { position: absolute; left: 0; top: 0; width: 320px; height: 240px; border-radius: 5px; overflow: hidden; background: #F0F0F0;
+         border: 5px solid #FFFFFF; box-shadow: 0 1px 3px rgba(0, 0, 0, .14); z-index: 1; }
+.fcpip video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fcpipname { position: absolute; left: 10px; bottom: 8px; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+             background: rgba(0, 0, 0, .62); color: #FFFFFF; font-size: 28px; font-weight: 700; border-radius: 5px; padding: 2px 12px; }
+.lgrow { display: flex; align-items: center; gap: 28px; }
+.lgrow .ludodie { flex: none; min-width: 150px; min-height: 150px; }
+.lgtext { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.lglegend { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 32px; font-size: 40px; font-weight: 700; }
+.lglegend span { display: inline-flex; align-items: center; gap: 12px; }
+.lglegend svg { width: 54px; height: 54px; flex: none; }
+.lgnote { margin: 0; font-size: 40px; line-height: 1.25; color: var(--muted); min-height: 1.25em; }
+.btn.lgroll { flex-direction: row; gap: 22px; }
+.btn.fchangup { flex-direction: row; gap: 16px; }
+.btn.fchangup .bico svg { width: 60px; height: 60px; display: block; }
+.stage.land .fcpip { width: 280px; height: 210px; }
+.stage.land .lgrow .ludodie { min-width: 120px; min-height: 120px; }
+.stage.land .lglegend, .stage.land .lgnote { font-size: 34px; }
+.stage.land .lglegend svg { width: 44px; height: 44px; }
+.stage.land #screen.fcin .btn.fcplay { min-height: 88px; font-size: 36px; }
+
+/* ---------- Care Team: the Family tab ---------- */
+.famhead { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-start; justify-content: space-between; }
+.famintro { flex: 1 1 340px; display: flex; flex-direction: column; gap: 6px; }
+.setup .famintro h2 { display: block; margin: 0; font-size: 22px; line-height: 1.2; color: var(--ink); text-transform: none; letter-spacing: 0; }
+.famstatus { flex: 0 1 380px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; font-size: 14px; background: var(--bg); }
+.famstatus .dot { width: 12px; height: 12px; }
+.famstatus.ok .dot { background: var(--good); }
+.famstatus.busy .dot { background: var(--focus); }
+.famstatus.err { border-color: var(--danger); }
+.famstatus.err .dot { background: var(--danger); }
+.famstatus span { flex: 1 1 200px; }
+.famlist { display: flex; flex-direction: column; gap: 10px; }
+.famc { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 14px; align-items: start; border: 1px solid var(--line); border-radius: 5px; padding: 12px 14px; background: var(--surface); }
+.famphoto { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-size: 30px; font-weight: 700; flex: none; }
+.famphoto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.faminfo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.famname { margin: 0; font-size: 18px; line-height: 1.3; }
+.famrel { color: var(--muted); }
+.faminfo .note { margin: 0; }
+.famlink { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+.setup .famlink input[type=text] { font: 13px/1.4 var(--font-code); color: var(--ink); }
+.famacts { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.famnolink { margin: 0; color: var(--focus); font-size: 14px; }
+.famform { border: 2px solid var(--accent); border-radius: 5px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.famform h3 { margin: 0; font-size: 17px; }
+.famphotoedit { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.famphotoedit .famphoto { width: 96px; height: 96px; font-size: 38px; }
+.famsay { margin: 0; padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--bg); border-radius: 0 5px 5px 0; font-size: 15px; }
+.famtimes { display: flex; flex-direction: column; gap: 8px; }
+.famtime { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.setup .famtime input[type=time] { width: auto; font: 15px/1.4 var(--font); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; }
+.famnow { margin: 0; font-weight: 700; }
+.famnow.yes { color: var(--good); }
+.famnow.no { color: var(--muted); }
+.famprivacy { border-left: 4px solid var(--accent); padding-left: 12px; }
+@media (max-width: 640px) {
+  .famc { grid-template-columns: 56px minmax(0, 1fr); }
+  .famphoto { width: 56px; height: 56px; font-size: 24px; }
+  .famacts { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+}
+
+/* ---------- 1.15: the simplified Family tab, and the care team calling the family ---------- */
+.famtop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; }
+.setup .famtop h2 { margin: 0; font-size: 22px; line-height: 1.2; color: var(--ink); text-transform: none; letter-spacing: 0; display: block; }
+.famtop .famstatus { flex: 0 1 auto; padding: 6px 12px; }
+.famtop .famstatus span { flex: 0 1 auto; }
+.famstatus.off .dot { background: var(--muted); }
+.famc .row { margin-top: 6px; }
+.famc { grid-template-columns: 64px minmax(0, 1fr); }
+.famc .famphoto { width: 64px; height: 64px; font-size: 26px; }
+.go.famcall { font-size: 16px; padding: 9px 18px; }
+.famlinkrow { border-top: 1px solid var(--line); padding-top: 10px; }
+.famtimesbox { border: 0; padding: 0; }
+.famtimesbox summary { font-weight: 400; color: var(--muted); }
+.famcalls { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-variant-numeric: tabular-nums; }
+.famcalls li { display: grid; grid-template-columns: 24px 100px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 10px; border: 1px solid var(--line); border-radius: 5px; }
+.famcalls li.no span:last-child { color: var(--danger); }
+.famdir { font-weight: 700; color: var(--accent); }
+.famsettings summary { font-weight: 700; cursor: pointer; }
+.famsettings[open] { display: flex; flex-direction: column; gap: 8px; }
+.famout { border: 2px solid var(--accent); }
+.famout.ended { border-color: var(--line); }
+.famoutstate { margin: 0; font-size: 17px; font-weight: 700; }
+.famoutbody { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; }
+.famqr { flex: none; width: 220px; height: 220px; background: #FFFFFF; border-radius: 5px; padding: 6px; border: 1px solid var(--line); }
+.famqr svg { width: 100%; height: 100%; display: block; }
+.famoutside { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.famoutlink { margin: 0; font: 700 20px/1.35 var(--font-code); color: var(--ink); word-break: break-all;
+              background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; user-select: all; }
+.famoutside a.ghost { text-decoration: none; display: inline-block; }
+
+/* ---------- 1.16 · Typography (agent V): LabLand's roles (see the end of css/lab.css) ---------- */
+.fcname, .famname, .famphoto { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); }
+/* what the call says to the resident: the serif */
+.fcstate, .fctap, .fcnote, .lgnote, .stage .note.fcwake { font-family: var(--font-text); font-weight: var(--w-text); letter-spacing: var(--track-text); line-height: var(--lh-text); }
+.fcpipname { font-family: var(--font-label); font-weight: var(--w-label); letter-spacing: var(--track-label); text-transform: uppercase; }
+.lglegend, #screen.fcall .btn.round, #screen.fcin .btn.fcplay, .btn.fcme { font-family: var(--font); font-weight: var(--w-ui); }
+/* Care Team */
+.setup .famintro h2, .setup .famtop h2 { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); line-height: 1.05; }
+.famoutstate, .go.famcall { font-weight: var(--w-strong); }
+/* ---------- end of Typography 1.16 ---------- */
+
+/* ---------- 1.16 · Call for elderly eyes (agent C) ----------
+   Stage units: the head screen is 1920 x 1080 shown at about 0.57, so 170 = 97 screen px (1.6 cm) and
+   a 60 px text = 34 screen px. In the call: the picture fills the screen, then ONE row of three huge
+   buttons: Volume, Hang up (red, the widest), Help. Ringing: huge Answer / Decline and a huge name. */
+#screen.fcall.fcin { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 186px; min-height: 0; min-width: 0; overflow: hidden; gap: 22px; align-items: stretch; }
+#screen.fcall.fcin > .fcvideo { grid-column: 1 / -1; grid-row: 1; border-radius: 5px; }
+.stage #screen.fcall.fcin > .fcvideo.fcvideo, .stage.land #screen.fcall.fcin.single > .fcvideo.fcvideo { margin: 0; width: auto; align-self: stretch; }
+#screen.fcall.fcin .actions, #screen.fcall.fcin .foot { display: contents; }
+#screen.fcall.fcin .foot .off, #screen.fcall.fcin .foot [data-a="back"], #screen.fcall.fcin .foot [data-a="stop"] { display: none; }
+.stage #screen.fcall .btn.round.fcact, .stage #screen.fcall:not(.fcin) .btn.round {
+  width: auto; height: auto; min-height: 172px; border-radius: 5px; padding: 0 24px; flex-direction: row; gap: 24px; font-size: 62px; line-height: 1.05; }
+.stage #screen.fcall .btn.round.fcact .bico svg, .stage #screen.fcall:not(.fcin) .btn.round .bico svg { width: 92px; height: 92px; }
+.stage #screen.fcall.fcin .btn.round.fcvolbtn { background: #FFFFFF; border: 6px solid #00519E; color: #00519E; grid-row: 2; grid-column: 1; }
+.stage #screen.fcall.fcin .btn.round.fchang { grid-row: 2; grid-column: 2; width: auto; height: 100%; min-height: 0; font-size: 70px; }
+.stage #screen.fcall.fcin .btn.round.fchang .bico svg { width: 104px; height: 104px; }
+.stage #screen.fcall.fcin .foot [data-a="help"] { grid-row: 2; grid-column: 3; min-height: 172px; border-radius: 5px; font-size: 62px; border-width: 6px; align-self: stretch; }
+.stage #screen.fcall.fcin .foot [data-a="help"]::before { width: 76px; height: 76px; }
+/* Fixed boxes: nothing here depends on the size of a video (a phone sends a portrait picture, and it may change size). */
+.fcvideo, .fctiles, .fctile, .fcvbox { min-width: 0; min-height: 0; overflow: hidden; }
+.fcvideo { contain: layout paint; }
+.fcvbox { contain: strict; }
+.fcvbox video.fcremote, .fcvideo video.fcremote { max-width: 100%; max-height: 100%; }
+.stage #screen.fcall.fcin .btn.round.fcact, .stage #screen.fcall.fcin .foot [data-a="help"] { min-height: 0; height: 100%; }
+/* Ringing: the name, then two huge answers side by side, Help under them. */
+.stage #screen.fcall:not(.fcin) .actions { gap: 40px; justify-content: center; }
+.stage #screen.fcall:not(.fcin) .btn.round { flex: 1 1 0; max-width: 760px; min-height: 170px; max-height: 190px; font-size: 66px; }
+.stage #screen.fcall:not(.fcin) .btn.round .bico svg { width: 120px; height: 120px; }
+.stage #screen.fcall:not(.fcin) .foot .off, .stage #screen.fcall:not(.fcin) .foot [data-a="back"], .stage #screen.fcall:not(.fcin) .foot [data-a="stop"] { display: none; }
+.stage #screen.fcall:not(.fcin) .foot { grid-template-columns: 1fr; }
+.stage #screen.fcall:not(.fcin) .foot [data-a="help"] { min-height: 150px; font-size: 56px; border-width: 5px; }
+.stage .fcring .callname { font-size: 130px; line-height: 1; }
+.stage .fcring .callstate { font-size: 70px; }
+.stage.land .fcring .callname { font-size: 118px; }
+.stage.land .fcring .callstate { font-size: 64px; }
+.stage.land .fcring .who { width: 400px; height: 400px; }
+/* In the call: caller name and timer, the state line, the volume bars, all large. */
+.stage .fcname { font-size: 62px; max-width: 70%; }
+.stage .fctimer { font-size: 56px; }
+.stage .fcstate { font-size: 64px; }
+.stage .fctap { font-size: 56px; }
+.stage .fcvol { gap: 14px; padding: 28px 36px; border-radius: 5px; }
+.stage .fcvol i { width: 34px; height: 96px; }
+.stage.land .fcname { font-size: 56px; }
+.stage.land .fctimer { font-size: 50px; }
+.stage.land .fcstate { font-size: 58px; }
+.stage.land .fcwait .who { width: 340px; height: 340px; }
+/* Portrait screen: narrower buttons, smaller text, still above 1.5 cm. */
+.stage:not(.land) #screen.fcall.fcin { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 230px; gap: 16px; }
+.stage:not(.land) #screen.fcall .btn.round.fcact { font-size: 46px; gap: 12px; padding: 0 12px; flex-direction: column; min-height: 230px; }
+.stage:not(.land) #screen.fcall.fcin .foot [data-a="help"] { font-size: 46px; min-height: 230px; flex-direction: column; }
+.stage:not(.land) #screen.fcall .btn.round.fcact .bico svg { width: 84px; height: 84px; }
+/* "Show me" / "Play together" when the care team switches them on: still large. */
+.stage #screen.fcin .btn.fcme, .stage #screen.fcin .btn.fcplay { min-height: 140px; font-size: 52px; }
+/* ---------- end of Call for elderly eyes ---------- */

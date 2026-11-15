@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bellatrix Care Team</title>
+<link rel="stylesheet" href="css/lab.css?v=1.16.0">
+<link rel="stylesheet" href="css/call.css?v=1.16.0">
+<link rel="stylesheet" href="css/play.css?v=1.16.0">
+<link rel="stylesheet" href="css/karaoke.css?v=1.16.0">
+<link rel="stylesheet" href="css/messages.css?v=1.16.0">
+<link rel="stylesheet" href="css/album-reading.css?v=1.16.0">
+<link rel="stylesheet" href="css/reading.css?v=1.16.0">
+<link rel="stylesheet" href="css/staff.css?v=1.16.0">
+<link rel="stylesheet" href="css/staff-tools.css?v=1.16.0">
+<link rel="stylesheet" href="css/places.css?v=1.16.0">
+<link rel="stylesheet" href="css/brand.css?v=1.16.0">
+<link rel="stylesheet" href="css/games.css?v=1.16.0">
+<link rel="stylesheet" href="css/family-visit.css?v=1.16.0">
+<link rel="stylesheet" href="css/meals.css?v=1.16.0">
+</head>
+<body class="staffpage">
+<section class="setup" id="setup">
+  <div class="box">
+    <div id="tabsWrap" class="tabpanel">
+      <header class="ctop">
+        <span class="cface" id="topFace" aria-hidden="true"></span>
+        <span class="cbrand" aria-hidden="true"><img src="img/suavia-cross.svg" alt=""></span>
+        <div class="ctitle"><h1>Bellatrix</h1><span class="cteam" data-st="Care Team">Care Team</span><span class="note" id="version"></span></div>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab="session" aria-selected="true"><span data-st="Activities">Activities</span></button>
+          <button type="button" role="tab" data-tab="results"><span data-st="Results">Results</span> <span id="resCount"></span></button>
+          <button type="button" role="tab" data-tab="family"><span data-st="Family">Family</span></button>
+          <button type="button" role="tab" data-tab="library"><span data-st="Library">Library</span></button>
+        </div>
+        <div class="langsw" id="langSwitch" role="group">
+          <button type="button" data-ui-lang="fr" lang="fr">FR</button>
+          <button type="button" data-ui-lang="en" lang="en">EN</button>
+          <button type="button" data-ui-lang="de" lang="de">DE</button>
+        </div>
+      </header>
+      <p class="warn" id="storeWarn" hidden data-st="This browser could not save. Download your results now.">This browser could not save. Download your results now.</p>
+      <!-- Everything waiting for the team (Daily Choice, Premium, family offer, cleaning, checklist,
+           family messages and playlists to approve…): always under the tag "To do · n" (staff.js,
+           foldTray). One item: the tag and its banner side by side; several: one line that opens.
+           The modules insert their banners next to #choiceBanner, so they all land in #trayList. -->
+      <div class="btray" id="bannerTray">
+        <button type="button" class="banner trayline" id="trayLine" aria-expanded="false" aria-controls="trayList" hidden></button>
+        <div class="traylist" id="trayList">
+          <div class="banner xfer" id="choiceBanner" hidden></div>
+          <div class="banner xfer waitbanner" id="famWaitBanner" hidden></div>
+          <div class="banner xfer waitbanner" id="callReqBanner" hidden></div>
+          <div class="banner xfer waitbanner" id="plWaitBanner" hidden></div>
+          <div class="banner xfer" id="xferBanner" hidden><span id="xferText"></span>
+            <button type="button" class="go" id="xferLoad" data-st="Load them">Load them</button> <button type="button" class="ghost" id="xferLater" data-st="Not now">Not now</button></div>
+        </div>
+      </div>
+
+      <div class="tabpanel" id="tab-session">
+        <!-- The patient: code, language, greeting name; the life story and a few settings fold away. -->
+        <div class="section pcardx">
+          <div class="pmain">
+            <span class="pavatar" id="pAvatar" aria-hidden="true">P1</span>
+            <label class="field"><span data-st="Resident code">Resident code</span><input id="fParticipant" type="text" list="patientList" autocomplete="off"><datalist id="patientList"></datalist></label>
+            <label class="field"><span data-st="Patient's language">Patient's language</span><select id="optLang"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option><option value="de" lang="de">Deutsch</option></select></label>
+            <label class="field"><span data-st="Greeting name">Greeting name</span><input id="fGreet" type="text" autocomplete="off" placeholder="e.g. Maria" data-st-placeholder="e.g. Maria"></label>
+            <div class="pmood" id="pMood"></div>
+          </div>
+          <div class="pfolds">
+            <details class="more lifebox" id="lifeBox">
+              <summary data-st="Life story">Life story</summary>
+              <div class="grid2">
+                <label class="field"><span data-st="Year of birth">Year of birth</span><input id="fBorn" type="number" min="1910" max="1990" placeholder="e.g. 1945" data-st-placeholder="e.g. 1945"></label>
+                <label class="field"><span data-st="Birthday (day.month)">Birthday (day.month)</span><input id="fBirthday" type="text" autocomplete="off" placeholder="e.g. 14.11" data-st-placeholder="e.g. 14.11"></label>
+                <label class="field"><span data-st="Grew up in">Grew up in</span><input id="fHome" type="text" autocomplete="off" placeholder="e.g. Lyon, Bavaria" data-st-placeholder="e.g. Lyon, Bavaria"></label>
+                <label class="field"><span data-st="Favourite music">Favourite music</span><input id="fLoves" type="text" autocomplete="off" placeholder="e.g. Piaf, Aznavour, waltz" data-st-placeholder="e.g. Piaf, Aznavour, waltz"></label>
+                <label class="field"><span data-st="Music to avoid">Music to avoid</span><input id="fAvoid" type="text" autocomplete="off" placeholder="e.g. rock" data-st-placeholder="e.g. rock"></label>
+                <label class="field"><span data-st="Loves to talk about">Loves to talk about</span><input id="fTalk" type="text" autocomplete="off" placeholder="e.g. her garden, her dog Rex" data-st-placeholder="e.g. her garden, her dog Rex"></label>
+              </div>
+              <p class="note" id="lifeFamily"></p>
+            </details>
+            <details class="more">
+              <summary data-st="More settings">More settings</summary>
+              <div class="grid2">
+                <label class="field"><span data-st="Text size">Text size</span><select id="optText"><option value="normal" data-st="Normal">Normal</option><option value="large" data-st="Large">Large</option></select></label>
+                <label class="field"><span data-st="Speaking speed">Speaking speed</span><select id="optRate"><option value="0.8" data-st="Slow">Slow</option><option value="0.92" data-st="Normal">Normal</option><option value="1.05" data-st="Fast">Fast</option></select></label>
+                <label class="field"><span data-st="Volume">Volume</span><input id="optVolume" type="range" min="10" max="100" step="5"></label>
+              </div>
+              <div class="checks">
+                <input type="checkbox" id="optMood" hidden>
+                <label class="check"><input type="checkbox" id="optSubs"> <span data-st="Subtitles">Subtitles</span></label>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- The activities as app tiles. -->
+        <div class="section">
+          <div class="shead">
+            <h2 data-st="Choose an activity">Choose an activity</h2>
+            <div class="chips" id="actFilter" role="group"></div>
+            <button type="button" class="gm-entry" id="toAddGame" data-st="Add a game">Add a game</button>
+          </div>
+          <div class="tiles" id="actList"></div>
+          <p class="note" id="actEmpty" hidden data-st="No favourites yet. Choose an activity and tap its star.">No favourites yet. Choose an activity and tap its star.</p>
+        </div>
+
+        <!-- The chosen activity: picture, name, one sentence; how they answer; personalise. -->
+        <div class="section actdetail" id="actDetail">
+          <div class="dhead" id="actHead"></div>
+          <div class="answer">
+            <h3 data-st="How they answer">How they answer</h3>
+            <div class="seg" role="radiogroup">
+              <label><input type="radio" name="camMode" value="off"> <span><b data-st="Touch">Touch</b><small data-st="No camera">No camera</small></span></label>
+              <label><input type="radio" name="camMode" value="signs"> <span><b data-st="Hand signs">Hand signs</b><small data-st="Open hand, fist, fingers">Open hand, fist, fingers</small></span></label>
+              <label><input type="radio" name="camMode" value="air"> <span><b data-st="Point in the air">Point in the air</b><small data-st="Hold a finger on a button">Hold a finger on a button</small></span></label>
+            </div>
+            <label class="check" id="camMoveRow" hidden><input type="checkbox" id="optCamMove" checked> <span data-st="Count the movements with the camera">Count the movements with the camera</span></label>
+            <p class="note" id="camNote" hidden data-st="Camera only with the patient's consent. Nothing is recorded.">Camera only with the patient's consent. Nothing is recorded.</p>
+          </div>
+          <details class="more" id="persBox">
+            <summary id="persTitle" data-st="Personalise">Personalise</summary>
+            <p class="warn" id="mediaWarn" hidden data-st="This browser cannot keep pictures and songs after a reload.">This browser cannot keep pictures and songs after a reload.</p>
+            <div id="contentBox"></div>
+            <!-- 15 Nov (Rahma): no "Music & photos" tab any more. What it held is in the activity's own
+                 settings, shown only for that activity (staff.js, data-act-host; event 'bellatrix-staff-act'):
+                 Memories: the family photos and the album (js/album-staff.js); Book reading: the books;
+                 Bellatrix Play: the playlists (js/reco-staff.js); Group karaoke: the lists (js/karaoke.js). -->
+            <div class="acthost arpanel" id="arBody" data-act-host="album reading" hidden></div>
+            <div class="acthost" data-act-host="play" hidden><div id="recoBody" class="rs-wrap"></div></div>
+            <div class="acthost" data-act-host="karaoke" hidden><div id="kStaffHost"></div></div>
+            <div class="row"><button type="button" class="ghost sm" id="cReset" data-st="Back to the defaults">Back to the defaults</button></div>
+          </details>
+          <p class="warn" id="support" hidden></p>
+        </div>
+
+        <!-- Always in reach: who, what, how, and Start. -->
+        <div class="startbar">
+          <span class="ssum" id="startSummary"></span>
+          <button type="button" class="ghost" id="preview" data-st="Preview">Preview</button>
+          <button type="button" class="go" id="go"><span class="playdot" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg></span><span data-st="Start on the patient screen">Start on the patient screen</span></button>
+        </div>
+      </div>
+
+      <div class="tabpanel" id="tab-results" hidden>
+        <div class="row resbar">
+          <label class="field resshow"><span data-st="Show">Show</span><select id="resPatient"></select></label>
+          <button type="button" class="go" id="resWrapped" data-st="Monthly summary for the family">Monthly summary for the family</button>
+          <span class="grow"></span>
+          <button type="button" class="ghost sm" id="resAllMd" data-st="Download the report">Download the report</button>
+          <button type="button" class="ghost sm" id="resAllCsv" data-st="Download the table (.csv)">Download the table (.csv)</button>
+          <button type="button" class="ghost sm danger" id="resClear" data-st="Delete all">Delete all</button>
+        </div>
+        <div id="resBody"></div>
+      </div>
+
+      <!-- Family (1.16, agent M's modules): Messages (no approval since the portal spec BF-11; the ids
+           stay: 'queue'), the family accounts (js/messages-staff.js) and the calls (js/family-staff.js). -->
+      <div class="tabpanel" id="tab-family" hidden>
+        <div class="subnav" role="tablist">
+          <button type="button" role="tab" data-sub="queue"><span data-st="Messages">Messages</span></button>
+          <button type="button" role="tab" data-sub="accounts"><span data-st="Accounts">Accounts</span></button>
+          <button type="button" role="tab" data-sub="calls"><span data-st="Calls">Calls</span></button>
+        </div>
+        <div class="subpanel" data-for="queue accounts" hidden><div id="msgBody"></div></div>
+        <div class="subpanel" data-for="calls" hidden><div id="famBody"></div></div>
+      </div>
+
+      <div class="tabpanel" id="tab-library" hidden>
+        <div id="libBody"></div>
+      </div>
+    </div>
+
+    <div class="tabpanel" id="debrief" hidden></div>
+  </div>
+</section>
+
+<!-- "Ajouter un jeu" (js/games-staff.js, labland/games.mjs): the carer scans the QR code or opens the address on
+     the PC, pastes the link of the project; the server checks it and the game appears under "Team games". -->
+<section class="gm-add" id="gmAdd" hidden>
+  <header class="gm-head"><button type="button" class="gm-back" id="gmBack"><span aria-hidden="true">‹</span> <span data-st="Back">Back</span></button><h2 data-st="Add a game">Add a game</h2></header>
+  <div class="gm-body">
+    <div class="gm-qr" id="gmQr" aria-hidden="true"></div>
+    <div class="gm-info">
+      <p class="gm-say" data-st="Scan with your phone, or open the address on your computer.">Scan with your phone, or open the address on your computer.</p>
+      <p class="gm-addr" id="gmAddr"></p>
+      <p class="gm-code"><span data-st="Code">Code</span> <b id="gmCode"></b></p>
+      <p class="gm-msg" id="gmMsg" hidden></p>
+      <p class="gm-got" id="gmGot" hidden></p>
+    </div>
+  </div>
+  <a class="gm-atelier" id="toAtelier" href="atelier.html" data-st="Atelier">Atelier</a>
+</section>
+
+<div id="toast" hidden></div>
+
+<script src="js/i18n.js?v=1.16.0"></script>
+<script src="js/i18n-core.js?v=1.16.0"></script>
+<script src="js/i18n-activities.js?v=1.16.0"></script>
+<script src="js/i18n-staff.js?v=1.16.0"></script>
+<script src="js/i18n-play.js?v=1.16.0"></script>
+<script src="js/i18n-karaoke.js?v=1.16.0"></script>
+<script src="js/i18n-messages.js?v=1.16.0"></script>
+<script src="js/i18n-album-reading.js?v=1.16.0"></script>
+<script src="js/i18n-atelier.js?v=1.16.0"></script>
+<script src="js/i18n-games.js?v=1.16.0"></script>
+<script src="js/art.js?v=1.16.0"></script>
+<script src="js/ludo-board.js?v=1.16.0"></script>
+<script src="js/music.js?v=1.16.0"></script>
+<script src="js/media.js?v=1.16.0"></script>
+<script src="js/premium-config.js?v=1.16.0"></script>
+<script src="js/premium.js?v=1.16.0"></script>
+<script src="js/core.js?v=1.16.0"></script>
+<script src="js/daily.js?v=1.16.0"></script>
+<script src="js/activities.js?v=1.16.0"></script>
+<script src="js/move.js?v=1.16.0"></script>
+<script src="js/atelier-engine.js?v=1.16.0"></script>
+<script src="js/games.js?v=1.16.0"></script>
+<script src="js/meals.js?v=1.16.0"></script>
+<script src="js/karaoke-songs.js?v=1.16.0"></script>
+<script src="js/karaoke.js?v=1.16.0"></script>
+<script src="js/karaoke-yt.js?v=1.16.0"></script>
+<script src="js/album-data.js?v=1.16.0"></script>
+<script src="js/album.js?v=1.16.0"></script>
+<script src="js/reading-data.js?v=1.16.0"></script>
+<script src="js/books/index.js?v=1.16.0"></script>
+<script src="js/reading.js?v=1.16.0"></script>
+<script src="js/messages.js?v=1.16.0"></script>
+<script src="js/play-catalog.js?v=1.16.0"></script>
+<script src="js/reco-config.js?v=1.16.0"></script>
+<script src="js/reco.js?v=1.16.0"></script>
+<script src="js/podcasts.js?v=1.16.0"></script>
+<script src="js/play.js?v=1.16.0"></script>
+<script src="js/i18n-family.js?v=1.16.0"></script>
+<script src="js/familycall.js?v=1.16.0"></script>
+<script src="js/store-key.js?v=1.16.0"></script>
+<script src="js/store.js?v=1.16.0"></script>
+<script src="js/library.js?v=1.16.0"></script>
+<script src="js/wrapped.js?v=1.16.0"></script>
+<script src="js/qr.js?v=1.16.0"></script>
+<script src="js/family-staff.js?v=1.16.0"></script>
+<script src="js/callreq-staff.js?v=1.16.0"></script>
+<script src="js/staff.js?v=1.16.0"></script>
+<script src="js/places.js?v=1.16.0"></script>
+<script src="js/link-staff.js?v=1.16.0"></script>
+<script src="js/head-server.js?v=1.16.0"></script>
+<script src="js/reco-staff.js?v=1.16.0"></script>
+<script src="js/staff-tools.js?v=1.16.0"></script>
+<script src="js/messages-staff.js?v=1.16.0"></script>
+<script src="js/album-staff.js?v=1.16.0"></script>
+<script src="js/family-share-staff.js?v=1.16.0"></script>
+<script src="js/family-visit-staff.js?v=1.16.0"></script>
+<script src="js/games-staff.js?v=1.16.0"></script>
+<script src="js/meals-staff.js?v=1.16.0"></script>
+</body>
+</html>

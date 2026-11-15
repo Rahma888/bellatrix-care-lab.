@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Bellatrix</title>
+<link rel="stylesheet" href="css/brand.css?v=1.16.0">
+<link rel="stylesheet" href="css/jeu.css?v=1.16.0">
+</head>
+<!-- "Ajouter un jeu", the import page the carer opens from the QR code of the robot head (or types the short
+     address on the PC): paste the link of the project or choose the file, name it, send. labland/games.mjs
+     downloads, checks and installs it; this page shows the progress and the result in plain words. -->
+<body class="jeu">
+<header class="jhead">
+  <img class="jlogo" src="img/suavia-cross-white.svg" alt="">
+  <h1 data-t="Add a game to the robot">Add a game to the robot</h1>
+  <div class="jlang" id="jLang" role="group">
+    <button type="button" data-ui-lang="fr" lang="fr">FR</button>
+    <button type="button" data-ui-lang="en" lang="en">EN</button>
+    <button type="button" data-ui-lang="de" lang="de">DE</button>
+  </div>
+</header>
+
+<main class="jmain">
+  <form id="jForm" novalidate>
+    <label class="jfield jcode" id="jCodeRow" hidden><span data-t="Code shown on the robot">Code shown on the robot</span>
+      <input id="jCode" type="text" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+
+    <section class="jstep">
+      <h2><span class="jn">1</span><span data-t="Your project">Your project</span></h2>
+      <input id="jUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" data-t-placeholder="Link to GitHub, GitLab or a .zip file">
+      <p class="jor" data-t="or">or</p>
+      <label class="jfile" id="jFileBox"><input id="jFile" type="file" accept=".zip,.html,.htm,application/zip,text/html"><span id="jFileName" data-t="Choose a file (.zip or .html)">Choose a file (.zip or .html)</span></label>
+      <button type="button" class="jlink" id="jFileClear" hidden data-t="Remove the file">Remove the file</button>
+    </section>
+
+    <section class="jstep">
+      <h2><span class="jn">2</span><span data-t="The game">The game</span></h2>
+      <label class="jfield"><span data-t="Name">Name</span><input id="jName" type="text" maxlength="40" autocomplete="off"></label>
+      <label class="jfield"><span data-t="For whom (optional)">For whom (optional)</span><input id="jFor" type="text" maxlength="40" autocomplete="off"></label>
+      <div class="jfield"><span data-t="Language of the game">Language of the game</span>
+        <div class="jseg" role="radiogroup">
+          <label><input type="radio" name="jGameLang" value="fr"> <span lang="fr">Français</span></label>
+          <label><input type="radio" name="jGameLang" value="de"> <span lang="de">Deutsch</span></label>
+          <label><input type="radio" name="jGameLang" value="en"> <span lang="en">English</span></label>
+        </div>
+      </div>
+    </section>
+
+    <section class="jstep jlast">
+      <h2><span class="jn">3</span></h2>
+      <button type="submit" class="jgo" id="jSend" data-t="Send">Send</button>
+    </section>
+    <p class="jerr" id="jErr" hidden role="alert"></p>
+  </form>
+
+  <section class="jprog" id="jProg" hidden aria-live="polite">
+    <h2 id="jProgName"></h2>
+    <ol class="jsteps" id="jSteps">
+      <li data-s="download"></li>
+      <li data-s="check" data-t="Checking">Checking</li>
+      <li data-s="install" data-t="Installing">Installing</li>
+      <li data-s="ready" data-t="Ready">Ready</li>
+    </ol>
+    <div class="jdone" id="jDone" hidden>
+      <p class="jok" id="jOk"></p>
+      <p class="jnote" data-t="You find it on the robot under Team games. Tap Try before a resident plays.">You find it on the robot under Team games. Tap Try before a resident plays.</p>
+      <p class="jwarn" id="jWarn" hidden></p>
+      <button type="button" class="jgo" id="jAgain" data-t="Add another game">Add another game</button>
+    </div>
+    <div class="jfail" id="jFail" hidden>
+      <p class="jerr" id="jFailText" role="alert"></p>
+      <button type="button" class="jgo" id="jRetry" data-t="Try again">Try again</button>
+    </div>
+  </section>
+</main>
+
+<script src="js/i18n.js?v=1.16.0"></script>
+<script src="js/i18n-games.js?v=1.16.0"></script>
+<script src="js/jeu.js?v=1.16.0"></script>
+</body>
+</html>

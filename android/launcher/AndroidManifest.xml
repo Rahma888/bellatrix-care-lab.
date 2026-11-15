@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Bellatrix Patient": its own name and icon on the robot's home screen. It holds nothing; it
+     opens the patient screen of Bellatrix Care Team, where the patients, pictures and results are. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.labland.bellatrix.patient">
+
+    <application
+        android:label="Bellatrix Patient"
+        android:icon="@mipmap/ic_launcher">
+        <activity
+            android:name=".Open"
+            android:label="Bellatrix Patient"
+            android:exported="true"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

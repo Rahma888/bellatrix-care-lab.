@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier</title>
+<link rel="stylesheet" href="css/lab.css?v=1.16.0">
+<link rel="stylesheet" href="css/brand.css?v=1.16.0">
+<link rel="stylesheet" href="css/atelier.css?v=1.16.0">
+</head>
+<body class="atelier">
+<header class="athead">
+  <a class="atback" id="atBack" href="staff.html"><span aria-hidden="true">‹</span> <span data-st="Care Team">Care Team</span></a>
+  <h1>Atelier</h1>
+  <div class="atlang" id="atLang" role="group">
+    <button type="button" data-ui-lang="fr" lang="fr">FR</button>
+    <button type="button" data-ui-lang="en" lang="en">EN</button>
+    <button type="button" data-ui-lang="de" lang="de">DE</button>
+  </div>
+</header>
+
+<main class="atmain">
+  <!-- 1. The request, and the games already in the menu. -->
+  <section id="vHome">
+    <label class="atlabel" for="atPrompt" data-st="Describe the game">Describe the game</label>
+    <textarea id="atPrompt" rows="2" maxlength="200" autocomplete="off" placeholder="For example: a quiz about Bavarian food" data-st-placeholder="For example: a quiz about Bavarian food"></textarea>
+    <div class="atrow">
+      <button type="button" class="atbtn primary" id="atCreate" data-st="Create">Create</button>
+      <span class="atmsg" id="atMsg" aria-live="polite"></span>
+    </div>
+    <h2 data-st="Ideas">Ideas</h2>
+    <ul class="atideas" id="atIdeas"></ul>
+    <h2 data-st="In the menu">In the menu</h2>
+    <ul class="atlist" id="atList"></ul>
+    <p class="atnote" id="atEmpty" hidden data-st="No game yet.">No game yet.</p>
+  </section>
+
+  <!-- 2. A topic the bank does not know: the carer writes the items. -->
+  <section id="vForm" hidden>
+    <p class="atlead" data-st="I do not know this topic yet. Write the items, one per line.">I do not know this topic yet. Write the items, one per line.</p>
+    <div class="atfields">
+      <label class="atfield"><span data-st="Title">Title</span><input type="text" id="atFormTitle" maxlength="40" autocomplete="off"></label>
+      <label class="atfield"><span data-st="Kind of game">Kind of game</span><select id="atFormType"></select></label>
+    </div>
+    <p class="atnote athint" id="atFormHint"></p>
+    <textarea id="atFormText" rows="8" autocomplete="off" spellcheck="false"></textarea>
+    <div class="atrow">
+      <button type="button" class="atbtn primary" id="atFormCreate" data-st="Create">Create</button>
+      <button type="button" class="atbtn" id="atFormBack" data-st="Back">Back</button>
+      <span class="atmsg" id="atFormMsg" aria-live="polite"></span>
+    </div>
+  </section>
+
+  <!-- 3. The preview: the game exactly as on the patient screen, playable. -->
+  <section id="vPreview" hidden>
+    <div class="atfields">
+      <label class="atfield wide"><span data-st="Title">Title</span><input type="text" id="atTitle" maxlength="40" autocomplete="off"></label>
+    </div>
+    <div class="atrow">
+      <button type="button" class="atbtn primary" id="atAdd" data-st="Add to menu">Add to menu</button>
+      <button type="button" class="atbtn" id="atAgain" data-st="Another version">Another version</button>
+      <button type="button" class="atbtn" id="atRestart" data-st="Start again">Start again</button>
+      <button type="button" class="atbtn" id="atPrevBack" data-st="Back">Back</button>
+      <span class="atmsg" id="atPrevMsg" aria-live="polite"></span>
+    </div>
+    <div class="atfit" id="atFit"><div class="stage insession" id="atStage"><div id="screen"></div></div></div>
+  </section>
+</main>
+
+<script src="js/i18n.js?v=1.16.0"></script>
+<script src="js/i18n-core.js?v=1.16.0"></script>
+<script src="js/i18n-activities.js?v=1.16.0"></script>
+<script src="js/i18n-staff.js?v=1.16.0"></script>
+<script src="js/i18n-atelier.js?v=1.16.0"></script>
+<script src="js/atelier-engine.js?v=1.16.0"></script>
+<script src="js/atelier-bank.js?v=1.16.0"></script>
+<script src="js/atelier.js?v=1.16.0"></script>
+</body>
+</html>

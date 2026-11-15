@@ -1,0 +1,83 @@
+{
+  "title": "Bellatrix Library",
+  "publisher": "LabLand",
+  "note": "Wellbeing and activation for care homes. These activities are not medical treatments.",
+  "trialDays": 30,
+  "checks": [
+    { "id": "big", "label": "Large buttons, readable from 1.5 m" },
+    { "id": "distance", "label": "Works by pointing from a distance; touching the screen is optional" },
+    { "id": "calm", "label": "No time pressure; Help and Stop on every screen" },
+    { "id": "languages", "label": "English, French and German, spoken and written" },
+    { "id": "privacy", "label": "No patient data leaves the robot (GDPR)" },
+    { "id": "offline", "label": "Works without internet once installed" }
+  ],
+  "packs": [
+    {
+      "id": "basics", "name": "Bellatrix Basics", "included": true,
+      "promise": "Greeting, the day, small daily choices and kind social moments.",
+      "games": ["hello", "choice", "quiz"]
+    },
+    {
+      "id": "memory", "name": "Memory",
+      "promise": "Remembering, recognising and talking about the past.",
+      "games": ["sayings", "pairs"]
+    },
+    {
+      "id": "movement", "name": "Movement",
+      "promise": "Gentle seated movements, new every day.",
+      "games": ["move"]
+    },
+    {
+      "id": "music", "name": "Music",
+      "promise": "Songs to recognise and music moments to enjoy.",
+      "games": ["song"]
+    },
+    {
+      "id": "board-games", "name": "Board games", "download": true,
+      "promise": "Chess and Ludo: against Bellatrix, together at one robot, or between robots.",
+      "games": ["chess", "ludo"]
+    }
+  ],
+  "games": {
+    "hello":       { "name": "Hello & Today",       "trains": ["Orientation", "Social contact"],      "players": "1", "minutes": "5" },
+    "choice":      { "name": "Daily Choice",        "trains": ["Decision making", "Orientation"],     "players": "1", "minutes": "5" },
+    "quiz":        { "name": "Kindness Quiz",       "trains": ["Social contact", "Attention"],        "players": "1 or a group", "minutes": "10" },
+    "sayings":     { "name": "Finish the Saying",   "trains": ["Memory", "Language"],                 "players": "1 or a group", "minutes": "10" },
+    "pairs":       { "name": "Picture Pair",        "trains": ["Memory", "Attention"],                "players": "1", "minutes": "5–15" },
+    "move":        { "name": "Seated Move Along",   "trains": ["Movement"],                           "players": "1", "minutes": "5–10" },
+    "song":        { "name": "Guess the Song",      "trains": ["Music", "Memory"],                    "players": "1 or a group", "minutes": "10" },
+    "chess":       { "name": "Chess",               "trains": ["Attention", "Planning", "Social contact"], "players": "1 or 2", "minutes": "15–40" },
+    "ludo":        { "name": "Ludo",                "trains": ["Social contact", "Attention"],        "players": "2, 4 or 6, also between robots", "minutes": "5–30" }
+  },
+  "review": { "by": "LabLand", "on": "2026-11-06", "passed": ["big", "distance", "calm", "languages", "privacy", "offline"] },
+  "apps": [
+    { "id": "playpremium", "unlock": "play-premium", "game": "play", "name": "Bellatrix Play Premium", "category": "music-movement", "icon": "crown", "featured": true,
+      "tagline": "Synced lyrics and unlimited listening.",
+      "about": "Unlocks synced lyrics, the big clip view and listening without a time limit in Bellatrix Play.",
+      "players": "1", "minutes": "No limit" },
+    { "id": "chess", "game": "chess", "pack": "board-games", "name": "Chess", "category": "games", "icon": "chess",
+      "tagline": "Chess against Bellatrix or a friend.",
+      "about": "A large board, three levels and short puzzles. An unfinished game waits for next time.",
+      "players": "1 or 2", "minutes": "15–40" },
+    { "id": "ludo", "game": "ludo", "pack": "board-games", "name": "Ludo", "category": "games", "icon": "ludo",
+      "tagline": "The great classic, up to six players.",
+      "about": "Play together at one robot or between robots. Bellatrix takes the free places.",
+      "players": "2 to 6", "minutes": "5–30" },
+    { "id": "conductor", "name": "Conductor", "category": "music-movement", "icon": "conductor", "soon": true,
+      "tagline": "Conduct an orchestra with your arms.",
+      "about": "The resident conducts the orchestra with arm movements. The camera follows the tempo.",
+      "players": "1 or a group", "minutes": "10" },
+    { "id": "airpaint", "name": "Air painting", "category": "creativity", "icon": "airpaint", "soon": true,
+      "tagline": "Paint in the air with your hand.",
+      "about": "Paint with the hand in the air. The picture becomes a postcard for the family.",
+      "players": "1", "minutes": "10–15" },
+    { "id": "timemachine", "name": "Time machine", "category": "memories", "icon": "timemachine", "soon": true,
+      "tagline": "Travel back to a year of your choice.",
+      "about": "Choose a year: pictures from the archives, songs, prices and questions from that time.",
+      "players": "1 or a group", "minutes": "15" },
+    { "id": "lifebook", "name": "The book of my life", "category": "memories", "icon": "lifebook", "soon": true,
+      "tagline": "A memory film of a whole life.",
+      "about": "A memory film made from the life story and family photos.",
+      "players": "1 with family", "minutes": "10" }
+  ]
+}

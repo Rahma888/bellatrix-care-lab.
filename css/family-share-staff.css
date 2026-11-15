@@ -1,0 +1,30 @@
+/* Family portal 1.16 (agent F2), BF-09: "Share with the family" in the Care Team (js/family-share-staff.js).
+   The shared tokens only (lab.css). */
+.fsh-btn { display: inline-flex; align-items: center; gap: 4px; }
+.fsh-btn svg { width: 14px; height: 14px; color: var(--heart, #C0392B); }
+.fsh-back { position: fixed; inset: 0; z-index: 40; background: rgba(10, 20, 26, .55); display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 24px 12px; }
+.fsh { position: relative; width: 100%; max-width: 440px; background: var(--surface); color: var(--ink); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.18); font-family: var(--font); }
+.fsh h2 { margin: 0; display: flex; align-items: center; gap: 10px; font: var(--w-title, 400) 24px/1.05 var(--font-display); letter-spacing: var(--track-title, -.025em); }
+.fsh h3 { margin: 6px 0 0; font: var(--w-label, 400) 13px/1.2 var(--font-label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.fsh-heart { width: 34px; height: 34px; border-radius: var(--radius); display: grid; place-items: center; background: var(--heart, #C0392B); color: #FFFFFF; flex: none; }
+.fsh-heart svg { width: 20px; height: 20px; }
+.fsh-x { position: absolute; top: 8px; right: 10px; border: 0; background: transparent; font-size: 28px; line-height: 1; color: var(--muted); padding: 6px 10px; cursor: pointer; }
+.fsh-who { margin: 0; color: var(--muted); font: 16px/1.2 var(--font-text); }
+.fsh-who b { color: var(--ink); font-family: var(--font); }
+.fsh-note { margin: 0; padding: 10px 12px; border-radius: var(--radius); background: var(--surface-2, #F0F0F0); font: 15px/1.25 var(--font-text); color: var(--ink); }
+.fsh-err { margin: 0; color: var(--danger); font-size: 15px; }
+.fsh-pic { margin: 0; border-radius: var(--radius); overflow: hidden; background: #000; }
+.fsh-pic img { display: block; width: 100%; max-height: 300px; object-fit: contain; }
+.fsh-photo { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border-radius: var(--radius); border: 2px dashed var(--accent); background: transparent; color: var(--accent); font: 600 17px/1 var(--font); cursor: pointer; }
+.fsh-photo svg { width: 26px; height: 26px; }
+.fsh-field { display: flex; flex-direction: column; gap: 4px; }
+.fsh-field textarea { width: 100%; font: 17px/1.3 var(--font-text); color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 10px 12px; resize: vertical; }
+.fsh-field small { align-self: flex-end; color: var(--muted); font-size: 13px; }
+.fsh-go { min-height: 54px; border: 0; border-radius: var(--radius); background: var(--accent); color: var(--on-accent); font: 700 18px/1 var(--font); cursor: pointer; }
+.fsh button:disabled { opacity: .5; cursor: default; }
+.fsh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.fsh-list li { display: flex; align-items: center; gap: 10px; }
+.fsh-th { width: 44px; height: 44px; border-radius: var(--radius); overflow: hidden; background: var(--surface-2, #F0F0F0); color: var(--heart, #C0392B); display: grid; place-items: center; flex: none; }
+.fsh-th img { width: 100%; height: 100%; object-fit: cover; }
+.fsh-th svg { width: 20px; height: 20px; }
+.fsh-tx { flex: 1; min-width: 0; font: 15px/1.2 var(--font-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

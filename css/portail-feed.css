@@ -1,0 +1,188 @@
+/* Family portal 1.16 (agent F2): the follow-up tab (js/portail-feed.js). Mobile first, LabLand style:
+   titles in var(--font), running text in the serif var(--font-text), small upper-case labels in
+   var(--font-label); white, Suavia blue and a little light blue; thin rules rather than boxes; no gradient,
+   no emoji. Only the shared tokens (css/lab.css, css/portail.css), each with a fallback. */
+.ff {
+  --ff-title: var(--font, sans-serif); --ff-text: var(--font-text, var(--font, serif)); --ff-label: var(--font-label, var(--font, sans-serif));
+  --ff-cream: var(--surface-2, #F0F0F0); --ff-green: var(--accent, #00519E); --ff-apricot: var(--brand-cyan, #00A0E3);
+  --ff-on-apricot: var(--on-apricot, #00325F); --ff-glyph: var(--accent, #00519E); --ff-bar: #00519E; --ff-up: var(--good, #1E8A5A); --ff-down: var(--danger, #B3261E);
+  display: flex; flex-direction: column; gap: 18px; min-width: 0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ff { --ff-bar: #9FD3F5; --ff-glyph: var(--brand-cyan, #00A0E3); }
+}
+:root[data-theme="dark"] .ff { --ff-bar: #9FD3F5; --ff-glyph: var(--brand-cyan, #00A0E3); }
+.ff * { box-sizing: border-box; }
+.ff svg { display: block; }
+
+/* the five parts: one row that always fits a phone, a thin rule under it */
+.ff-nav { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: calc(-1 * var(--ff-pt, 16px)) calc(-1 * var(--ff-px, 16px)) 0; padding: 6px calc(var(--ff-px, 16px) - 8px) 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+.ff-nav button { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 60px; padding: 8px 2px 10px;
+  border: 0; border-radius: 0; background: transparent; color: var(--muted); font: var(--w-label, 400) clamp(10.5px, 3.1vw, 13px)/1.1 var(--ff-label); letter-spacing: .02em; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ff-nav button span { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ff-nav button svg { width: 22px; height: 22px; }
+.ff-nav button.on { color: var(--ink); }
+.ff-nav button.on::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: -1px; height: 2px; background: var(--ff-apricot); }
+.ff-nav button:focus-visible, .ff-day:focus-visible, .ff-chip:focus-visible, .ff-retry:focus-visible { outline: 2px solid var(--focus, var(--ff-apricot)); outline-offset: 2px; }
+
+.ff-part { display: flex; flex-direction: column; gap: 18px; }
+
+/* type */
+.ff-title { margin: 2px 0 0; font: var(--w-title, 400) 32px/.95 var(--ff-title); letter-spacing: -.025em; color: var(--ink); }
+.ff-title::first-letter { text-transform: uppercase; }
+.ff-label, .ff-h { margin: 0; font: var(--w-label, 400) 12px/1.2 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ff-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-top: 6px; }
+.ff-h small { font: 400 15px/1.2 var(--ff-text); letter-spacing: -.01em; text-transform: none; }
+.ff-note, .ff-line { margin: 0; font: var(--w-text, 400) 17px/1.15 var(--ff-text); letter-spacing: -.015em; color: var(--muted); }
+.ff-line { color: var(--ink); }
+
+/* live */
+.ff-live { display: flex; align-items: center; gap: 8px; margin: 0; font: var(--w-label, 400) 12px/1 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.ff-live small { margin-left: auto; font: 400 15px/1 var(--ff-text); letter-spacing: -.01em; text-transform: none; color: var(--muted); }
+.ff-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ff-apricot); animation: ff-blink 2.4s ease-in-out infinite; }
+@keyframes ff-blink { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .ff-dot, .ff-skel i { animation: none !important; } }
+
+/* the day in numbers: three figures between thin rules */
+.ff-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.ff-tile { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 12px 10px 14px; border-left: 1px solid var(--line); }
+.ff-tile:first-child { border-left: 0; padding-left: 0; }
+.ff-tiles .ff-tile:nth-child(4) { grid-column: 1 / -1; flex-direction: row; align-items: baseline; justify-content: space-between; border-left: 0; border-top: 1px solid var(--line); padding: 11px 0; }
+.ff-tile small, .ff-big small { font: var(--w-label, 400) 11.5px/1.1 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ff-tile b, .ff-big b { font: var(--w-title, 400) clamp(22px, 6.6vw, 30px)/.95 var(--ff-title); letter-spacing: -.03em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ff-tiles .ff-tile:nth-child(4) b { font-size: 22px; }
+
+/* the timeline: rows between thin rules */
+.ff-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ff-item { position: relative; display: grid; grid-template-columns: 46px 36px minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px 0; border-top: 1px solid var(--line); }
+.ff-list > .ff-item:last-child { border-bottom: 1px solid var(--line); }
+.ff-tiles + .ff-list > .ff-item:first-child { border-top: 0; padding-top: 4px; }
+.ff-item.new::before { content: ""; position: absolute; left: calc(-1 * var(--ff-px, 16px)); top: 14px; bottom: 14px; width: 3px; background: var(--ff-apricot); }
+.ff-time { font: 400 15px/36px var(--ff-label); color: var(--muted); font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.ff-ic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--ff-cream); color: var(--ff-glyph); }
+.ff-ic svg { width: 19px; height: 19px; }
+.ff-ic.c-heart { background: var(--ff-apricot); color: var(--ff-on-apricot); }
+.ff-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+.ff-body b { font: var(--w-ui, 500) 18px/1.15 var(--ff-title); letter-spacing: -.015em; color: var(--ink); overflow-wrap: anywhere; }
+.ff-body small { font: var(--w-text, 400) 16px/1.2 var(--ff-text); letter-spacing: -.015em; color: var(--muted); overflow-wrap: anywhere; }
+.ff-res { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; margin-top: 5px; color: var(--ink); font: var(--w-label, 400) 12px/1.3 var(--ff-label); letter-spacing: .06em; text-transform: uppercase; }
+.ff-res::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ff-bar); }
+.ff-res.win::before { display: none; }
+.ff-res svg { width: 15px; height: 15px; color: var(--ff-apricot); }
+.ff-new { margin-left: 8px; font: var(--w-label, 400) 11px/1 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); vertical-align: 2px; white-space: nowrap; }
+.ff-new::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--ff-apricot); vertical-align: 1px; }
+.ff-pic { display: block; margin-top: 10px; border-radius: 12px; overflow: hidden; background: var(--ff-cream); min-height: 80px; }
+.ff-pic img { display: block; width: 100%; height: auto; opacity: 0; transition: opacity .3s; }
+/* iOS 15+ and current browsers: a steady 4:3 frame while the photo loads (older Safari: the photo's own height) */
+@supports (aspect-ratio: 1 / 1) {
+  .ff-pic { aspect-ratio: 4 / 3; min-height: 0; }
+  .ff-pic img { height: 100%; object-fit: cover; }
+}
+.ff-pic.ready img { opacity: 1; }
+
+/* history: the last 14 days, the chosen one in deep green; a dot where something happened */
+.ff-strip { display: flex; gap: 2px; overflow-x: auto; margin: 0 calc(-1 * var(--ff-px, 16px)); padding: 0 calc(var(--ff-px, 16px) - 4px) 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ff-strip::-webkit-scrollbar { display: none; }
+.ff-day { flex: none; width: 50px; min-height: 76px; border: 0; background: transparent; color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px; padding: 6px 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ff-day small { font: var(--w-label, 400) 11px/1 var(--ff-label); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ff-day b { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: var(--w-title, 400) 19px/1 var(--ff-title); letter-spacing: -.02em; }
+.ff-day i { width: 5px; height: 5px; border-radius: 50%; background: transparent; }
+.ff-day.has i { background: var(--ff-apricot); }
+.ff-day.on b { background: var(--ff-green); color: var(--on-accent, #FFFFFF); }
+.ff-pick { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ff-pick label { display: flex; flex-direction: column; gap: 6px; font: var(--w-label, 400) 11.5px/1.2 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.ff-pick input { -webkit-appearance: none; appearance: none; font: 400 17px/1.2 var(--ff-title); color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--ink); border-radius: 0; padding: 6px 0; min-height: 40px; min-width: 150px; }
+.ff-pick small { font: 400 15px/1.2 var(--ff-text); color: var(--muted); padding-bottom: 8px; }
+
+/* listening: the kinds */
+.ff-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--ff-px, 16px)); padding: 0 var(--ff-px, 16px) 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ff-chips::-webkit-scrollbar { display: none; }
+.ff-chip { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--ink);
+  font: var(--w-label, 400) 12.5px/1 var(--ff-label); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.ff-chip svg { width: 16px; height: 16px; }
+.ff-chip i { font-style: normal; color: var(--muted); }
+.ff-chip.on { background: var(--ff-green); border-color: var(--ff-green); color: var(--on-accent, #FFFFFF); }
+.ff-chip.on i { color: inherit; opacity: .75; }
+
+/* summary: sections under a thin rule */
+.ff-card { display: flex; flex-direction: column; gap: 14px; padding-top: 14px; border-top: 1px solid var(--ink); }
+.ff-card .ff-tiles { border-top: 0; }
+.ff-big { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ff-big > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 0 10px; border-left: 1px solid var(--line); }
+.ff-big > div:first-child { border-left: 0; padding-left: 0; }
+.ff-trend { display: inline-flex; align-items: center; gap: 3px; font: var(--w-label, 400) 13px/1.2 var(--ff-label); letter-spacing: .02em; white-space: nowrap; }
+.ff-trend svg { width: 13px; height: 13px; }
+.ff-trend.up { color: var(--ff-up); }
+.ff-trend.down { color: var(--ff-down); }
+.ff-trend.flat { color: var(--muted); }
+.ff-bars { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; height: 120px; align-items: end; margin-top: 4px; }
+.ff-bar { position: relative; height: 100%; }
+.ff-bar small { position: absolute; left: 0; right: 0; bottom: -22px; text-align: center; font: var(--w-label, 400) 11px/1 var(--ff-label); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ff-bar.on small { color: var(--ink); }
+.ff-now, .ff-prev { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 3px 3px 0 0; }
+.ff-prev { box-shadow: inset 0 0 0 1px var(--line); }
+.ff-now { left: 18%; right: 18%; background: var(--ff-bar); }
+.ff-bar.on .ff-now { background: var(--ff-apricot); }
+.ff-card.ff-week { padding-bottom: 26px; }
+.ff-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ff-top li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.ff-top li:first-child { border-top: 0; padding-top: 0; }
+.ff-top span { font: var(--w-ui, 500) 17px/1.15 var(--ff-title); letter-spacing: -.01em; overflow-wrap: anywhere; }
+.ff-top b { font: var(--w-title, 400) 20px/1 var(--ff-title); }
+.ff-top small { font: 400 15px/1 var(--ff-text); color: var(--muted); min-width: 52px; text-align: right; }
+.ff-meter { height: 6px; border-radius: 3px; background: var(--ff-cream); overflow: hidden; }
+.ff-meter span { display: block; height: 100%; background: var(--ff-bar); }
+
+/* moments: the photo, its words, the date */
+.ff-moments { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ff-moment { display: flex; gap: 12px; align-items: center; padding: 16px 0; border-top: 1px solid var(--line); }
+.ff-moment:last-child { border-bottom: 1px solid var(--line); }
+.ff-moment.pic { flex-direction: column; align-items: stretch; gap: 12px; }
+.ff-moment.pic .ff-pic { margin: 0; max-height: 70vh; }
+.ff-moment > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.ff-moment b { font: var(--w-text, 400) 21px/1.1 var(--ff-text); letter-spacing: -.02em; color: var(--ink); overflow-wrap: anywhere; }
+.ff-moment small { font: var(--w-label, 400) 11.5px/1.2 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* empty, loading, error */
+.ff-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 44px 12px 36px; }
+.ff-emptyart { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); color: var(--ff-glyph); margin-bottom: 4px; }
+.ff-emptyart svg { width: 28px; height: 28px; }
+.ff-empty h3 { margin: 0; font: var(--w-title, 400) 26px/1 var(--ff-title); letter-spacing: -.025em; color: var(--ink); }
+.ff-empty p { margin: 0; max-width: 28ch; font: var(--w-text, 400) 18px/1.15 var(--ff-text); letter-spacing: -.015em; color: var(--muted); }
+.ff-retry { margin-top: 6px; min-height: 44px; padding: 8px 20px; border-radius: 999px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font: var(--w-label, 400) 13px/1 var(--ff-label); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.ff-skel { display: flex; flex-direction: column; gap: 1px; }
+.ff-skel i { display: block; height: 64px; background: var(--ff-cream); animation: ff-blink 1.6s ease-in-out infinite; }
+
+@media (max-width: 360px) {
+  .ff-item { grid-template-columns: 42px 32px minmax(0, 1fr); gap: 10px; }
+  .ff-ic { width: 32px; height: 32px; }
+  .ff-time { font-size: 14px; line-height: 32px; }
+}
+
+/* ---------- 1.16 · Figma Make shell, step 5: "Day" ----------
+   A plain title, three underlined words (Today / 7 days / Moments), flat figures, a thin timeline.
+   No green summary block, no round icon discs; History and Listening stay one tap away, as small links. */
+.ff-pagetitle { margin: 12px 0 0; font: var(--w-title, 400) 32px/1.05 var(--ff-title); letter-spacing: -.025em; color: var(--ink); }
+.ff-nav { position: static; display: flex; gap: 24px; margin: 0; padding: 0; background: none; border-bottom: 1px solid var(--line); }
+.ff-nav button { flex: none; min-height: 44px; padding: 8px 0; flex-direction: row; font: var(--w-ui, 500) 18px/1.2 var(--ff-title); letter-spacing: 0; text-transform: none; margin-bottom: -1px; }
+.ff-nav button.on::after { left: 0; right: 0; bottom: 0; }
+.ff-ic { background: none; border-radius: 0; width: 28px; height: 36px; }
+.ff-ic.c-heart { background: none; color: var(--ff-glyph); }
+.ff-item { grid-template-columns: 46px 26px minmax(0, 1fr); }
+.ff-day.on b { background: transparent; color: var(--ink); box-shadow: inset 0 -2px 0 var(--ff-apricot); border-radius: 0; }
+.ff-chip { border-radius: 8px; }
+.ff-chip.on { background: transparent; border-color: var(--ff-apricot); color: var(--ink); }
+.ff-card { border-top-color: var(--line); }
+.ff-retry { border-radius: 8px; }
+.ff-emptyart { border: 0; width: 40px; height: 40px; }
+.ff-more { display: flex; gap: 22px; margin: 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.ff-link { border: 0; background: none; padding: 8px 0; min-height: 40px; cursor: pointer; font: var(--w-ui, 500) 15px/1.2 var(--ff-title); color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
+.ff-link.on { color: var(--ink); text-decoration-color: var(--ff-apricot); text-decoration-thickness: 2px; }
+.ff-link:focus-visible { outline: 2px solid var(--focus, var(--ff-apricot)); outline-offset: 2px; }
+
+/* Suavia identity (14 Nov 2026): square marks, corners 0 to 5 px, no pills, no circles */
+.ff-dot, .ff-res::before, .ff-new::before, .ff-day i { border-radius: 0; }
+.ff-ic, .ff-emptyart, .ff-day b { border-radius: 0; }
+.ff-chip, .ff-retry { border-radius: 5px; text-transform: none; letter-spacing: 0; }
+.ff-pic { border-radius: 0; }
+.ff-meter, .ff-now, .ff-prev { border-radius: 0; }

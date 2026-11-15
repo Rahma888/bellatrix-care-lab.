@@ -1,0 +1,174 @@
+/* Family portal 1.16 (agent N2): calls, the bell and its notifications (js/portail-calls.js).
+   Colours and type come from the portal's tokens (css/portail.css, css/lab.css): nothing new. */
+.pc-bell { position: relative; flex: none; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.pc-bell svg { width: 24px; height: 24px; }
+.pc-bell:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pc-badge { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--danger); color: #FFFFFF; font: 700 13px/22px var(--font-label, var(--font)); font-style: normal; text-align: center; border: 2px solid var(--bg); }
+
+/* Layers: the bell's sheet, the Calls panel, the invitation card */
+.pc-layer[hidden] { display: none; }
+.pc-layer { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+.pc-scrim { position: absolute; inset: 0; background: rgba(17, 24, 27, .45); }
+.pc-sheet { position: relative; width: 100%; max-width: 560px; max-height: 88vh; overflow: auto; background: var(--bg); color: var(--ink); border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 -8px 30px rgba(0, 0, 0, .18); font-family: var(--font); }
+.pc-sheet.pc-full { height: 92vh; }
+.pc-sheethead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pc-sheethead h2 { display: flex; align-items: center; gap: 10px; margin: 0; font: 400 24px/1.1 var(--font-display, var(--font)); letter-spacing: -.01em; }
+.pc-sheethead h2 svg { width: 24px; height: 24px; color: var(--accent); }
+.pc-x { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 26px; line-height: 1; cursor: pointer; color: var(--muted); }
+.pc-panelbody { display: flex; flex-direction: column; gap: 16px; }
+
+/* The list of notices */
+.pc-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pc-list button { width: 100%; display: flex; align-items: flex-start; gap: 12px; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; cursor: pointer; color: var(--ink); min-height: 60px; }
+.pc-list li.new button { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+.pc-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pc-txt b { font-weight: 700; font-size: 17px; line-height: 1.3; }
+.pc-txt small { color: var(--muted); font-size: 15px; line-height: 1.35; }
+.pc-txt .pc-when { font: 300 12px/1.4 var(--font-label, var(--font)); text-transform: uppercase; letter-spacing: .04em; }
+.pc-new { color: var(--accent); font-weight: 700; }
+.pc-ico { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--soft); color: var(--accent); }
+.pc-ico svg { width: 22px; height: 22px; }
+.pc-ico.t-call_missed { background: var(--recbg); color: var(--danger); }
+.pc-ico.t-call_invite { background: var(--okbg); color: var(--ok); }
+.pc-ico.t-payment_request { background: var(--recbg); color: var(--gold); }
+.pc-empty { text-align: center; padding: 18px 0; }
+
+/* Turning notifications on: a calm card, the browser's question only after "Turn on" */
+.pc-push { display: flex; flex-direction: column; gap: 12px; border-radius: 16px; padding: 14px; background: var(--soft); }
+.pc-push.on { background: var(--okbg); }
+.pc-push.on p { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ok); }
+.pc-push.on p svg { width: 22px; height: 22px; flex: none; }
+.pc-push.info { background: var(--notbg); }
+.pc-pushhead { display: flex; gap: 12px; align-items: flex-start; }
+.pc-pushhead b { display: block; font-size: 18px; margin-bottom: 2px; }
+/* running text in the serif, as everywhere in the portal */
+.pc-push p, .pc-txt small:not(.pc-when), .pc-ask > p:not(.pc-state) { font-family: var(--font-text, var(--font)); }
+.pc-push .btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.pc-push .btn svg { width: 22px; height: 22px; }
+.pc-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pc-row { display: flex; gap: 18px; flex-wrap: wrap; }
+.pc-warn { color: var(--danger); }
+
+/* The reminder ("You have not talked with … for 7 days") and the planned call */
+.pc-remind { border-color: var(--accent); gap: 12px; }
+.pc-remind p { margin: 0; font-size: 18px; line-height: 1.3; }
+.pc-plan .field input { width: 100%; min-height: 52px; font-size: 18px; }
+.pc-planned { margin: 0; font-size: 19px; }
+.pc-planned b::first-letter { text-transform: uppercase; }
+.pc-ask .btn[data-pc="plan-open"] { min-height: 52px; }
+
+/* The Calls screen */
+.pc-invite { align-items: center; text-align: center; border-color: var(--ok); background: var(--okbg); }
+.pc-invite h1, .pc-callcard h1 { font: 400 26px/1.15 var(--font-display, var(--font)); letter-spacing: -.015em; margin: 0; }
+.pc-ring { width: 72px; height: 72px; border-radius: 50%; background: var(--ok); color: #FFFFFF; display: grid; place-items: center; box-shadow: 0 0 0 10px var(--okbg); }
+.pc-ring svg { width: 36px; height: 36px; }
+.pc-ring.big { width: 96px; height: 96px; }
+.pc-ring.big svg { width: 48px; height: 48px; }
+.pc-ask .pc-askbtn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 60px; font-size: 19px; }
+.pc-ask .pc-askbtn svg { width: 24px; height: 24px; }
+.pc-when { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pc-when legend { font-weight: 700; font-size: 16px; padding: 0; margin-bottom: 8px; }
+.pc-when .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pc-when .tchip { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; padding: 10px 16px; min-height: 46px; font-weight: 700; font-size: 16px; cursor: pointer; color: var(--ink); }
+.pc-when .tchip.on { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+.pc-state { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pc-recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pc-recent li { display: flex; align-items: center; gap: 12px; }
+.pc-recent li b { flex: 1; font-size: 17px; }
+.pc-recent li.miss .pc-ico { background: var(--recbg); color: var(--danger); }
+.pc-recent li.ok .pc-ico { background: var(--okbg); color: var(--ok); }
+
+/* The invitation while the portal is open */
+.pc-callcard { align-items: center; text-align: center; border-radius: 26px 26px 0 0; padding-top: 28px; gap: 16px; }
+.pc-callcard .btn.call { max-width: 420px; }
+@media (min-width: 600px) {
+  .pc-layer { align-items: center; }
+  .pc-sheet, .pc-callcard { border-radius: 22px; }
+}
+
+/* The QR code of the call link, for another device */
+.pc-qr { margin: 4px 0 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pc-qrimg { width: 132px; height: 132px; background: #FFFFFF; border-radius: 12px; padding: 6px; border: 1px solid var(--line); }
+.pc-qrimg svg { width: 100%; height: 100%; display: block; }
+.pc-qr figcaption { font: 300 12px/1.4 var(--font-label, var(--font)); text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+/* The invitation card sits at the top of the portal */
+#pcOverlay { align-items: flex-start; }
+#pcOverlay .pc-callcard { border-radius: 0 0 26px 26px; padding: calc(22px + env(safe-area-inset-top)) 16px 22px; max-height: 96vh; }
+
+/* ---------- 1.16 · Figma Make shell, step 6: calls without boxes ----------
+   The invitation is a plain block between hairlines (no shadow, no coloured disc); "OR"; the request form;
+   the sheets of the bell and of the invitation lose their shadows and tinted squares. */
+.pc-invite { border: 0; border-top: 1px solid var(--line); background: transparent; align-items: flex-start; text-align: left; padding: 24px 0; gap: 14px; }
+.pc-invite h1, .pc-ask h1, .pc-callcard h1 { font: var(--w-title, 400) 32px/1.05 var(--font-display, var(--font)); letter-spacing: var(--track-title, -.025em); }
+.pc-ring { width: 40px; height: 40px; border-radius: 0; background: none; color: var(--accent); box-shadow: none; }
+.pc-ring svg { width: 30px; height: 30px; }
+.pc-ring.big { width: 56px; height: 56px; }
+.pc-ring.big svg { width: 44px; height: 44px; }
+.pc-or { display: flex; align-items: center; gap: 14px; margin: 0; padding: 4px 0; color: var(--muted); font: var(--w-label, 400) 11px/1 var(--font-label, var(--font)); letter-spacing: .12em; text-transform: uppercase; }
+.pc-or::before, .pc-or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.pc-ask { border-top: 0; padding-top: 18px; }
+.pc-when .tchip { border-radius: 8px; border-width: 1px; background: transparent; font-weight: 500; }
+.pc-when .tchip.on { background: transparent; border-color: var(--apricot); color: var(--ink); box-shadow: inset 0 -2px 0 var(--apricot); }
+.pc-when legend { font: var(--w-label, 400) 14px/1.2 var(--font-label, var(--font)); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.pc-askbtn { border-radius: 12px; }
+.pc-recent li { padding: 10px 0; border-top: 1px solid var(--line); }
+.pc-recent li:first-child { border-top: 0; }
+.pc-ico, .pc-ico.t-call_missed, .pc-ico.t-call_invite, .pc-ico.t-payment_request, .pc-recent li.miss .pc-ico, .pc-recent li.ok .pc-ico { background: none; border-radius: 0; width: 28px; color: var(--accent); }
+.pc-recent li.miss .pc-ico { color: var(--danger); }
+.pc-push, .pc-push.on, .pc-push.info { background: none; border: 0; border-left: 2px solid var(--apricot); border-radius: 0; padding: 4px 0 4px 14px; }
+.pc-sheet { border-radius: 0; box-shadow: none; border-top: 1px solid var(--line); }
+.pc-x { border-radius: 0; border: 0; background: transparent; }
+.pc-list { gap: 0; }
+.pc-list button { background: transparent; border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 14px 0; }
+.pc-list li:first-child button { border-top: 0; }
+.pc-list li.new button { box-shadow: none; border-top-color: var(--line); }
+.pc-list li.new .pc-txt b::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--apricot); margin-right: 8px; vertical-align: 2px; }
+.pc-qrimg { border-radius: 0; }
+#pcOverlay .pc-callcard { border-radius: 0; }
+@media (min-width: 600px) { .pc-sheet, .pc-callcard { border-radius: 0; } }
+
+/* Suavia identity (14 Nov 2026): square corners (0 to 5 px), light blue / cyan accents */
+.pc-bell { border-radius: 5px; }
+.pc-badge { border-radius: 0; background: var(--brand-light, #9FD3F5); color: #00325F; border-color: transparent; }
+.pc-scrim { background: rgba(0, 31, 61, .55); }
+.pc-ring { color: var(--accent); }
+.pc-qrimg { border-radius: 0; }
+.pc-askbtn, .pc-when .tchip { border-radius: 5px; }
+.pc-sheet, .pc-callcard { border-radius: 0; box-shadow: none; }
+@media (min-width: 600px) { .pc-sheet, .pc-callcard { border-radius: 5px; } }
+.pc-list li.new .pc-txt b::before { border-radius: 0; background: var(--brand-cyan, #00A0E3); }
+.pc-when .tchip.on { box-shadow: inset 0 -2px 0 var(--brand-cyan, #00A0E3); border-color: var(--accent); }
+.pc-ring { border-radius: 0; box-shadow: none; background: none; }
+
+/* 14 Nov: the phone's notifications, always visible as the first line of the bell's sheet */
+.pc-bell.off { color: var(--muted); }
+.pc-pushrow { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.pc-pushrow .pc-ico { flex: none; width: 36px; height: 36px; display: grid; place-items: center; color: var(--accent); }
+.pc-pushrow[data-push="denied"] .pc-ico, .pc-pushrow[data-push="none"] .pc-ico, .pc-pushrow[data-push="insecure"] .pc-ico, .pc-pushrow[data-push="ios"] .pc-ico { color: var(--muted); }
+.pc-pushrow .pc-ico svg { width: 26px; height: 26px; }
+.pc-pushtxt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pc-pushtxt small { color: var(--muted); font-size: 14px; line-height: 1.3; }
+.pc-pushrow[data-push="on"] .pc-pushtxt small { color: var(--ok); }
+.pc-pushrow .btn.sm { flex: none; }
+.pc-visit { font-size: 19px; margin: 6px 0 2px; }
+
+/* 15 Nov: the incoming call (js/portail-calls.js, RING): full screen, Suavia blue and white; green and red only on
+   the two phone buttons (the phone convention). No shadows, no gradients. */
+.pc-layer.pc-ringlayer { z-index: 60; align-items: stretch; }
+.pc-ringscreen { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: calc(28px + env(safe-area-inset-top)) 20px calc(36px + env(safe-area-inset-bottom)); background: #00519E; color: #FFFFFF; text-align: center; font-family: var(--font); }
+.pc-ringbrand { margin: 0; font-size: 17px; letter-spacing: .04em; opacity: .9; }
+.pc-ringface { width: 132px; height: 132px; border-radius: 50%; background: #FFFFFF; color: #00519E; display: grid; place-items: center; font: 700 64px/1 var(--font-display, var(--font)); margin-top: 18px; }
+.pc-ringscreen h1 { margin: 6px 0 0; font: 700 44px/1.05 var(--font-display, var(--font)); color: #FFFFFF; overflow-wrap: anywhere; }
+.pc-ringline { margin: 0; font-size: 24px; }
+.pc-ringscreen.missed .pc-ringline { font-weight: 700; }
+.pc-ringbtns { margin-top: auto; width: 100%; max-width: 420px; display: flex; justify-content: space-between; padding: 0 12px; }
+.pc-ringbtns.one { justify-content: center; }
+.pc-ringbtns.one .btn { min-width: 200px; background: #FFFFFF; color: #00519E; border-color: #FFFFFF; }
+.pc-rb { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; }
+.pc-rbtn { width: 92px; height: 92px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: #FFFFFF; padding: 0; }
+.pc-rbtn svg { width: 44px; height: 44px; }
+.pc-rbtn.accept { background: #1E8A3C; }
+.pc-rbtn.decline { background: #C62828; }
+.pc-rbtn.decline svg { transform: rotate(135deg); }
+.pc-rbtn:focus-visible { outline: 4px solid #FFFFFF; outline-offset: 4px; }
+.pc-ringnote { margin: 4px 0 0; }

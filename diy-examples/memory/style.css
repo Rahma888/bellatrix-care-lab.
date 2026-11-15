@@ -1,0 +1,87 @@
+/* Memory: calm and very big, for the portrait tablet of the robot (the game gets about 1080 x 1580 px).
+   Suavia look: white, blue #00519E, Roboto Condensed, corners 5 px at most. No gradients, no shadows. */
+@font-face { font-family: "Roboto Condensed"; font-weight: 400; src: url("fonts/RobotoCondensed-Regular.ttf") format("truetype"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 500; src: url("fonts/RobotoCondensed-Medium.ttf") format("truetype"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 700; src: url("fonts/RobotoCondensed-Bold.ttf") format("truetype"); }
+
+html, body { margin: 0; height: 100%; background: #FFFFFF; }
+body { font-family: "Roboto Condensed", "Arial Narrow", Arial, sans-serif; color: #333333; overflow: hidden;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; touch-action: manipulation; cursor: pointer; -webkit-appearance: none; appearance: none; }
+button:focus { outline: none; }
+button:focus-visible { outline: 5px solid #00A0E3; outline-offset: 4px; }
+
+.app { box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; gap: 18px; padding: 24px 32px 28px; }
+
+/* ---------- top: the pictures (themes) and the language ---------- */
+.top { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.group { display: flex; flex-wrap: wrap; gap: 12px; }
+.chip, .lang { min-height: 96px; border: 3px solid #00519E; border-radius: 5px; background: #FFFFFF; color: #00519E; font-weight: 500; }
+.chip { display: inline-flex; align-items: center; gap: 12px; padding: 0 22px 0 12px; font-size: 34px; }
+.chip .ic { width: 68px; height: 68px; flex: none; background: #FFFFFF; border-radius: 4px; display: block; }
+.chip .ic svg { width: 100%; height: 100%; display: block; }
+.lang { min-width: 84px; padding: 0 10px; font-size: 30px; font-weight: 700; }
+.chip[aria-pressed="true"], .lang[aria-pressed="true"] { background: #00519E; color: #FFFFFF; }
+
+/* ---------- the line that says how it goes ---------- */
+.status { flex: none; margin: 0; min-height: 52px; text-align: center; font-size: 42px; line-height: 52px; color: #333333; }
+
+/* ---------- the cards ---------- */
+.board { flex: 1 1 auto; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+.deck { display: flex; flex-wrap: wrap; justify-content: center; align-content: center; }
+.card { position: relative; flex: none; padding: 0; margin: 0; border: 0; background: transparent; perspective: 1600px; }
+.card * { pointer-events: none; }
+.card .inner { position: absolute; left: 0; top: 0; right: 0; bottom: 0; transform-style: preserve-3d; transition: transform .5s ease; }
+.card.open .inner, .card.found .inner { transform: rotateY(180deg); }
+.card .face { position: absolute; left: 0; top: 0; right: 0; bottom: 0; box-sizing: border-box; border-radius: 5px; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+/* face down: blue, a thin white frame and a lozenge */
+.card .back { background: #00519E; }
+.card .back::before { content: ""; position: absolute; left: 7%; top: 7%; right: 7%; bottom: 7%; border: 4px solid #FFFFFF; border-radius: 3px; opacity: .55; }
+.card .back::after { content: ""; position: absolute; left: 50%; top: 50%; width: 26%; padding-top: 26%; transform: translate(-50%, -50%) rotate(45deg); border: 5px solid #FFFFFF; box-sizing: border-box; }
+/* face up: the picture and its word */
+.card .front { transform: rotateY(180deg); background: #FFFFFF; border: 4px solid #B9CCE0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.card .pic { display: block; width: 86%; height: 70%; }
+.card .pic svg { display: block; width: 100%; height: 100%; }
+.card .word { margin-top: 3%; font-weight: 500; white-space: nowrap; color: #333333; line-height: 1.1; }
+.card.found .front { border: 7px solid #00519E; background: #F0F6FC; }
+.card .tick { position: absolute; right: 8px; top: 8px; width: 46px; height: 46px; display: none; }
+.card.found .tick { display: block; }
+
+/* ---------- all pairs found ---------- */
+.end { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; text-align: center; }
+.end[hidden] { display: none; }
+.end h2 { margin: 0; font-size: 110px; font-weight: 700; color: #00519E; line-height: 1.05; }
+.end p { margin: 0; font-size: 54px; color: #333333; }
+.endpics { display: flex; gap: 28px; margin: 18px 0 10px; }
+.endpics svg { width: 190px; height: 190px; display: block; }
+.again { min-height: 128px; min-width: 460px; padding: 0 40px; border: 0; border-radius: 5px; background: #00519E; color: #FFFFFF; font-size: 48px; font-weight: 500; }
+
+/* ---------- bottom: new game, easier, harder ---------- */
+.bottom { flex: none; display: flex; gap: 20px; }
+.act { flex: 1 1 0; min-height: 128px; padding: 0 12px; border: 3px solid #00519E; border-radius: 5px; background: #FFFFFF; color: #00519E; font-size: 44px; font-weight: 500; }
+.act.primary { background: #00519E; color: #FFFFFF; }
+.act:disabled { border-color: #CCCCCC; color: #999999; background: #FFFFFF; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) { .card .inner { transition: none; } }
+
+/* a phone or a small window (the carer tries the game on a PC or a phone) */
+@media (max-width: 760px), (max-height: 900px) {
+  .app { gap: 10px; padding: 12px 14px 14px; }
+  .chip, .lang { min-height: 60px; }
+  .chip { font-size: 22px; padding: 0 12px 0 6px; gap: 6px; }
+  .chip .ic { width: 44px; height: 44px; }
+  .lang { min-width: 54px; font-size: 20px; }
+  .status { font-size: 26px; line-height: 34px; min-height: 34px; }
+  .act { min-height: 72px; font-size: 26px; }
+  .end h2 { font-size: 64px; }
+  .end p { font-size: 30px; }
+  .endpics svg { width: 110px; height: 110px; }
+  .again { min-height: 80px; min-width: 260px; font-size: 30px; }
+}
+/* a phone: the theme buttons without their small pictures, so that they fit on one line */
+@media (max-width: 480px) {
+  .group { gap: 8px; }
+  .chip { padding: 0 12px; font-size: 20px; }
+  .chip .ic { display: none; }
+  .act { font-size: 20px; }
+}

@@ -1,0 +1,331 @@
+/* Bellatrix Play texts in French and German (version 1.13, js/play.js). English is the key.
+   Words already translated elsewhere (Back, Finish, Pause, Next, Quieter, Louder, Calm, Try again,
+   I like it, Classical music) are used as they are. The styles (genres) are all here, also the ones
+   written the same in the three languages, so every style has its French and German name. */
+I18N.add('fr', {
+  'Here is your music.': 'Voici votre musique.',
+  'Home': 'Accueil', 'Search': 'Rechercher', 'My music': 'Ma musique',
+  'For you': 'Pour vous', 'From your family': 'De votre famille', 'Recently played': 'Écoutés récemment', 'Your artists': 'Vos artistes', 'Moods': 'Ambiances',
+  'Hits of the moment': 'Hits du moment',
+  'Your youth': 'Votre jeunesse', '{artist} mix': 'Mix {artist}', 'International hits': 'Succès internationaux', '{y}s': 'Années {yy}',
+  'Dance': 'Danser', 'Nature': 'Nature',
+  'Artist or song': 'Artiste ou chanson', 'Space': 'Espace', 'Delete': 'Effacer', 'Clear': 'Tout effacer', 'No results': 'Aucun résultat',
+  'Artists': 'Artistes', 'Years': 'Années', 'Styles': 'Styles',
+  'Listen': 'Lecture', 'Previous': 'Précédent',
+  'Liked songs': 'Coups de cœur', 'Your hearts will appear here.': 'Vos coups de cœur apparaîtront ici.',
+  'No internet. Here is my calm music.': 'Pas d’internet. Voici ma musique calme.',
+  'This music cannot play right now.': 'Cette musique ne peut pas être lue pour le moment.',
+  'Would you like to listen to your music again another time?': 'Voulez-vous écouter votre musique une autre fois ?',
+  'French chanson': 'Chanson française', 'Schlager': 'Schlager', 'Folk music': 'Musique folklorique', 'Pop': 'Pop', 'Rock': 'Rock',
+  'Rock and roll': 'Rock’n’roll', 'Jazz': 'Jazz', 'Swing': 'Swing', 'Blues': 'Blues', 'Soul': 'Soul', 'Gospel': 'Gospel',
+  'Opera': 'Opéra', 'Waltzes': 'Valses', 'Rap and hip-hop': 'Rap et hip-hop', 'Electronic music': 'Électro', 'R&B and soul': 'R&B et soul',
+  'Latin music': 'Musique latine', 'Reggae': 'Reggae', 'Disco': 'Disco', 'Film music': 'Musiques de film',
+  'Country': 'Country'
+});
+I18N.add('de', {
+  'Here is your music.': 'Hier ist Ihre Musik.',
+  'Home': 'Start', 'Search': 'Suchen', 'My music': 'Meine Musik',
+  'For you': 'Für Sie', 'From your family': 'Von Ihrer Familie', 'Recently played': 'Zuletzt gehört', 'Your artists': 'Ihre Künstler', 'Moods': 'Stimmungen',
+  'Hits of the moment': 'Aktuelle Hits',
+  'Your youth': 'Ihre Jugend', '{artist} mix': '{artist} Mix', 'International hits': 'Internationale Hits', '{y}s': '{yy}er',
+  'Dance': 'Tanzen', 'Nature': 'Natur',
+  'Artist or song': 'Künstler oder Lied', 'Space': 'Leerzeichen', 'Delete': 'Löschen', 'Clear': 'Alles löschen', 'No results': 'Nichts gefunden',
+  'Artists': 'Künstler', 'Years': 'Jahrzehnte', 'Styles': 'Musikstile',
+  'Listen': 'Abspielen', 'Previous': 'Vorheriges Lied',
+  'Liked songs': 'Lieblingslieder', 'Your hearts will appear here.': 'Ihre Lieblingslieder erscheinen hier.',
+  'No internet. Here is my calm music.': 'Kein Internet. Hier ist meine ruhige Musik.',
+  'This music cannot play right now.': 'Diese Musik kann gerade nicht abgespielt werden.',
+  'Would you like to listen to your music again another time?': 'Möchten Sie ein anderes Mal wieder Ihre Musik hören?',
+  'French chanson': 'Chanson', 'Schlager': 'Schlager', 'Folk music': 'Volksmusik', 'Pop': 'Pop', 'Rock': 'Rock',
+  'Rock and roll': 'Rock ’n’ Roll', 'Jazz': 'Jazz', 'Swing': 'Swing', 'Blues': 'Blues', 'Soul': 'Soul', 'Gospel': 'Gospel',
+  'Opera': 'Oper', 'Waltzes': 'Walzer', 'Rap and hip-hop': 'Rap und Hip-Hop', 'Electronic music': 'Elektro', 'R&B and soul': 'R&B und Soul',
+  'Latin music': 'Latin', 'Reggae': 'Reggae', 'Disco': 'Disco', 'Film music': 'Filmmusik', 'Children’s songs': 'Kinderlieder',
+  'Country': 'Country'
+});
+/* Version 1.13, second look: sidebar, player bar, favourites, history, queue, lyrics, Premium. */
+I18N.add('fr', {
+  'Hello': 'Bonjour', 'Hello, {name}': 'Bonjour, {name}', 'Your selection of the day': 'Votre sélection du jour', 'Listen now': 'Écouter maintenant',
+  'Your recommendations': 'Vos recommandations', 'Explore easily': 'Explorez facilement', 'French songs': 'Chansons françaises',
+  'My favourites': 'Mes favoris', 'The songs you love': 'Les chansons que vous aimez', '1 song': '1 chanson', '{n} songs': '{n} chansons',
+  'Just now': 'À l’instant', 'Today': 'Aujourd’hui', 'Yesterday': 'Hier', 'This week': 'Cette semaine', 'Nothing played yet.': 'Rien n’a encore été écouté.',
+  'Up next': 'À suivre', 'Nothing in the queue yet.': 'Rien à suivre pour le moment.', 'Clip': 'Clip', 'Choose a song': 'Choisissez une chanson',
+  'Lyrics': 'Paroles', 'No lyrics for this song.': 'Pas de paroles pour cette chanson.', 'Lyrics: LRCLIB': 'Paroles : LRCLIB',
+  'Lyrics, big clips and no time limit.': 'Paroles, clips en grand et écoute sans limite.', 'Ask the team': 'Demander à l’équipe',
+  'Noted, the team has been told.': 'C’est noté, l’équipe est prévenue.'
+});
+I18N.add('de', {
+  'Hello': 'Guten Tag', 'Hello, {name}': 'Guten Tag, {name}', 'Your selection of the day': 'Ihre Auswahl für heute', 'Listen now': 'Jetzt anhören',
+  'Your recommendations': 'Ihre Empfehlungen', 'Explore easily': 'Einfach entdecken', 'French songs': 'Französische Chansons',
+  'My favourites': 'Meine Favoriten', 'The songs you love': 'Die Lieder, die Sie lieben', '1 song': '1 Lied', '{n} songs': '{n} Lieder',
+  'Just now': 'Gerade eben', 'Today': 'Heute', 'Yesterday': 'Gestern', 'This week': 'Diese Woche', 'Nothing played yet.': 'Noch nichts gehört.',
+  'Up next': 'Als Nächstes', 'Nothing in the queue yet.': 'Noch nichts in der Warteschlange.', 'Clip': 'Video', 'Choose a song': 'Wählen Sie ein Lied',
+  'Lyrics': 'Liedtext', 'No lyrics for this song.': 'Für dieses Lied gibt es keinen Text.', 'Lyrics: LRCLIB': 'Liedtext: LRCLIB',
+  'Lyrics, big clips and no time limit.': 'Liedtexte, große Videos und Musik ohne Zeitlimit.', 'Ask the team': 'Das Team fragen',
+  'Noted, the team has been told.': 'Notiert, das Team weiß Bescheid.'
+});
+/* Version 1.13, the "Mélodie" design: sidebar, page titles, sections, history, queue, lyrics, clip, Premium. */
+I18N.add('fr', {
+  'Your music, simply': 'Votre musique, tout simplement', 'What would you like to hear?': 'Que voulez-vous écouter ?',
+  'The songs|that make you feel good': 'Les chansons|qui vous font du bien', 'Melodies you love, gathered in one place.': 'Des mélodies que vous aimez, réunies au même endroit.',
+  'your favourite songs': 'vos favoris', 'Just for you': 'Rien que pour vous', 'Choose a mood': 'Choisissez une ambiance',
+  'Listen to {title}': 'Écouter {title}', 'Add to my favourites': 'Ajouter aux favoris', 'Remove from my favourites': 'Retirer des favoris',
+  'The {y1}s and {y2}s': 'Années {yy1} & {yy2}', 'Your music, without limits.': 'Votre musique, sans limites.',
+  'Lyrics, big music videos and listening with no time limit.': 'Les paroles, les clips en grand et l’écoute sans limite de temps.',
+  'Ask for Premium': 'Demander Premium', 'Your collection': 'Votre collection', '1 song saved': '1 chanson enregistrée', '{n} songs saved': '{n} chansons enregistrées',
+  'Play all my favourites': 'Lire tous les favoris', 'No favourites yet': 'Aucun favori pour le moment', 'Touch the heart of a song to find it here.': 'Touchez le cœur d’une chanson pour la retrouver ici.',
+  'Song, artist or music style': 'Chanson, artiste ou style musical', 'Clear the search': 'Effacer la recherche', 'Results': 'Résultats', 'Browse': 'Parcourir',
+  'For “{q}”': 'Pour « {q} »', 'All the songs': 'Toutes les chansons', 'No results found': 'Aucun résultat trouvé', 'Try the name of another artist or song.': 'Essayez le nom d’un autre artiste ou d’une chanson.',
+  'Your history': 'Votre historique', 'Find what you listened to last': 'Retrouvez vos dernières écoutes', 'The songs you started recently appear here by themselves.': 'Les chansons lancées récemment apparaissent automatiquement ici.',
+  'Nothing played yet': 'Rien n’a encore été écouté', 'The songs you listen to will appear here.': 'Les chansons que vous écoutez apparaîtront ici.',
+  'Your queue': 'Votre file d’attente', 'What plays next': 'La suite de votre écoute', 'Touch a song to listen to it now.': 'Touchez une chanson pour l’écouter tout de suite.',
+  'Now playing': 'En cours', 'Nothing in the queue yet': 'Rien à suivre pour le moment', 'Choose a song and the next ones appear here.': 'Choisissez une chanson : les suivantes apparaîtront ici.',
+  'Traditional song': 'Chanson traditionnelle', 'Close the lyrics': 'Fermer les paroles', 'Music video': 'Clip vidéo', 'Close the music video': 'Fermer le clip',
+  'Premium is active': 'Vous êtes Premium !', 'Start listening': 'Commencer à écouter', 'Request sent!': 'Demande envoyée !', 'The care team is taking care of it.': 'L’équipe soignante s’en occupe.',
+  'Back to my music': 'Retour à ma musique', 'Welcome': 'Bienvenue', 'Listen without any limit': 'Écoutez sans aucune limite', 'Ask the care team: they take care of everything.': 'Demandez-le à l’équipe soignante : elle s’occupe de tout.',
+  'Synced lyrics': 'Paroles synchronisées', 'Big music videos': 'Clips en grand', 'No time limit': 'Sans limite de temps', 'Nothing to pay here': 'Rien à payer ici',
+  'Premium active': 'Premium actif', 'Your music without limits': 'Votre musique sans limites', 'Request sent': 'Demande envoyée', 'Lyrics and big music videos': 'Paroles et clips en grand',
+  'Need help?': 'Besoin d’aide ?', 'Call the care team': 'Appeler l’équipe soignante', 'Music player': 'Lecteur audio', 'Previous song': 'Chanson précédente', 'Next song': 'Chanson suivante'
+});
+I18N.add('de', {
+  'Your music, simply': 'Ihre Musik, ganz einfach', 'What would you like to hear?': 'Was möchten Sie hören?',
+  'The songs|that make you feel good': 'Die Lieder,|die Ihnen guttun', 'Melodies you love, gathered in one place.': 'Melodien, die Sie lieben, an einem Ort.',
+  'your favourite songs': 'Ihre Favoriten', 'Just for you': 'Nur für Sie', 'Choose a mood': 'Wählen Sie eine Stimmung',
+  'Listen to {title}': '{title} anhören', 'Add to my favourites': 'Zu den Favoriten', 'Remove from my favourites': 'Aus den Favoriten entfernen',
+  'The {y1}s and {y2}s': '{yy1}er & {yy2}er', 'Your music, without limits.': 'Ihre Musik, ohne Grenzen.',
+  'Lyrics, big music videos and listening with no time limit.': 'Liedtexte, große Videos und Musik ohne Zeitlimit.',
+  'Ask for Premium': 'Premium anfragen', 'Your collection': 'Ihre Sammlung', '1 song saved': '1 Lied gespeichert', '{n} songs saved': '{n} Lieder gespeichert',
+  'Play all my favourites': 'Alle Favoriten abspielen', 'No favourites yet': 'Noch keine Favoriten', 'Touch the heart of a song to find it here.': 'Tippen Sie auf das Herz eines Liedes, dann finden Sie es hier.',
+  'Song, artist or music style': 'Lied, Künstler oder Musikstil', 'Clear the search': 'Suche löschen', 'Results': 'Ergebnisse', 'Browse': 'Stöbern',
+  'For “{q}”': 'Für „{q}“', 'All the songs': 'Alle Lieder', 'No results found': 'Nichts gefunden', 'Try the name of another artist or song.': 'Versuchen Sie einen anderen Künstler oder ein anderes Lied.',
+  'Your history': 'Ihr Verlauf', 'Find what you listened to last': 'Was Sie zuletzt gehört haben', 'The songs you started recently appear here by themselves.': 'Die Lieder, die Sie zuletzt gestartet haben, erscheinen hier von selbst.',
+  'Nothing played yet': 'Noch nichts gehört', 'The songs you listen to will appear here.': 'Die Lieder, die Sie hören, erscheinen hier.',
+  'Your queue': 'Ihre Warteschlange', 'What plays next': 'Was als Nächstes kommt', 'Touch a song to listen to it now.': 'Tippen Sie auf ein Lied, um es gleich zu hören.',
+  'Now playing': 'Läuft gerade', 'Nothing in the queue yet': 'Noch nichts in der Warteschlange', 'Choose a song and the next ones appear here.': 'Wählen Sie ein Lied: die nächsten erscheinen hier.',
+  'Traditional song': 'Volkslied', 'Close the lyrics': 'Liedtext schließen', 'Music video': 'Musikvideo', 'Close the music video': 'Video schließen',
+  'Premium is active': 'Sie haben Premium!', 'Start listening': 'Jetzt hören', 'Request sent!': 'Anfrage gesendet!', 'The care team is taking care of it.': 'Das Pflegeteam kümmert sich darum.',
+  'Back to my music': 'Zurück zu meiner Musik', 'Welcome': 'Willkommen', 'Ask the care team: they take care of everything.': 'Fragen Sie das Pflegeteam: es kümmert sich um alles.',
+  'Synced lyrics': 'Mitlaufende Liedtexte', 'Big music videos': 'Große Videos', 'No time limit': 'Ohne Zeitlimit', 'Nothing to pay here': 'Hier nichts zu bezahlen',
+  'Premium active': 'Premium aktiv', 'Your music without limits': 'Ihre Musik ohne Grenzen', 'Request sent': 'Anfrage gesendet', 'Lyrics and big music videos': 'Liedtexte und große Videos',
+  'Need help?': 'Brauchen Sie Hilfe?', 'Call the care team': 'Pflegeteam rufen', 'Music player': 'Musikspieler', 'Previous song': 'Vorheriges Lied', 'Next song': 'Nächstes Lied'
+});
+/* Version 1.15: the big video for everyone, the new Premium, on-device AI (radio, DJ Bellatrix, AI playlist). */
+I18N.add('fr', {
+  'Synced lyrics, unlimited listening and all the songs.': 'Paroles synchronisées, écoute sans limite et toutes les chansons.', 'Lyrics and unlimited listening': 'Paroles et écoute sans limite',
+  'More like this': 'Plus comme ça', 'Reduce': 'Réduire', 'AI': 'IA', 'AI playlist': 'Playlist IA',
+  'Your favourites, rediscoveries and new songs, without end.': 'Vos favoris, des redécouvertes et des nouveautés, en continu.', 'Say what you would like to hear.': 'Dites ce que vous voulez écouter.',
+  'Favourite': 'Favori', 'Rediscovery': 'Redécouverte', 'New for you': 'Nouveauté', 'Stop the DJ': 'Arrêter le DJ', 'Start the DJ': 'Lancer le DJ',
+  'DJ voice: on': 'Voix du DJ : activée', 'DJ voice: off': 'Voix du DJ : désactivée', 'Coming up': 'Ensuite',
+  'Here is {artist}, from {year}.': 'Voici {artist}, en {year}.', 'Here is {artist}.': 'Voici {artist}.', 'Here is {title}.': 'Voici {title}.',
+  'Happy songs from the 60s': 'Chansons joyeuses des années 60', 'Calm music to rest': 'Musique calme pour se reposer', 'Like {artist}': 'Comme {artist}', 'Let’s dance!': 'Danser !',
+  'Describe your playlist': 'Décrivez votre playlist', 'Ideas': 'Idées', 'Create the playlist': 'Créer la playlist', 'New playlist': 'Nouvelle playlist',
+  'Happy songs': 'Chansons joyeuses', 'Calm music': 'Musique calme', 'Let’s dance': 'Pour danser', 'Memories': 'Souvenirs', 'Your playlist': 'Votre playlist'
+});
+I18N.add('de', {
+  'Synced lyrics, unlimited listening and all the songs.': 'Mitlaufende Liedtexte, Musik ohne Zeitlimit und alle Lieder.', 'Lyrics and unlimited listening': 'Liedtexte und Musik ohne Limit',
+  'More like this': 'Mehr davon', 'Reduce': 'Verkleinern', 'AI': 'KI', 'AI playlist': 'KI-Playlist',
+  'Your favourites, rediscoveries and new songs, without end.': 'Ihre Favoriten, Wiederentdeckungen und Neues, ohne Ende.', 'Say what you would like to hear.': 'Sagen Sie, was Sie hören möchten.',
+  'Favourite': 'Favorit', 'Rediscovery': 'Wiederentdeckung', 'New for you': 'Neu für Sie', 'Stop the DJ': 'DJ stoppen', 'Start the DJ': 'DJ starten',
+  'DJ voice: on': 'DJ-Stimme: an', 'DJ voice: off': 'DJ-Stimme: aus', 'Coming up': 'Danach',
+  'Here is {artist}, from {year}.': 'Hier ist {artist}, aus dem Jahr {year}.', 'Here is {artist}.': 'Hier ist {artist}.', 'Here is {title}.': 'Hier ist {title}.',
+  'Happy songs from the 60s': 'Fröhliche Lieder der 60er', 'Calm music to rest': 'Ruhige Musik zum Ausruhen', 'Like {artist}': 'Wie {artist}', 'Let’s dance!': 'Tanzen!',
+  'Describe your playlist': 'Beschreiben Sie Ihre Playlist', 'Ideas': 'Ideen', 'Create the playlist': 'Playlist erstellen', 'New playlist': 'Neue Playlist',
+  'Happy songs': 'Fröhliche Lieder', 'Calm music': 'Ruhige Musik', 'Let’s dance': 'Zum Tanzen', 'Memories': 'Erinnerungen', 'Your playlist': 'Ihre Playlist'
+});
+
+/* Block C, recommendations (js/reco.js): the patient screen (Play) and the Care Team "Music" tab
+   (js/reco-staff.js). staff.html loads this file too, so the Care Team texts are here. */
+I18N.add('fr', {
+  /* Play */
+  'Next song': 'Chanson suivante', 'And then?': 'Et ensuite ?', 'Something else': 'Autre chose', 'Not this song': 'Pas cette chanson',
+  'Your playlist of the week': 'Votre playlist de la semaine', 'Your playlist of the month': 'Votre playlist du mois', 'Prepared for you': 'Préparée pour vous',
+  'Well-known songs': 'Chansons connues', 'Play all': 'Tout écouter', 'Right now': 'En ce moment', 'Through the years': 'Au fil des années', 'From your life story': 'D’après votre histoire',
+  /* reasons, for the team */
+  'Already liked or listened to the end': 'Déjà aimée ou écoutée jusqu’au bout', 'Very close to the usual music': 'Très proche de la musique habituelle',
+  'Close to the starting choice of the team': 'Proche du choix de départ de l’équipe', 'Not heard yet, close to the usual music': 'Pas encore écoutée, proche de la musique habituelle',
+  'A small discovery, a little further away': 'Petite découverte, un peu plus éloignée', 'Well-known song of the catalogue': 'Chanson connue du catalogue',
+  'Close to “{title}”': 'Proche de « {title} »', 'Close to the usual music': 'Proche de la musique habituelle', 'Added by the team': 'Ajoutée par l’équipe',
+  'same artist: {artist}': 'même artiste : {artist}', 'Before 1900': 'Avant 1900',
+  'French': 'Français', 'German': 'Allemand', 'English': 'Anglais', 'Spanish': 'Espagnol', 'Italian': 'Italien', 'Instrumental': 'Instrumental',
+  /* Care Team, Music tab */
+  'Music': 'Musique', 'Playlists to review': 'Playlists à vérifier', 'Music: weekly and monthly playlists': 'Musique : playlists de la semaine et du mois',
+  'Your initials': 'Vos initiales', 'Check for new playlists now': 'Chercher les nouvelles playlists',
+  'Made on this robot from what each resident listens to, with their consent. Nothing leaves the robot. Only playlists approved here are offered on the patient screen.':
+    'Préparées sur ce robot à partir de ce que chaque résident écoute, avec son consentement. Rien ne quitte le robot. Seules les playlists approuvées ici sont proposées sur l’écran du résident.',
+  'Settings {v} ({hash}): mix {c} % close, {n} % neighbours, {d} % discovery; half-life {h} days; kept {r} days. New drafts every Monday from 6:00 and on the 1st of the month.':
+    'Réglages {v} ({hash}) : {c} % de titres proches, {n} % de voisins, {d} % de découvertes ; demi-vie {h} jours ; conservation {r} jours. Nouveaux brouillons chaque lundi dès 6 h et le 1er du mois.',
+  'Last check: {t}.': 'Dernière vérification : {t}.', 'No resident yet: add a patient code in Activities.': 'Aucun résident pour l’instant : ajoutez un code patient dans Activités.',
+  'Resident': 'Résident', 'Consent given': 'Consentement donné', 'No consent': 'Pas de consentement', 'Music personalisation': 'Personnalisation musicale',
+  'Given by {by} on {t}, recorded by {staff}.': 'Donné par {by} le {t}, enregistré par {staff}.', 'Withdrawn on {t}, recorded by {staff}.': 'Retiré le {t}, enregistré par {staff}.',
+  'the legal representative': 'le représentant légal', 'the resident': 'le résident',
+  'Without consent nothing is collected and no playlist is made: Play shows the catalogue without personal recommendations.':
+    'Sans consentement, rien n’est collecté et aucune playlist n’est préparée : Play montre le catalogue sans recommandations personnelles.',
+  'Agreed by': 'Accordé par', 'Record the consent': 'Enregistrer le consentement', 'Withdraw the consent': 'Retirer le consentement',
+  'Listening data is kept {n} days, then deleted.': 'Les données d’écoute sont gardées {n} jours, puis supprimées.', 'Delete the listening data (on request)': 'Supprimer les données d’écoute (sur demande)',
+  'Starting profile': 'Profil de départ', 'Profile in progress': 'Profil en construction',
+  'For a new resident: 3 to 5 favourite songs, or an era and a language. It counts while there is little listening.':
+    'Pour un nouveau résident : 3 à 5 chansons préférées, ou une époque et une langue. Il compte tant qu’il y a peu d’écoutes.',
+  '{n} listening signals in the last {d} days.': '{n} signaux d’écoute sur les {d} derniers jours.', 'Remove': 'Retirer', 'Search a song or an artist': 'Chercher une chanson ou un artiste',
+  'Era': 'Époque', 'Language of the songs': 'Langue des chansons', 'Save': 'Enregistrer', 'Saved on {t} by {staff}.': 'Enregistré le {t} par {staff}.', 'No song found.': 'Aucune chanson trouvée.',
+  'Playlists of {code}': 'Playlists de {code}', 'No consent: no playlist is made for this resident.': 'Pas de consentement : aucune playlist n’est préparée pour ce résident.',
+  'No playlist yet.': 'Pas encore de playlist.', 'Make the drafts now': 'Préparer les brouillons maintenant', 'Month {key}': 'Mois {key}', 'Week {key}': 'Semaine {key}',
+  'Draft': 'Brouillon', 'Approved': 'Approuvée', 'Active': 'Active', 'Archived': 'Archivée', '{n} songs': '{n} chansons',
+  'Made on {t} with settings {v}.': 'Préparée le {t} avec les réglages {v}.', 'Draft: not offered to the resident until a team member approves it.': 'Brouillon : rien n’est proposé au résident tant qu’un membre de l’équipe ne l’a pas approuvée.',
+  'Profile in progress: little listening yet, the starting profile and well-known songs weigh more.': 'Profil en construction : encore peu d’écoutes, le profil de départ et les chansons connues comptent davantage.',
+  'Many songs were skipped or stopped lately: this playlist stays very close to known songs. This is information for the team, not an alert.':
+    'Beaucoup de chansons ont été passées ou arrêtées récemment : cette playlist reste très proche des titres connus. C’est une information pour l’équipe, pas une alerte.',
+  'The team found the last playlist did not suit: this one stays closer to known songs.': 'L’équipe a trouvé que la dernière playlist ne convenait pas : celle-ci reste plus proche des titres connus.',
+  'Few songs were left after the exclusions: the similarity was widened.': 'Il restait peu de chansons après les exclusions : la ressemblance a été élargie.',
+  'Very recent songs had to be allowed again to fill the list.': 'Des chansons très récentes ont dû être autorisées pour remplir la liste.',
+  'Shorter than usual: the catalogue ran out after the exclusions.': 'Plus courte que d’habitude : le catalogue est épuisé après les exclusions.',
+  'More songs than usual are shared with the previous playlist.': 'Plus de chansons que d’habitude sont communes avec la playlist précédente.',
+  '{a} close, {b} neighbours, {c} discoveries, {d} added by the team.': '{a} proches, {b} voisines, {c} découvertes, {d} ajoutées par l’équipe.',
+  'Close to the taste': 'Proche', 'Neighbour': 'Voisine', 'Discovery': 'Découverte',
+  'Move up': 'Monter', 'Move down': 'Descendre', 'Never propose to this resident': 'Ne plus jamais proposer à ce résident',
+  'Add a song: search a title or an artist': 'Ajouter une chanson : chercher un titre ou un artiste',
+  'A change puts the playlist back to draft: it then needs a new approval.': 'Une modification remet la playlist en brouillon : elle doit alors être approuvée à nouveau.',
+  'Approve': 'Approuver', 'Write your initials first, at the top of this tab.': 'Écrivez d’abord vos initiales, en haut de cet onglet.', 'Make it again': 'Refaire',
+  'Approved by {who} on {t}.': 'Approuvée par {who} le {t}.',
+  'Since approval: {c} listened to the end, {l} hearts, {s} skipped, {x} "not this song".': 'Depuis l’approbation : {c} écoutées jusqu’au bout, {l} cœurs, {s} passées, {x} « pas cette chanson ».',
+  'How did this playlist suit?': 'Cette playlist a-t-elle convenu ?', 'Suited well': 'Bien', 'Partly': 'En partie', 'Did not suit': 'Pas du tout',
+  'Log of this playlist': 'Journal de cette playlist', 'Never proposed to {code}': 'Jamais proposées à {code}', 'since {t}': 'depuis le {t}', 'Allow again': 'Autoriser à nouveau',
+  'None. Use ⊘ in a playlist to leave a song out for good.': 'Aucune. Utilisez ⊘ dans une playlist pour écarter une chanson définitivement.',
+  'Access log': 'Journal des accès', 'Who opened or changed the music data of {code}.': 'Qui a consulté ou modifié les données musicales de {code}.', 'Show': 'Afficher',
+  '{n} new drafts to review.': '{n} nouveaux brouillons à vérifier.',
+  'Nothing new: every resident with consent has this week’s and this month’s playlist.': 'Rien de nouveau : chaque résident avec consentement a sa playlist de la semaine et du mois.',
+  'Withdraw the music consent of {code}? Nothing more is collected and no playlist is made.': 'Retirer le consentement musical de {code} ? Plus rien n’est collecté et aucune playlist n’est préparée.',
+  'Also delete the listening data and playlists of {code} now?': 'Supprimer aussi maintenant les données d’écoute et les playlists de {code} ?',
+  'Delete all listening data, hearts, starting profile and playlists of {code}? This cannot be undone.': 'Supprimer toutes les données d’écoute, les cœurs, le profil de départ et les playlists de {code} ? C’est définitif.',
+  'Choose 3 to 5 songs, or an era and a language.': 'Choisissez 3 à 5 chansons, ou une époque et une langue.', 'Starting profile saved.': 'Profil de départ enregistré.',
+  'Never propose "{title}" to {code} again?': 'Ne plus jamais proposer « {title} » à {code} ?',
+  'Approved: the playlist is now offered on the patient screen.': 'Approuvée : la playlist est maintenant proposée sur l’écran du résident.', 'This playlist cannot be approved.': 'Cette playlist ne peut pas être approuvée.'
+});
+I18N.add('de', {
+  /* Play */
+  'Next song': 'Nächstes Lied', 'And then?': 'Und dann?', 'Something else': 'Etwas anderes', 'Not this song': 'Nicht dieses Lied',
+  'Your playlist of the week': 'Ihre Playlist der Woche', 'Your playlist of the month': 'Ihre Playlist des Monats', 'Prepared for you': 'Für Sie vorbereitet',
+  'Well-known songs': 'Bekannte Lieder', 'Play all': 'Alle anhören', 'Right now': 'Gerade aktuell', 'Through the years': 'Durch die Jahre', 'From your life story': 'Aus Ihrer Lebensgeschichte',
+  /* reasons, for the team */
+  'Already liked or listened to the end': 'Schon gemocht oder bis zum Ende gehört', 'Very close to the usual music': 'Sehr nah an der gewohnten Musik',
+  'Close to the starting choice of the team': 'Nah an der Startauswahl des Teams', 'Not heard yet, close to the usual music': 'Noch nicht gehört, nah an der gewohnten Musik',
+  'A small discovery, a little further away': 'Eine kleine Entdeckung, etwas weiter weg', 'Well-known song of the catalogue': 'Bekanntes Lied aus dem Katalog',
+  'Close to “{title}”': 'Nah an „{title}“', 'Close to the usual music': 'Nah an der gewohnten Musik', 'Added by the team': 'Vom Team hinzugefügt',
+  'same artist: {artist}': 'gleicher Interpret: {artist}', 'Before 1900': 'Vor 1900',
+  'French': 'Französisch', 'German': 'Deutsch', 'English': 'Englisch', 'Spanish': 'Spanisch', 'Italian': 'Italienisch', 'Instrumental': 'Instrumental',
+  /* Care Team, Music tab */
+  'Music': 'Musik', 'Playlists to review': 'Zu prüfende Playlists', 'Music: weekly and monthly playlists': 'Musik: Playlists der Woche und des Monats',
+  'Your initials': 'Ihre Initialen', 'Check for new playlists now': 'Jetzt nach neuen Playlists sehen',
+  'Made on this robot from what each resident listens to, with their consent. Nothing leaves the robot. Only playlists approved here are offered on the patient screen.':
+    'Auf diesem Roboter aus dem erstellt, was jede Bewohnerin und jeder Bewohner hört, mit Einwilligung. Nichts verlässt den Roboter. Nur hier freigegebene Playlists werden auf dem Bewohner-Bildschirm angeboten.',
+  'Settings {v} ({hash}): mix {c} % close, {n} % neighbours, {d} % discovery; half-life {h} days; kept {r} days. New drafts every Monday from 6:00 and on the 1st of the month.':
+    'Einstellungen {v} ({hash}): {c} % nahe Titel, {n} % Nachbarn, {d} % Entdeckungen; Halbwertszeit {h} Tage; Aufbewahrung {r} Tage. Neue Entwürfe jeden Montag ab 6 Uhr und am 1. des Monats.',
+  'Last check: {t}.': 'Zuletzt geprüft: {t}.', 'No resident yet: add a patient code in Activities.': 'Noch keine Bewohner: Fügen Sie unter Aktivitäten einen Patientencode hinzu.',
+  'Resident': 'Bewohner', 'Consent given': 'Einwilligung erteilt', 'No consent': 'Keine Einwilligung', 'Music personalisation': 'Musikalische Personalisierung',
+  'Given by {by} on {t}, recorded by {staff}.': 'Erteilt von {by} am {t}, erfasst von {staff}.', 'Withdrawn on {t}, recorded by {staff}.': 'Widerrufen am {t}, erfasst von {staff}.',
+  'the legal representative': 'der gesetzlichen Vertretung', 'the resident': 'der Bewohnerin / dem Bewohner',
+  'Without consent nothing is collected and no playlist is made: Play shows the catalogue without personal recommendations.':
+    'Ohne Einwilligung wird nichts erfasst und keine Playlist erstellt: Play zeigt den Katalog ohne persönliche Empfehlungen.',
+  'Agreed by': 'Erteilt von', 'Record the consent': 'Einwilligung erfassen', 'Withdraw the consent': 'Einwilligung widerrufen',
+  'Listening data is kept {n} days, then deleted.': 'Hördaten werden {n} Tage aufbewahrt, dann gelöscht.', 'Delete the listening data (on request)': 'Hördaten löschen (auf Wunsch)',
+  'Starting profile': 'Startprofil', 'Profile in progress': 'Profil im Aufbau',
+  'For a new resident: 3 to 5 favourite songs, or an era and a language. It counts while there is little listening.':
+    'Für neue Bewohner: 3 bis 5 Lieblingslieder oder eine Epoche und eine Sprache. Es zählt, solange es wenig Hördaten gibt.',
+  '{n} listening signals in the last {d} days.': '{n} Hörsignale in den letzten {d} Tagen.', 'Remove': 'Entfernen', 'Search a song or an artist': 'Lied oder Interpret suchen',
+  'Era': 'Epoche', 'Language of the songs': 'Sprache der Lieder', 'Save': 'Speichern', 'Saved on {t} by {staff}.': 'Gespeichert am {t} von {staff}.', 'No song found.': 'Kein Lied gefunden.',
+  'Playlists of {code}': 'Playlists von {code}', 'No consent: no playlist is made for this resident.': 'Keine Einwilligung: Für diese Person wird keine Playlist erstellt.',
+  'No playlist yet.': 'Noch keine Playlist.', 'Make the drafts now': 'Entwürfe jetzt erstellen', 'Month {key}': 'Monat {key}', 'Week {key}': 'Woche {key}',
+  'Draft': 'Entwurf', 'Approved': 'Freigegeben', 'Active': 'Aktiv', 'Archived': 'Archiviert', '{n} songs': '{n} Lieder',
+  'Made on {t} with settings {v}.': 'Erstellt am {t} mit Einstellungen {v}.', 'Draft: not offered to the resident until a team member approves it.': 'Entwurf: wird erst angeboten, wenn ein Teammitglied ihn freigibt.',
+  'Profile in progress: little listening yet, the starting profile and well-known songs weigh more.': 'Profil im Aufbau: noch wenig gehört, Startprofil und bekannte Lieder zählen mehr.',
+  'Many songs were skipped or stopped lately: this playlist stays very close to known songs. This is information for the team, not an alert.':
+    'Viele Lieder wurden zuletzt übersprungen oder gestoppt: Diese Playlist bleibt nah an bekannten Liedern. Das ist eine Information für das Team, keine Warnung.',
+  'The team found the last playlist did not suit: this one stays closer to known songs.': 'Die letzte Playlist passte laut Team nicht: Diese bleibt näher an bekannten Liedern.',
+  'Few songs were left after the exclusions: the similarity was widened.': 'Nach den Ausschlüssen blieben wenige Lieder: Die Ähnlichkeit wurde erweitert.',
+  'Very recent songs had to be allowed again to fill the list.': 'Sehr kürzlich gehörte Lieder mussten wieder zugelassen werden, um die Liste zu füllen.',
+  'Shorter than usual: the catalogue ran out after the exclusions.': 'Kürzer als üblich: Nach den Ausschlüssen ist der Katalog erschöpft.',
+  'More songs than usual are shared with the previous playlist.': 'Mehr Lieder als üblich stimmen mit der vorigen Playlist überein.',
+  '{a} close, {b} neighbours, {c} discoveries, {d} added by the team.': '{a} nah, {b} Nachbarn, {c} Entdeckungen, {d} vom Team hinzugefügt.',
+  'Close to the taste': 'Nah', 'Neighbour': 'Nachbar', 'Discovery': 'Entdeckung',
+  'Move up': 'Nach oben', 'Move down': 'Nach unten', 'Never propose to this resident': 'Dieser Person nie mehr vorschlagen',
+  'Add a song: search a title or an artist': 'Lied hinzufügen: Titel oder Interpret suchen',
+  'A change puts the playlist back to draft: it then needs a new approval.': 'Eine Änderung macht die Playlist wieder zum Entwurf: Sie muss dann neu freigegeben werden.',
+  'Approve': 'Freigeben', 'Write your initials first, at the top of this tab.': 'Schreiben Sie zuerst Ihre Initialen oben in diesen Reiter.', 'Make it again': 'Neu erstellen',
+  'Approved by {who} on {t}.': 'Freigegeben von {who} am {t}.',
+  'Since approval: {c} listened to the end, {l} hearts, {s} skipped, {x} "not this song".': 'Seit der Freigabe: {c} bis zum Ende gehört, {l} Herzen, {s} übersprungen, {x} „nicht dieses Lied“.',
+  'How did this playlist suit?': 'Wie passte diese Playlist?', 'Suited well': 'Gut', 'Partly': 'Teilweise', 'Did not suit': 'Gar nicht',
+  'Log of this playlist': 'Protokoll dieser Playlist', 'Never proposed to {code}': 'Nie vorgeschlagen für {code}', 'since {t}': 'seit {t}', 'Allow again': 'Wieder zulassen',
+  'None. Use ⊘ in a playlist to leave a song out for good.': 'Keine. Mit ⊘ in einer Playlist wird ein Lied dauerhaft ausgelassen.',
+  'Access log': 'Zugriffsprotokoll', 'Who opened or changed the music data of {code}.': 'Wer die Musikdaten von {code} geöffnet oder geändert hat.', 'Show': 'Anzeigen',
+  '{n} new drafts to review.': '{n} neue Entwürfe zu prüfen.',
+  'Nothing new: every resident with consent has this week’s and this month’s playlist.': 'Nichts Neues: Alle mit Einwilligung haben ihre Playlist der Woche und des Monats.',
+  'Withdraw the music consent of {code}? Nothing more is collected and no playlist is made.': 'Musik-Einwilligung von {code} widerrufen? Es wird nichts mehr erfasst und keine Playlist erstellt.',
+  'Also delete the listening data and playlists of {code} now?': 'Auch die Hördaten und Playlists von {code} jetzt löschen?',
+  'Delete all listening data, hearts, starting profile and playlists of {code}? This cannot be undone.': 'Alle Hördaten, Herzen, das Startprofil und die Playlists von {code} löschen? Das ist endgültig.',
+  'Choose 3 to 5 songs, or an era and a language.': 'Wählen Sie 3 bis 5 Lieder oder eine Epoche und eine Sprache.', 'Starting profile saved.': 'Startprofil gespeichert.',
+  'Never propose "{title}" to {code} again?': '„{title}“ {code} nie mehr vorschlagen?',
+  'Approved: the playlist is now offered on the patient screen.': 'Freigegeben: Die Playlist wird jetzt auf dem Bewohner-Bildschirm angeboten.', 'This playlist cannot be approved.': 'Diese Playlist kann nicht freigegeben werden.'
+});
+
+/* Version 1.16 (agent R): free lyrics, free and Premium Play, the "Bellatrix message", podcasts,
+   listening together, "Your mixes", the life story as an option (Care Team, Personalise). */
+I18N.add('fr', {
+  'Podcasts are here': 'Les podcasts sont là', 'Stories, history and music to listen to.': 'Des récits, de l’histoire et de la musique à écouter.', 'See the podcasts': 'Voir les podcasts',
+  'Listen together': 'Écouter ensemble', 'With Premium, your family can listen with you.': 'Avec Premium, votre famille peut écouter avec vous.', 'Learn more': 'En savoir plus',
+  'DJ Bellatrix': 'DJ Bellatrix', 'Bellatrix Play Premium': 'Bellatrix Play Premium', 'Your favourites and new songs, without end.': 'Vos favoris et des nouveautés, en continu.',
+  'No messages like this one, and skip as often as you like.': 'Sans messages comme celui-ci, et passez les chansons à volonté.',
+  'No more skips for now. More in {n} min.': 'Vous ne pouvez plus passer de chanson pour l’instant. À nouveau dans {n} min.', 'Bellatrix message': 'Message de Bellatrix',
+  'This episode cannot play right now.': 'Cet épisode ne peut pas être lu pour le moment.', 'The robot is full: delete an episode first.': 'Le robot est plein : supprimez d’abord un épisode.',
+  'This episode can only be listened to online.': 'Cet épisode s’écoute seulement en ligne.', 'The download did not work. Try again later.': 'Le téléchargement n’a pas marché. Réessayez plus tard.',
+  '{style} mix': 'Mix {style}', 'Made for you': 'Fait pour vous', 'Your mixes': 'Vos mix',
+  'History': 'Histoire', 'Gardens': 'Jardins', 'Conversations': 'Rencontres', 'Stories and radio plays': 'Récits et fictions', 'Games': 'Jeux', 'Science': 'Sciences', 'Culture': 'Culture', 'Podcast': 'Podcast',
+  'Remove download': 'Supprimer', 'Remove it?': 'Supprimer ?', 'On the robot': 'Sur le robot', 'Online only': 'En ligne seulement',
+  'Remove from my podcasts': 'Retirer de mes podcasts', 'Add to my podcasts': 'Ajouter à mes podcasts', 'Podcasts': 'Podcasts', 'No podcasts here': 'Pas de podcasts ici', 'Ask the care team.': 'Demandez à l’équipe soignante.',
+  'To listen without internet': 'À écouter sans internet', '{n} episodes, {size}': '{n} épisodes, {size}', '1 episode, {size}': '1 épisode, {size}', 'Delete them all?': 'Tout supprimer ?', 'Delete all': 'Tout supprimer',
+  'My podcasts': 'Mes podcasts', 'Free, from public radio': 'Gratuits, de la radio publique', 'Podcasts to discover': 'Podcasts à découvrir', 'Other languages': 'Autres langues',
+  'The podcasts need internet right now.': 'Les podcasts ont besoin d’internet en ce moment.', 'The episodes on the robot still play.': 'Les épisodes gardés sur le robot marchent toujours.',
+  'List saved on the robot': 'Liste gardée sur le robot', 'All the podcasts': 'Tous les podcasts',
+  'The family portal is not set up on this robot.': 'Le portail famille n’est pas installé sur ce robot.', 'Your family is not on the portal yet.': 'Votre famille n’est pas encore sur le portail.',
+  'Listening together has ended.': 'L’écoute ensemble est terminée.', 'No connection to the family portal.': 'Pas de connexion au portail famille.', 'The care team can help.': 'L’équipe soignante peut vous aider.',
+  'Your family listens with you from their phone.': 'Votre famille écoute avec vous depuis son téléphone.', 'Listen together now': 'Écouter ensemble', 'Opening…': 'Ouverture…',
+  '{names} is listening with you.': '{names} écoute avec vous.', 'Your family can join now.': 'Votre famille peut vous rejoindre maintenant.',
+  'They see the song and can add songs here.': 'Elle voit la chanson et peut en ajouter ici.', 'Stop listening together': 'Arrêter l’écoute ensemble', 'Added by {name}': 'Ajoutée par {name}',
+  'Your family is with you.': 'Votre famille est avec vous.', 'With your family, from their phone.': 'Avec votre famille, depuis son téléphone.',
+  '15 seconds back': '15 secondes en arrière', '30 seconds on': '30 secondes en avant', 'Episodes': 'Épisodes', 'Shuffle: on': 'Aléatoire : activé', 'Shuffle: off': 'Aléatoire : désactivé',
+  'No ads, skip as often as you like, listen together.': 'Sans publicité, passez les chansons à volonté, écoutez ensemble.', 'No ads': 'Sans publicité',
+  'Skip as often as you like': 'Passer les chansons à volonté', 'Choose the order': 'Choisir l’ordre', 'Listen together with your family': 'Écouter ensemble avec votre famille',
+  'Your own podcast list': 'Votre liste de podcasts', 'Music without internet': 'La musique sans internet', 'Better sound': 'Un meilleur son',
+  'coming with the licensed catalogue': 'bientôt, avec le catalogue sous licence', 'No ads, unlimited skips': 'Sans publicité, sauts illimités', 'My downloaded podcasts': 'Mes podcasts téléchargés',
+  /* Care Team, Personalise (Bellatrix Play) */
+  'Use the life story for the music': 'Utiliser l’histoire de vie pour la musique', 'No: listening and favourites only': 'Non : seulement l’écoute et les favoris',
+  'Yes: year of birth and favourite music too': 'Oui : aussi l’année de naissance et la musique préférée'
+});
+I18N.add('de', {
+  'Podcasts are here': 'Jetzt gibt es Podcasts', 'Stories, history and music to listen to.': 'Geschichten, Geschichte und Musik zum Zuhören.', 'See the podcasts': 'Zu den Podcasts',
+  'Listen together': 'Zusammen hören', 'With Premium, your family can listen with you.': 'Mit Premium kann Ihre Familie mit Ihnen hören.', 'Learn more': 'Mehr erfahren',
+  'DJ Bellatrix': 'DJ Bellatrix', 'Bellatrix Play Premium': 'Bellatrix Play Premium', 'Listen without any limit': 'Hören ohne jede Grenze', 'Your favourites and new songs, without end.': 'Ihre Favoriten und Neues, ohne Ende.',
+  'No messages like this one, and skip as often as you like.': 'Keine Hinweise wie dieser, und Lieder überspringen, so oft Sie möchten.',
+  'No more skips for now. More in {n} min.': 'Gerade kein Überspringen mehr. Wieder in {n} Min.', 'Bellatrix message': 'Hinweis von Bellatrix',
+  'This episode cannot play right now.': 'Diese Folge kann gerade nicht abgespielt werden.', 'The robot is full: delete an episode first.': 'Der Roboter ist voll: Löschen Sie zuerst eine Folge.',
+  'This episode can only be listened to online.': 'Diese Folge gibt es nur online.', 'The download did not work. Try again later.': 'Das Herunterladen hat nicht geklappt. Bitte später noch einmal.',
+  '{style} mix': '{style}-Mix', 'Made for you': 'Für Sie gemacht', 'Your mixes': 'Ihre Mixe',
+  'History': 'Geschichte', 'Gardens': 'Garten', 'Conversations': 'Gespräche', 'Stories and radio plays': 'Geschichten und Hörspiele', 'Games': 'Spiele', 'Science': 'Wissen', 'Culture': 'Kultur', 'Podcast': 'Podcast',
+  'Remove download': 'Löschen', 'Remove it?': 'Löschen?', 'On the robot': 'Auf dem Roboter', 'Online only': 'Nur online',
+  'Remove from my podcasts': 'Aus meinen Podcasts entfernen', 'Add to my podcasts': 'Zu meinen Podcasts', 'Podcasts': 'Podcasts', 'No podcasts here': 'Hier gibt es keine Podcasts', 'Ask the care team.': 'Fragen Sie das Pflegeteam.',
+  'To listen without internet': 'Zum Hören ohne Internet', '{n} episodes, {size}': '{n} Folgen, {size}', '1 episode, {size}': '1 Folge, {size}', 'Delete them all?': 'Alle löschen?', 'Delete all': 'Alle löschen',
+  'My podcasts': 'Meine Podcasts', 'Free, from public radio': 'Kostenlos, vom öffentlich-rechtlichen Radio', 'Podcasts to discover': 'Podcasts zum Entdecken', 'Other languages': 'Andere Sprachen',
+  'The podcasts need internet right now.': 'Die Podcasts brauchen gerade Internet.', 'The episodes on the robot still play.': 'Die Folgen auf dem Roboter laufen trotzdem.',
+  'List saved on the robot': 'Auf dem Roboter gespeicherte Liste', 'All the podcasts': 'Alle Podcasts',
+  'The family portal is not set up on this robot.': 'Das Familienportal ist auf diesem Roboter nicht eingerichtet.', 'Your family is not on the portal yet.': 'Ihre Familie ist noch nicht im Portal.',
+  'Listening together has ended.': 'Das Zusammenhören ist beendet.', 'No connection to the family portal.': 'Keine Verbindung zum Familienportal.', 'The care team can help.': 'Das Pflegeteam hilft gern.',
+  'Your family listens with you from their phone.': 'Ihre Familie hört mit Ihnen, am Telefon.', 'Listen together now': 'Zusammen hören', 'Opening…': 'Wird geöffnet…',
+  '{names} is listening with you.': '{names} hört mit Ihnen.', 'Your family can join now.': 'Ihre Familie kann jetzt dazukommen.',
+  'They see the song and can add songs here.': 'Sie sieht das Lied und kann hier Lieder hinzufügen.', 'Stop listening together': 'Zusammen hören beenden', 'Added by {name}': 'Von {name} hinzugefügt',
+  'Your family is with you.': 'Ihre Familie ist bei Ihnen.', 'With your family, from their phone.': 'Mit Ihrer Familie, am Telefon.',
+  '15 seconds back': '15 Sekunden zurück', '30 seconds on': '30 Sekunden vor', 'Episodes': 'Folgen', 'Shuffle: on': 'Zufällig: an', 'Shuffle: off': 'Zufällig: aus',
+  'No ads, skip as often as you like, listen together.': 'Ohne Werbung, Lieder überspringen, so oft Sie möchten, zusammen hören.', 'No ads': 'Ohne Werbung',
+  'Skip as often as you like': 'Überspringen, so oft Sie möchten', 'Choose the order': 'Die Reihenfolge wählen', 'Listen together with your family': 'Zusammen hören mit Ihrer Familie',
+  'Your own podcast list': 'Ihre eigene Podcast-Liste', 'Music without internet': 'Musik ohne Internet', 'Better sound': 'Besserer Klang',
+  'coming with the licensed catalogue': 'kommt mit dem lizenzierten Katalog', 'No ads, unlimited skips': 'Ohne Werbung, unbegrenzt überspringen', 'My downloaded podcasts': 'Meine heruntergeladenen Podcasts',
+  /* Care Team, Personalise (Bellatrix Play) */
+  'Use the life story for the music': 'Lebensgeschichte für die Musik nutzen', 'No: listening and favourites only': 'Nein: nur Hören und Favoriten',
+  'Yes: year of birth and favourite music too': 'Ja: auch Geburtsjahr und Lieblingsmusik'
+});

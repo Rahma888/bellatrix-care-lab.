@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test caméra</title>
+<style>
+  body { margin: 0; background: #fff; color: #333; font: 22px "Roboto Condensed", Arial, sans-serif; }
+  header { padding: 16px; border-bottom: 2px solid #00519E; }
+  h1 { margin: 0; color: #00519E; font-size: 30px; font-weight: 500; }
+  main { padding: 16px; }
+  video { width: 100%; background: #000; display: block; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+  button, select { font: inherit; padding: 12px 18px; border: 1px solid #00519E; border-radius: 5px; background: #fff; color: #00519E; }
+  button.on { background: #00519E; color: #fff; }
+  #fps { font-size: 40px; color: #00519E; font-weight: 700; }
+  #info { color: #666; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header><h1>Test caméra</h1></header>
+<main>
+  <div class="row"><select id="cam"></select></div>
+  <div class="row">
+    <button data-w="1280" data-h="720" class="on">720p</button>
+    <button data-w="1920" data-h="1080">1080p</button>
+    <button data-w="640" data-h="480">480p</button>
+  </div>
+  <div class="row"><span id="fps">–</span></div>
+  <video id="v" autoplay muted playsinline></video>
+  <p id="info"></p>
+</main>
+<script>
+(function () {
+  var v = document.getElementById('v'), sel = document.getElementById('cam'), fpsEl = document.getElementById('fps'), info = document.getElementById('info');
+  var stream = null, size = { w: 1280, h: 720 }, frames = 0, t0 = performance.now();
+  function stop() { if (stream) stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+  function start() {
+    stop(); info.textContent = 'Ouverture…';
+    var c = { width: { ideal: size.w }, height: { ideal: size.h }, frameRate: { ideal: 30 } };
+    if (sel.value) c.deviceId = { exact: sel.value };
+    navigator.mediaDevices.getUserMedia({ video: c, audio: false }).then(function (s) {
+      stream = s; v.srcObject = s;
+      var t = s.getVideoTracks()[0], st = t.getSettings();
+      info.textContent = t.label + '\n' + st.width + ' × ' + st.height + ' · demandé ' + (st.frameRate || '?') + ' images/s';
+      list();
+    }, function (e) { info.textContent = 'Erreur : ' + e.name + ' – ' + e.message; list(); });
+  }
+  function list() {
+    return navigator.mediaDevices.enumerateDevices().then(function (d) {
+      var cur = sel.value, cams = d.filter(function (x) { return x.kind === 'videoinput'; });
+      sel.innerHTML = cams.map(function (x, i) { return '<option value="' + x.deviceId + '">' + (x.label || ('Caméra ' + (i + 1))) + '</option>'; }).join('');
+      if (cur) sel.value = cur;
+      return cams;
+    });
+  }
+  function tick() {
+    frames++;
+    var now = performance.now();
+    if (now - t0 >= 1000) { fpsEl.textContent = Math.round(frames * 1000 / (now - t0)) + ' images/s'; frames = 0; t0 = now; }
+    if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(tick);
+  }
+  if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(tick);
+  sel.onchange = start;
+  Array.prototype.forEach.call(document.querySelectorAll('button[data-w]'), function (b) {
+    b.onclick = function () {
+      size = { w: +b.getAttribute('data-w'), h: +b.getAttribute('data-h') };
+      Array.prototype.forEach.call(document.querySelectorAll('button[data-w]'), function (x) { x.className = x === b ? 'on' : ''; });
+      start();
+    };
+  });
+  navigator.mediaDevices.getUserMedia({ video: true }).then(function (s) { s.getTracks().forEach(function (t) { t.stop(); }); }, function () {}).then(list).then(function (cams) {
+    var ob = cams.filter(function (x) { return /obsbot|usb|external/i.test(x.label); })[0];
+    if (ob) sel.value = ob.deviceId;
+    start();
+  });
+  navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener('devicechange', function () {
+    setTimeout(function () {
+      list().then(function (cams) {
+        var ob = cams.filter(function (x) { return /obsbot|usb|external/i.test(x.label); })[0];
+        var live = stream && stream.getVideoTracks()[0] && stream.getVideoTracks()[0].readyState === 'live';
+        if (ob && (!live || sel.value !== ob.deviceId)) { sel.value = ob.deviceId; start(); }
+      });
+    }, 1500);
+  });
+})();
+</script>
+</body>
+</html>

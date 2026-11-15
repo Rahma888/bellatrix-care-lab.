@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bellatrix Care Team: both screens live in this one app, so they share the patients, pictures,
+     songs and results. The robot's home screen shows each app by its application name, so the
+     patient screen gets its own icon from a second, tiny app ("Bellatrix Patient", android/launcher)
+     that only opens PatientActivity here.
+     minSdk, targetSdk and the version come from the aapt2 flags in build.ps1. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="de.labland.bellatrix">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Ludo between robots on the same Wi-Fi: find the games (UDP broadcast) and keep Wi-Fi awake. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Start-of-shift checklist: is the robot connected (BellatrixApp.network()). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Orionstar RobotApi.connectServer reads the cloud zone from this provider (normal level,
+         granted at install). Without it: SecurityException at start. -->
+    <uses-permission android:name="com.ainirobot.coreservice.robotSettingProvider" />
+    <!-- The whole server on the head (HeadServer, NodeService): a foreground service (normal level, granted at install). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application
+        android:usesCleartextTraffic="true"
+        android:label="Bellatrix Care Team"
+        android:icon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar.Fullscreen">
+        <activity
+            android:name=".StaffActivity"
+            android:label="Bellatrix Care Team"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="de.labland.bellatrix.staff"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|density">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- No launcher entry here: the "Bellatrix Patient" app opens it. -->
+        <activity
+            android:name=".PatientActivity"
+            android:label="Bellatrix Patient"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="de.labland.bellatrix.patient"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|density" />
+        <!-- Node on the robot head, in its own process (a crash there never takes the Care Team screen with it).
+             Started only when the head APK carries the runtime (HeadServer.available). -->
+        <service
+            android:name=".NodeService"
+            android:process=":node"
+            android:exported="false" />
+    </application>
+</manifest>

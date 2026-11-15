@@ -1,0 +1,56 @@
+/* Bellatrix Atelier (atelier.html): the care team writes a short request and gets a game.
+   Suavia identity (css/brand.css): white page, blue #00519E, Roboto Condensed, corners 5 px at most.
+   No cards, no shadows, no pills: text, lines, and one filled blue button per screen.
+   Sizes in rem on a root that grows with the screen, so the page reads on the head screen (1098 px
+   wide) and on the big portrait tablet (1080 px wide). */
+html { font-size: clamp(16px, 2.1vw, 23px); }
+body.atelier { margin: 0; background: #FFFFFF; color: var(--ink); font: 400 1rem/1.4 var(--font); }
+.athead { display: flex; align-items: center; gap: 1.2rem; padding: .7rem 1.4rem; background: var(--brand); color: #FFFFFF; }
+.athead h1 { margin: 0; flex: 1; font-size: 1.5rem; font-weight: 500; letter-spacing: .01em; color: #FFFFFF; }
+.atback { color: #FFFFFF; text-decoration: none; font-size: 1rem; padding: .5rem .2rem; white-space: nowrap; }
+.atback:focus-visible, .atlang button:focus-visible { outline: 3px solid var(--brand-light); outline-offset: 2px; }
+.atlang { display: flex; gap: .2rem; }
+.atlang button { border: 0; background: transparent; color: #FFFFFF; opacity: .75; font: 700 .85rem var(--font); letter-spacing: .04em; padding: .5rem .6rem; border-radius: 5px; }
+.atlang button.on { opacity: 1; box-shadow: inset 0 -3px 0 var(--brand-light); }
+
+.atmain { max-width: 62rem; margin: 0 auto; padding: 1.6rem 1.4rem 3rem; }
+.atmain > section > h2 { margin: 2.2rem 0 .5rem; font-size: 1.05rem; font-weight: 500; color: var(--brand); border-bottom: 1px solid var(--line); padding-bottom: .35rem; }
+.atlabel { display: block; font-size: 1.6rem; font-weight: 500; color: var(--brand); margin-bottom: .6rem; }
+.atlead { margin: 0 0 1.2rem; font-size: 1.25rem; }
+.atelier textarea, .atelier input[type=text], .atelier select {
+  width: 100%; box-sizing: border-box; font: 400 1.25rem/1.35 var(--font); color: var(--ink); background: #FFFFFF;
+  border: 2px solid var(--line); border-radius: 5px; padding: .7rem .8rem; }
+.atelier textarea { resize: vertical; display: block; }
+.atelier textarea:focus, .atelier input[type=text]:focus, .atelier select:focus { outline: 0; border-color: var(--brand); }
+#atFormText { font-size: 1.1rem; }
+
+.atrow { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-top: 1rem; }
+.atbtn { min-height: 3.2rem; padding: .6rem 1.4rem; font: 500 1.15rem var(--font); border-radius: 5px; border: 2px solid var(--brand); background: #FFFFFF; color: var(--brand); }
+.atbtn.primary { background: var(--brand); color: #FFFFFF; min-width: 11rem; }
+.atbtn:active { filter: brightness(.94); }
+.atbtn:disabled { opacity: .45; }
+.atbtn:focus-visible { outline: 3px solid var(--brand-cyan); outline-offset: 2px; }
+.atmsg { font-size: 1rem; color: var(--muted); }
+.atnote { margin: .4rem 0; color: var(--muted); font-size: 1rem; }
+.athint { font-family: var(--font); color: var(--ink); margin: 1rem 0 .4rem; }
+
+.atideas, .atlist { list-style: none; margin: 0; padding: 0; }
+.atideas { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
+.atideas button { border: 0; background: transparent; padding: .55rem 0; font: 400 1.1rem var(--font); color: var(--brand); text-decoration: underline; text-align: left; }
+.atlist li { display: flex; align-items: center; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+.atlist .atname { flex: 1; min-width: 0; font-size: 1.2rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.atlist .atkind { color: var(--muted); font-size: 1rem; white-space: nowrap; }
+.atlist button { border: 0; background: transparent; padding: .5rem .2rem; font: 400 1.05rem var(--font); color: var(--brand); text-decoration: underline; white-space: nowrap; }
+.atlist button.atsure { color: var(--danger); font-weight: 500; }
+
+.atfields { display: flex; flex-wrap: wrap; gap: 1rem 1.4rem; }
+.atfield { display: flex; flex-direction: column; gap: .3rem; flex: 1 1 16rem; font-size: 1rem; color: var(--muted); }
+.atfield.wide { flex-basis: 100%; }
+
+/* The preview: the patient screen (1080 x 1920, css/lab.css) scaled down, with a thin line around it. */
+.atfit { margin: 1.4rem auto 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; background: #FFFFFF; }
+.atfit .stage { transform-origin: 0 0; }
+.atelier #screen { flex: 1; min-height: 0; }
+/* No footer in the preview: a screen without a picture sits in the middle. */
+.atelier #screen.nofill { justify-content: center; }
+.atelier #screen.nofill > :first-child { margin-top: 0; }

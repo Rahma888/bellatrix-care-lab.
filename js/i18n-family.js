@@ -1,0 +1,227 @@
+/* French and German for the family call on the robot's screen (js/familycall.js) and its note on
+   the waiting screen (js/patient.js). See js/i18n.js: the English text is the key. French: "vous",
+   German: "Sie". Some keys also exist in i18n-core / i18n-activities with the same translation; they
+   are repeated here so the call never depends on another file's texts.
+   The relation ("votre fille", "Ihre Tochter") comes from FamilyCall.RELATIONS or the care team. */
+(function () {
+  'use strict';
+  /* No-break space before ? ! : ; in French, as in i18n-activities.js. */
+  function nb(table) {
+    Object.keys(table).forEach(function (k) { table[k] = table[k].replace(/ ([?!:;»])/g, ' $1'); });
+    return table;
+  }
+
+  I18N.add('fr', nb({
+    'Family call': 'Appel de la famille',
+    'Video call': 'Appel vidéo',
+    '{name}, {relation}, is calling you.': '{name}, {relation}, vous appelle.',
+    '{name} is calling you.': '{name} vous appelle.',
+    'Your family': 'Votre famille',
+    'Answer': 'Répondre',
+    'Not now': 'Pas maintenant',
+    'Connecting…': 'Connexion…',
+    'Hang up': 'Raccrocher',
+    'Quieter': 'Moins fort',
+    'Louder': 'Plus fort',
+    'Show me': 'Me voir',
+    'Hide me': 'Ne plus me voir',
+    'Touch the screen for sound.': 'Touchez l’écran pour avoir le son.',
+    'The call with {name} has ended.': 'L’appel avec {name} est terminé.',
+    'That is fine. {name} can call again another time.': 'D’accord. {name} pourra rappeler une autre fois.',
+    'Sorry, the call could not be connected.': 'Malheureusement, l’appel n’a pas pu être établi.',
+    '{name} can call again another time.': '{name} pourra rappeler une autre fois.',
+    'Family calls: click once on this screen so that Bellatrix can ring and speak.': 'Appels de la famille : cliquez une fois sur cet écran pour que Bellatrix puisse sonner et parler.',
+    /* Ludo during the call (same translations as the Board games pack where the text is the same) */
+    'Play together': 'Jouer ensemble',
+    'Cancel the invitation': 'Annuler l’invitation',
+    'Waiting for {name} to accept…': 'J’attends la réponse de {name}…',
+    '{name} did not answer the invitation.': '{name} n’a pas répondu à l’invitation.',
+    '{name} cannot play right now.': '{name} ne peut pas jouer maintenant.',
+    'The game has stopped.': 'La partie est arrêtée.',
+    'Ludo': 'Petits chevaux',
+    'The game begins. You start.': 'La partie commence. Vous commencez.',
+    'Your turn.': 'À vous de jouer.',
+    '{name} is playing…': '{name} joue…',
+    'You': 'Vous',
+    'Roll the die': 'Lancer le dé',
+    'come out': 'sortir',
+    'go home': 'rentrer',
+    'move {n}': 'avancer de {n}',
+    'Token {n}: {what}': 'Pion {n} : {what}',
+    'capture!': 'il prend !',
+    'You roll {die}.': 'Vous faites {die}.',
+    '{player} rolls {die}.': '{player} fait {die}.',
+    'No move possible.': 'Aucun coup possible.',
+    'You bring your token out.': 'Vous sortez votre pion.',
+    '{player} brings a token out.': '{player} sort un pion.',
+    'You send the token of {name} back home!': 'Vous renvoyez le pion de {name} à la maison !',
+    '{name} sends your token back home!': '{name} renvoie votre pion à la maison !',
+    'Your token is home!': 'Votre pion est arrivé !',
+    '{player} brings a token home.': '{player} rentre un pion.',
+    'A six: you play again.': 'Un six : vous rejouez.',
+    'A six: {player} plays again.': 'Un six : {player} rejoue.',
+    'You won!': 'Vous avez gagné !',
+    '{name} won!': '{name} a gagné !',
+    'Well done!': 'Bravo !',
+    'Thank you for the game!': 'Merci pour la partie !',
+    'Back to the call': 'Revenir à l’appel',
+    'Volume': 'Volume',
+    '{name} joined the call.': '{name} a rejoint l’appel.',
+    '{name} left the call.': '{name} a quitté l’appel.'
+  }));
+
+  I18N.add('de', {
+    'Family call': 'Anruf der Familie',
+    'Video call': 'Videoanruf',
+    '{name}, {relation}, is calling you.': '{name}, {relation}, ruft Sie an.',
+    '{name} is calling you.': '{name} ruft Sie an.',
+    'Your family': 'Ihre Familie',
+    'Answer': 'Annehmen',
+    'Not now': 'Jetzt nicht',
+    'Connecting…': 'Verbindung…',
+    'Hang up': 'Auflegen',
+    'Quieter': 'Leiser',
+    'Louder': 'Lauter',
+    'Show me': 'Mich sehen',
+    'Hide me': 'Mich ausblenden',
+    'Touch the screen for sound.': 'Berühren Sie den Bildschirm für den Ton.',
+    'The call with {name} has ended.': 'Der Anruf mit {name} ist beendet.',
+    'That is fine. {name} can call again another time.': 'In Ordnung. {name} kann ein andermal wieder anrufen.',
+    'Sorry, the call could not be connected.': 'Entschuldigung, der Anruf konnte nicht verbunden werden.',
+    '{name} can call again another time.': '{name} kann ein andermal wieder anrufen.',
+    'Family calls: click once on this screen so that Bellatrix can ring and speak.': 'Anrufe der Familie: Klicken Sie einmal auf diesen Bildschirm, damit Bellatrix klingeln und sprechen kann.',
+    /* Ludo during the call (same translations as the Board games pack where the text is the same) */
+    'Play together': 'Zusammen spielen',
+    'Cancel the invitation': 'Einladung zurücknehmen',
+    'Waiting for {name} to accept…': 'Ich warte auf die Antwort von {name}…',
+    '{name} did not answer the invitation.': '{name} hat auf die Einladung nicht geantwortet.',
+    '{name} cannot play right now.': '{name} kann gerade nicht spielen.',
+    'The game has stopped.': 'Das Spiel ist beendet.',
+    'Ludo': 'Mensch ärgere dich nicht',
+    'The game begins. You start.': 'Das Spiel beginnt. Sie fangen an.',
+    'Your turn.': 'Sie sind dran.',
+    '{name} is playing…': '{name} ist dran…',
+    'You': 'Sie',
+    'Roll the die': 'Würfeln',
+    'come out': 'herauskommen',
+    'go home': 'ins Ziel',
+    'move {n}': '{n} Felder vor',
+    'Token {n}: {what}': 'Figur {n}: {what}',
+    'capture!': 'schlägt!',
+    'You roll {die}.': 'Sie würfeln eine {die}.',
+    '{player} rolls {die}.': '{player} würfelt eine {die}.',
+    'No move possible.': 'Kein Zug möglich.',
+    'You bring your token out.': 'Sie bringen Ihre Figur ins Spiel.',
+    '{player} brings a token out.': '{player} bringt eine Figur ins Spiel.',
+    'You send the token of {name} back home!': 'Sie schicken die Figur von {name} zurück nach Hause!',
+    '{name} sends your token back home!': '{name} schickt Ihre Figur zurück nach Hause!',
+    'Your token is home!': 'Ihre Figur ist im Ziel!',
+    '{player} brings a token home.': '{player} bringt eine Figur ins Ziel.',
+    'A six: you play again.': 'Eine Sechs: Sie würfeln noch einmal.',
+    'A six: {player} plays again.': 'Eine Sechs: {player} würfelt noch einmal.',
+    'You won!': 'Sie haben gewonnen!',
+    '{name} won!': '{name} hat gewonnen!',
+    'Well done!': 'Gut gemacht!',
+    'Thank you for the game!': 'Danke für das Spiel!',
+    'Back to the call': 'Zurück zum Anruf',
+    'Volume': 'Lautstärke',
+    '{name} joined the call.': '{name} ist dem Anruf beigetreten.',
+    '{name} left the call.': '{name} hat den Anruf verlassen.'
+  });
+
+  /* ---- 1.15: the care team calls the family (robot screen, and the message sent to the family) ---- */
+  I18N.add('fr', nb({
+    'We are calling {name}…': 'On appelle {name}…',
+    'As soon as {name} answers, the call begins.': 'Dès que {name} répond, l’appel commence.',
+    'Cancel': 'Annuler',
+    '{label} is waiting for your video call: {link}': '{label} vous attend pour un appel vidéo : {link}',
+    'We will try again later.': 'Nous réessaierons plus tard.'
+  }));
+  I18N.add('de', {
+    'We are calling {name}…': 'Wir rufen {name} an…',
+    'As soon as {name} answers, the call begins.': 'Sobald {name} antwortet, beginnt der Anruf.',
+    'Cancel': 'Abbrechen',
+    '{label} is waiting for your video call: {link}': '{label} wartet auf Ihren Videoanruf: {link}',
+    'We will try again later.': 'Wir versuchen es später noch einmal.'
+  });
+
+  /* ---- 1.15: the Care Team's Family tab, in the team's language (ST). Added only where the shared
+     dictionary has no translation yet, so a word the other pages already translate keeps it. ---- */
+  function addMissing(l, table) {
+    var have = I18N.dict[l] || {}, outT = {};
+    Object.keys(table).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) outT[k] = table[k]; });
+    I18N.add(l, outT);
+  }
+  addMissing('fr', nb({
+    'Family calls': 'Appels de la famille', 'Checking…': 'Vérification…', 'Contacts': 'Contacts', 'No contacts yet.': 'Pas encore de contact.',
+    'Add a contact': 'Ajouter un contact', 'Accept calls': 'Accepter les appels', 'Accept calls now': 'Accepter les appels maintenant',
+    'Call times': 'Heures d’appel', 'Call time {n}': 'Plage {n}', 'from': 'de', 'to': 'à', 'Last calls': 'Derniers appels', 'Settings': 'Réglages',
+    'Call server address': 'Adresse du serveur d’appel', 'e.g. https://….trycloudflare.com or http://192.168.1.20:8765': 'ex. https://….trycloudflare.com ou http://192.168.1.20:8765',
+    'Save': 'Enregistrer', 'Empty: the server of this page. On the robot: the address shown by the server window on the PC.': 'Vide : le serveur de cette page. Sur le robot : l’adresse affichée par la fenêtre du serveur sur le PC.',
+    'Call sound at maximum (robot loudspeaker during a call)': 'Son de l’appel au maximum (haut-parleur du robot pendant l’appel)',
+    'Names and photos stay on this device. Calls are not recorded. A photo only with the person’s agreement.': 'Les noms et les photos restent sur cet appareil. Les appels ne sont pas enregistrés. Une photo seulement avec l’accord de la personne.',
+    'Call {name}': 'Appeler {name}', 'Copy their link': 'Copier son lien', 'Edit': 'Modifier', 'Edit {name}': 'Modifier {name}', 'New contact': 'Nouveau contact',
+    'First name': 'Prénom', 'Last name': 'Nom', 'Phone': 'Téléphone', 'Relation': 'Lien', 'Say the name only': 'Dire seulement le prénom', 'Other: type it': 'Autre : à écrire',
+    'Relation, as Bellatrix says it': 'Le lien, tel que Bellatrix le dit', 'The family calls {who}': 'La famille appelle {who}', 'Language of their page': 'Langue de sa page',
+    'Photo…': 'Photo…', 'No photo': 'Sans photo', 'Open their page': 'Ouvrir sa page', 'Revoke their link': 'Révoquer son lien', 'Make a new link': 'Nouveau lien',
+    'Remove': 'Supprimer', 'Bellatrix says: “{line}”': 'Bellatrix dit : « {line} »', 'Calls ring through now.': 'Les appels passent maintenant.',
+    'No calls now. Next call time: {time}.': 'Pas d’appel maintenant. Prochaine plage : {time}.', 'No calls now.': 'Pas d’appel maintenant.', 'No calls yet.': 'Pas encore d’appel.',
+    '{m} min {s} s': '{m} min {s} s', '{s} s': '{s} s', 'Declined': 'Refusé', 'Cancelled': 'Annulé', 'Not connected': 'Pas connecté', 'Missed': 'Manqué',
+    'The care team called': 'L’équipe a appelé', 'The family called': 'La famille a appelé',
+    'Patient screen not connected': 'Écran patient non connecté', 'A call is on': 'Un appel est en cours', 'A call is ringing': 'Un appel sonne',
+    'Patient screen busy (an activity)': 'Écran patient occupé (une activité)', 'Patient screen ready for calls': 'Écran patient prêt pour les appels',
+    'Call server not reachable': 'Serveur d’appel injoignable', 'Open': 'Ouvrir',
+    '{name} has joined: the call is on.': '{name} a rejoint l’appel.', 'The call is over.': 'L’appel est terminé.', 'The call was cancelled.': 'L’appel a été annulé.',
+    'Nobody joined in time.': 'Personne n’a rejoint l’appel à temps.',
+    'The patient screen is not connected: open it, it will wait for {name}.': 'L’écran patient n’est pas connecté : ouvrez-le, il attendra {name}.',
+    'Bellatrix waits on the patient screen. Send this link to {name}:': 'Bellatrix attend sur l’écran patient. Envoyez ce lien à {name} :',
+    'Calling {name}': 'On appelle {name}', 'Copy the link': 'Copier le lien', 'Valid until {time}, for one call.': 'Valable jusqu’à {time}, pour un appel.',
+    'Close': 'Fermer', 'Cancel the call': 'Annuler l’appel', '{name} has a link to call Bellatrix: “Copy their link”.': '{name} a un lien pour appeler Bellatrix : « Copier son lien ».',
+    'This file is not a picture this browser can read.': 'Ce fichier n’est pas une image lisible par ce navigateur.', 'Link copied.': 'Lien copié.',
+    'Call server saved: {address}': 'Serveur d’appel enregistré : {address}', 'Call server: the server of this page.': 'Serveur d’appel : le serveur de cette page.',
+    'The call server does not answer. Check the server address (Settings, below) or start the server on the PC.': 'Le serveur d’appel ne répond pas. Vérifiez son adresse (Réglages, plus bas) ou démarrez le serveur sur le PC.',
+    'Revoke {name}’s link? It stops working at once.': 'Révoquer le lien de {name} ? Il ne marchera plus.', '{name}’s link no longer works.': 'Le lien de {name} ne marche plus.',
+    'Remove {name}? Their link stops working and their photo is deleted from this device.': 'Supprimer {name} ? Son lien ne marchera plus et sa photo est effacée de cet appareil.',
+    '{name} was removed.': '{name} a été supprimé(e).', 'Please give the first name Bellatrix should say.': 'Indiquez le prénom que Bellatrix doit dire.',
+    'Please give the word the family uses for {who} (e.g. Maman).': 'Indiquez comment la famille appelle {who} (ex. Maman).',
+    'Please type the relation as Bellatrix should say it.': 'Écrivez le lien tel que Bellatrix doit le dire.', 'This browser could not save. Try without a photo.': 'Ce navigateur n’a pas pu enregistrer. Essayez sans photo.',
+    'Ringing {name}…': 'Ça sonne chez {name}…', 'It rings on {name}’s phone (notification, or the family portal when it is open).': 'Ça sonne sur le téléphone de {name} (notification, ou le portail famille s’il est ouvert).',
+    'Other way (link)': 'Autre possibilité (lien)', '{name} cannot take the call right now.': '{name} ne peut pas répondre pour le moment.', '{name} did not answer.': '{name} n’a pas répondu.'
+  }));
+  addMissing('de', {
+    'Family calls': 'Anrufe der Familie', 'Checking…': 'Wird geprüft…', 'Contacts': 'Kontakte', 'No contacts yet.': 'Noch keine Kontakte.',
+    'Add a contact': 'Kontakt hinzufügen', 'Accept calls': 'Anrufe annehmen', 'Accept calls now': 'Anrufe jetzt annehmen',
+    'Call times': 'Anrufzeiten', 'Call time {n}': 'Zeit {n}', 'from': 'von', 'to': 'bis', 'Last calls': 'Letzte Anrufe', 'Settings': 'Einstellungen',
+    'Call server address': 'Adresse des Anrufservers', 'e.g. https://….trycloudflare.com or http://192.168.1.20:8765': 'z. B. https://….trycloudflare.com oder http://192.168.1.20:8765',
+    'Save': 'Speichern', 'Empty: the server of this page. On the robot: the address shown by the server window on the PC.': 'Leer: der Server dieser Seite. Auf dem Roboter: die Adresse, die das Serverfenster auf dem PC zeigt.',
+    'Call sound at maximum (robot loudspeaker during a call)': 'Anrufton auf Maximum (Lautsprecher des Roboters während des Anrufs)',
+    'Names and photos stay on this device. Calls are not recorded. A photo only with the person’s agreement.': 'Namen und Fotos bleiben auf diesem Gerät. Anrufe werden nicht aufgezeichnet. Ein Foto nur mit Zustimmung der Person.',
+    'Call {name}': '{name} anrufen', 'Copy their link': 'Eigenen Link kopieren', 'Edit': 'Bearbeiten', 'Edit {name}': '{name} bearbeiten', 'New contact': 'Neuer Kontakt',
+    'First name': 'Vorname', 'Last name': 'Nachname', 'Phone': 'Telefon', 'Relation': 'Beziehung', 'Say the name only': 'Nur den Vornamen sagen', 'Other: type it': 'Andere: eintippen',
+    'Relation, as Bellatrix says it': 'Die Beziehung, wie Bellatrix sie sagt', 'The family calls {who}': 'Die Familie nennt {who}', 'Language of their page': 'Sprache ihrer Seite',
+    'Photo…': 'Foto…', 'No photo': 'Kein Foto', 'Open their page': 'Ihre Seite öffnen', 'Revoke their link': 'Link sperren', 'Make a new link': 'Neuer Link',
+    'Remove': 'Entfernen', 'Bellatrix says: “{line}”': 'Bellatrix sagt: „{line}“', 'Calls ring through now.': 'Anrufe kommen jetzt durch.',
+    'No calls now. Next call time: {time}.': 'Jetzt keine Anrufe. Nächste Anrufzeit: {time}.', 'No calls now.': 'Jetzt keine Anrufe.', 'No calls yet.': 'Noch keine Anrufe.',
+    '{m} min {s} s': '{m} Min. {s} Sek.', '{s} s': '{s} Sek.', 'Declined': 'Abgelehnt', 'Cancelled': 'Abgebrochen', 'Not connected': 'Nicht verbunden', 'Missed': 'Verpasst',
+    'The care team called': 'Das Team hat angerufen', 'The family called': 'Die Familie hat angerufen',
+    'Patient screen not connected': 'Patientenbildschirm nicht verbunden', 'A call is on': 'Ein Anruf läuft', 'A call is ringing': 'Ein Anruf klingelt',
+    'Patient screen busy (an activity)': 'Patientenbildschirm belegt (eine Aktivität)', 'Patient screen ready for calls': 'Patientenbildschirm bereit für Anrufe',
+    'Call server not reachable': 'Anrufserver nicht erreichbar', 'Open': 'Öffnen',
+    '{name} has joined: the call is on.': '{name} ist dabei: Der Anruf läuft.', 'The call is over.': 'Der Anruf ist beendet.', 'The call was cancelled.': 'Der Anruf wurde abgebrochen.',
+    'Nobody joined in time.': 'Niemand ist rechtzeitig beigetreten.',
+    'The patient screen is not connected: open it, it will wait for {name}.': 'Der Patientenbildschirm ist nicht verbunden: Öffnen Sie ihn, er wartet dann auf {name}.',
+    'Bellatrix waits on the patient screen. Send this link to {name}:': 'Bellatrix wartet auf dem Patientenbildschirm. Schicken Sie {name} diesen Link:',
+    'Calling {name}': 'Anruf an {name}', 'Copy the link': 'Link kopieren', 'Valid until {time}, for one call.': 'Gültig bis {time}, für einen Anruf.',
+    'Close': 'Schließen', 'Cancel the call': 'Anruf abbrechen', '{name} has a link to call Bellatrix: “Copy their link”.': '{name} hat einen Link, um Bellatrix anzurufen: „Eigenen Link kopieren“.',
+    'This file is not a picture this browser can read.': 'Diese Datei ist kein Bild, das dieser Browser lesen kann.', 'Link copied.': 'Link kopiert.',
+    'Call server saved: {address}': 'Anrufserver gespeichert: {address}', 'Call server: the server of this page.': 'Anrufserver: der Server dieser Seite.',
+    'The call server does not answer. Check the server address (Settings, below) or start the server on the PC.': 'Der Anrufserver antwortet nicht. Prüfen Sie seine Adresse (Einstellungen, unten) oder starten Sie den Server auf dem PC.',
+    'Revoke {name}’s link? It stops working at once.': 'Den Link von {name} sperren? Er funktioniert sofort nicht mehr.', '{name}’s link no longer works.': 'Der Link von {name} funktioniert nicht mehr.',
+    'Remove {name}? Their link stops working and their photo is deleted from this device.': '{name} entfernen? Der Link funktioniert nicht mehr und das Foto wird von diesem Gerät gelöscht.',
+    '{name} was removed.': '{name} wurde entfernt.', 'Please give the first name Bellatrix should say.': 'Geben Sie den Vornamen an, den Bellatrix sagen soll.',
+    'Please give the word the family uses for {who} (e.g. Maman).': 'Geben Sie an, wie die Familie {who} nennt (z. B. Mama).',
+    'Please type the relation as Bellatrix should say it.': 'Schreiben Sie die Beziehung so, wie Bellatrix sie sagen soll.', 'This browser could not save. Try without a photo.': 'Dieser Browser konnte nicht speichern. Versuchen Sie es ohne Foto.',
+    'Ringing {name}…': 'Es klingelt bei {name}…', 'It rings on {name}’s phone (notification, or the family portal when it is open).': 'Es klingelt auf dem Telefon von {name} (Benachrichtigung, oder im Familienportal, wenn es offen ist).',
+    'Other way (link)': 'Andere Möglichkeit (Link)', '{name} cannot take the call right now.': '{name} kann gerade nicht.', '{name} did not answer.': '{name} hat nicht abgenommen.'
+  });
+})();

@@ -1,0 +1,43 @@
+/* Bellatrix brand: Suavia Donauklinik identity (www.suavia-donauklinik.de), the single source for the three apps
+   (Care Team, patient screen, family portal). Loaded AFTER each page's own stylesheet so that these tokens win.
+   Measured on the clinic's site (2026-11-14): font Roboto Condensed for all text (15 px / 140 %), main blue #00519E
+   (top bar, navigation, headings, links), text #444444, white background, light greys #F0F0F0 / #E0E0E0, corners
+   0 to 5 px, no heavy shadows. Logo: dark blue cross, light blue (#9FD3F5) band, cyan (#00A0E3) slogan.
+   Font files: fonts/RobotoCondensed-*.ttf (Roboto Condensed, Apache License 2.0, from the Android platform fonts). */
+@font-face { font-family: "Roboto Condensed"; font-weight: 300; font-style: normal; font-display: swap; src: url("../fonts/RobotoCondensed-Light.ttf") format("truetype"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 400; font-style: normal; font-display: swap; src: url("../fonts/RobotoCondensed-Regular.ttf") format("truetype"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 500; font-style: normal; font-display: swap; src: url("../fonts/RobotoCondensed-Medium.ttf") format("truetype"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 700; font-style: normal; font-display: swap; src: url("../fonts/RobotoCondensed-Bold.ttf") format("truetype"); }
+
+:root {
+  --font: "Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+  --font-text: var(--font); --font-label: var(--font); --font-display: var(--font);
+
+  --brand: #00519E;          /* Suavia blue: top bars, headings, buttons, links */
+  --brand-dark: #003E79;
+  --brand-light: #9FD3F5;    /* the light blue of the logo band */
+  --brand-cyan: #00A0E3;     /* the slogan blue */
+  --radius: 5px;             /* corners 0 to 5 px, like the clinic site */
+
+  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F0F0F0; --ink: #333333; --muted: #666666; --line: #E0E0E0;
+  --accent: #00519E; --accent-2: #1565B0; --on-accent: #FFFFFF; --focus: #00A0E3;
+  --danger: #B3261E; --good: #1E8A5A;
+  --apricot: #9FD3F5; --on-apricot: #00325F;     /* the former apricot accent is now the light blue */
+  --terracotta: #B3261E; --sage: #1E8A5A; --ochre: #8A6D1D; --heart: #C0392B;
+  --hero: #F0F6FC;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1F33; --surface: #102A45; --surface-2: #17406A; --ink: #F0F6FC; --muted: #A9BFD6; --line: #24507C;
+    --accent: #9FD3F5; --accent-2: #BFE3F9; --on-accent: #00325F; --focus: #00A0E3;
+    --danger: #FF8A80; --good: #7ED3A8; --hero: #17406A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1F33; --surface: #102A45; --surface-2: #17406A; --ink: #F0F6FC; --muted: #A9BFD6; --line: #24507C;
+  --accent: #9FD3F5; --accent-2: #BFE3F9; --on-accent: #00325F; --focus: #00A0E3;
+  --danger: #FF8A80; --good: #7ED3A8; --hero: #17406A; color-scheme: dark;
+}
+body { font-family: var(--font); font-weight: 400; }
+h1, h2, h3, h4 { font-family: var(--font); font-weight: 500; }

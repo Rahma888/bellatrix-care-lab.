@@ -1,0 +1,63 @@
+/* "Menu" (js/meals.js on the patient tablet, js/meals-staff.js on the head). Suavia identity (css/brand.css):
+   blue #00519E, white, Roboto Condensed, corners 5 px; no shadows on cards, no pills, no gradients, no icons.
+   Tablet, portrait 1080 x 1920: one course per screen, 2 or 3 big dish cards (photo left, name, a short
+   description, the gentle note "Contains pork" when it matters), readable from 2 m, pointing-friendly;
+   a category of the menu card ("Speisekarte") with 4 to 6 dishes in two columns. */
+
+/* ---------- the tablet ---------- */
+#screen.mealstep header h2 { font-size: 76px; }
+#screen.mealcourse .cards { gap: 24px; }
+#screen.mealcourse .card { display: grid; grid-template-columns: 38% 1fr; grid-template-rows: auto auto 1fr; grid-template-areas: "ph nm" "ph ds" "ph fl";
+  column-gap: 36px; align-content: start; text-align: left; border: 4px solid var(--line); box-shadow: none; background: var(--surface); }
+#screen.mealcourse .card.nophoto { grid-template-columns: 1fr; grid-template-areas: "nm" "ds" "fl"; padding-left: 8px; }
+#screen.mealcourse .card .mc-photo { grid-area: ph; position: relative; overflow: hidden; background: var(--hero); }
+#screen.mealcourse .card .mc-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+#screen.mealcourse .card .tag { grid-area: nm; position: static; padding: 30px 32px 0 0; background: transparent; border: 0; box-shadow: none;
+  font-family: var(--font-display); font-weight: 700; font-size: 62px; line-height: 1.06; color: var(--ink); gap: 20px; align-items: flex-start; }
+#screen.mealcourse .card .tag::after { content: none; }
+#screen.mealcourse .card .mc-desc { grid-area: ds; padding: 14px 32px 0 0; font-size: 40px; line-height: 1.22; color: var(--muted); }
+#screen.mealcourse .card .mc-flag { grid-area: fl; align-self: end; padding: 0 32px 26px 0; font-size: 42px; line-height: 1.2; font-weight: 700; color: var(--accent); }
+#screen.mealcourse .card.nophoto .tag, #screen.mealcourse .card.nophoto .mc-desc, #screen.mealcourse .card.nophoto .mc-flag { padding-left: 32px; }
+#screen.mealcourse .card.chosen { border-color: var(--accent); border-width: 8px; }
+#screen.mealcourse .card.hot, #screen.mealcourse .card:active { border-color: var(--focus); border-width: 10px; box-shadow: none; }
+/* a dish the resident should not have: shown and explained, not choosable */
+#screen.mealcourse .card.blocked { background: var(--surface-2); border-style: dashed; }
+#screen.mealcourse .card.blocked .tag, #screen.mealcourse .card.blocked .mc-desc { color: var(--muted); }
+#screen.mealcourse .card.blocked .mc-photo img { opacity: .45; }
+#screen.mealcourse .btn.mc-none { min-height: 112px; font-size: 50px; }
+/* two dishes: the cards share the height; three: a little tighter */
+#screen.mealcourse.n3 .card .tag { font-size: 56px; padding-top: 24px; }
+#screen.mealcourse.n3 .card .mc-desc { font-size: 36px; }
+#screen.mealcourse.n3 .card .mc-flag { font-size: 38px; padding-bottom: 20px; }
+/* the kitchen's dish of the day: "Tagesempfehlung" above the name, plain blue text (no pill) */
+#screen.mealcourse .card.mc-daily { grid-template-rows: auto auto auto 1fr; grid-template-areas: "ph bd" "ph nm" "ph ds" "ph fl"; }
+#screen.mealcourse .card.mc-daily.nophoto { grid-template-areas: "bd" "nm" "ds" "fl"; }
+#screen.mealcourse .card .mc-badge { grid-area: bd; padding: 26px 32px 0 0; font-size: 32px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+#screen.mealcourse .card.nophoto .mc-badge { padding-left: 32px; }
+#screen.mealcourse .card.mc-daily .tag { padding-top: 6px; }
+#screen.mealcourse .card.blocked .mc-badge { color: var(--muted); }
+/* the menu card: 4 to 6 dishes of a category in two columns, each card a big target (touch, voice, pointing) */
+#screen.mealcourse.mgrid .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 22px; }
+#screen.mealcourse.mgrid .card { grid-template-columns: minmax(0, 1fr); grid-template-rows: 44% auto auto 1fr; grid-template-areas: "ph" "nm" "ds" "fl"; column-gap: 0; }
+#screen.mealcourse.mgrid .card.nophoto { grid-template-rows: auto auto 1fr; grid-template-areas: "nm" "ds" "fl"; padding-left: 0; }
+#screen.mealcourse.mgrid .card .tag { font-size: 52px; padding: 26px 28px 0; }
+#screen.mealcourse.mgrid .card .mc-desc { font-size: 34px; padding: 12px 28px 0; }
+#screen.mealcourse.mgrid .card .mc-flag { font-size: 34px; padding: 0 28px 22px; }
+#screen.mealcourse.mgrid .card.nophoto .tag { padding-top: 34px; }
+/* "Aus der Speisekarte wählen" and "Nichts für mich" side by side */
+#screen.mealcourse .pair .btn.mc-tocard, #screen.mealcourse .pair .btn.mc-none { min-height: 112px; font-size: 44px; line-height: 1.1; }
+
+/* the summary: "Your choice" */
+.mealsum { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 34px; overflow: hidden; }
+.mealsum .ms-meal h3 { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 3px solid var(--accent); font-size: 50px; font-weight: 700; color: var(--accent); }
+.mealsum .ms-row { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.mealsum .ms-c { font-size: 38px; color: var(--muted); }
+.mealsum .ms-d { font-size: 54px; line-height: 1.12; font-weight: 700; color: var(--ink); }
+.mealsum .ms-none .ms-d { font-weight: 400; color: var(--muted); }
+.mealsum .ms-portion { margin: 0; font-size: 42px; color: var(--ink); }
+
+/* ---------- the head (Care Team): the meal settings of a resident, the round's line ---------- */
+.staffpage .ml-diet .checks { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 4px 0 8px; }
+.staffpage .ml-diet .grid2 { margin-top: 4px; }
+.staffpage .ml-note .fv-text { font-weight: 600; }
+.staffpage .ml-note .ml-n { font-weight: 700; }

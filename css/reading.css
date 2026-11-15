@@ -1,0 +1,267 @@
+/* Bellatrix 1.16 (workstream H): the reading app as an open book (js/reading.js).
+   Robot screen 1080 x 1920 upright: one page; ".land" 1920 x 1080 head screen: two pages side by side.
+   The page turn uses CSS 3D transforms and gradients only (no blend modes, no filters): the leaf
+   is cut into 8 nested strips (.rdst.s0 … .s7) that bend a little more each (the curl), each with a
+   shade layer, plus the shadow it casts on the page under it. The keyframes at the end are made by
+   gen-turn.js (scratchpad v116-H) from one motion: a short pause (the hand), the corner lifts, the
+   page swings over, lands. Chrome 95 WebView: no :has, no color-mix.
+   Loaded after css/album-reading.css. Every reading rule still used is here (the speed buttons, the
+   favourite, the crown of a locked book, the tile), so the old reading rules of album-reading.css
+   (Today, weather, horoscope, 50 years ago, the 1.15 story page) can all be deleted there. */
+
+/* ---------- the reading screen ---------- */
+#screen.rdreader { gap: 22px; }
+#screen.rdreader .btn[disabled] { opacity: .35; }
+#screen.rdreader.nofill > :first-child { margin-top: 0; }
+#screen.rdreader > header h2 { font-size: 54px; line-height: 1.08; }
+.stage.land #screen.rdreader { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: 14px 28px; }
+.stage.land #screen.rdreader.single > :not(.foot):not(.overlay) { width: auto; margin-inline: 0; }
+.stage.land #screen.rdreader > header { grid-column: 1; grid-row: 1; align-self: center; min-width: 0; }
+.stage.land #screen.rdreader > header h2 { font-size: 46px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage.land #screen.rdreader > .rdtools { grid-column: 2; grid-row: 1; }
+.stage.land #screen.rdreader > .rdbook { grid-column: 1 / -1; grid-row: 2; }
+.stage.land #screen.rdreader > .actions { grid-column: 1 / -1; grid-row: 3; flex-direction: row; gap: 18px; }
+.stage.land #screen.rdreader > .actions > .pair { flex: 2; gap: 18px; }
+.stage.land #screen.rdreader > .actions > .btn { flex: 1; }
+.stage.land #screen.rdreader .actions .btn { min-height: 84px; font-size: 38px; }
+.stage.land #screen.rdreader > .foot { grid-column: 1 / -1; grid-row: 4; }
+
+/* speed, favourite, page number (one row) */
+.rdtools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 22px; font-family: var(--font); background: #FFFFFF; border-top: 1px solid #E0E0E0; border-bottom: 1px solid #E0E0E0; padding: 12px 0; }
+.rdspeed { display: flex; }
+.rdsp { min-height: 80px; padding: 0 28px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; font-family: var(--font); font-size: 34px; font-weight: 700; }
+.rdsp + .rdsp { border-left-width: 0; }
+.rdsp:first-child { border-radius: 5px 0 0 5px; }
+.rdsp:last-child { border-radius: 0 5px 5px 0; }
+.rdsp.on { background: #F0F0F0; color: #00519E; border-color: #00519E; border-left-width: 2px; }
+.rdfav { display: flex; align-items: center; gap: 12px; min-height: 80px; padding: 0 28px; border-radius: 5px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; font-family: var(--font); font-size: 32px; font-weight: 700; }
+.rdfav svg { width: 46px; height: 46px; }
+.rdfav.on { background: #F0F0F0; border-color: var(--heart); }
+.btn.rdfavbtn { flex-direction: row; gap: 18px; }
+.btn.rdfavbtn .bico svg { width: 52px; height: 52px; display: block; }
+.rdpageno { font-family: var(--font); font-size: 32px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage.land .rdtools { flex-wrap: nowrap; justify-content: flex-end; }
+.stage.land .rdsp { min-height: 64px; font-size: 28px; padding: 0 20px; }
+.stage.land .rdfav { min-height: 64px; font-size: 26px; }
+.stage.land .rdpageno { font-size: 26px; white-space: nowrap; }
+/* the one small extra button (Chapters, or From the beginning): discreet, not one of the three big buttons */
+.rdmini { min-height: 72px; padding: 0 26px; border-radius: 5px; border: 2px solid #E0E0E0; background: transparent; color: var(--ink); font-family: var(--font); font-size: 30px; font-weight: 700; }
+.stage.land .rdmini { min-height: 60px; font-size: 26px; padding: 0 20px; }
+.opt.rdchnow { border-color: var(--brand-light); box-shadow: inset 0 0 0 4px var(--brand-light); }
+
+/* ---------- the shelf: a drawn cover, the author and this resident's progress, the title in the tag ---------- */
+.card.rdbookcard { background: var(--surface); }
+.rdshelf { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; gap: 34px; padding: 22px 34px 110px; text-align: left; }
+.rdcover { flex: none; height: 100%; aspect-ratio: 120 / 170; display: block; }
+.rdcover svg { display: block; width: 100%; height: 100%; }
+.rdmeta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+.rdauthor { font-family: var(--font-label, var(--font)); font-size: 28px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.rdprog { align-self: flex-start; padding: 8px 22px; border-radius: 5px; background: #F0F0F0; color: var(--ink); font-family: var(--font); font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rdlock { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font); font-size: 28px; font-weight: 700; color: var(--brand); }
+.rdlock svg { width: 44px; height: 44px; }
+.card.rdlocked { box-shadow: 0 0 0 1px #E0E0E0; }
+.stage.land .rdshelf { gap: 24px; padding: 14px 24px 84px; }
+.stage.land .rdauthor { font-size: 22px; }
+.stage.land .rdprog { font-size: 26px; padding: 6px 16px; }
+.stage.land .rdlock { font-size: 22px; }
+.stage.land .rdlock svg { width: 34px; height: 34px; }
+/* the chapter title at the top of its first page */
+.rdtx h3.rdchap { margin: .2em 0 .8em; font-size: .8em; letter-spacing: .04em; color: var(--rd-accent); }
+
+/* ---------- the books: tile, and a Premium book without books Premium (a crown, the title, no price) ---------- */
+.rdtileart { display: grid; place-items: center; width: 100%; height: 100%; background: #FFFFFF; }
+.rdtileart svg { width: 62%; height: 62%; }
+.opt.rdlocked { border-color: #E0E0E0; }
+.opt.rdlocked .lbl::after { content: " ·  Premium"; font-size: .6em; font-weight: 700; color: var(--brand); }
+.picture.rdcrownbox { background: #FFFFFF; display: grid; place-items: center; }
+.rdcrown { display: grid; justify-items: center; gap: 30px; padding: 40px; text-align: center; }
+.rdcrown svg { width: 340px; height: 340px; }
+.rdcrown b { font-family: var(--font-display); font-weight: 400; font-size: 66px; line-height: 1.12; color: var(--brand); }
+.stage.land .rdcrown svg { width: 260px; height: 260px; }
+.stage.land .rdcrown b { font-size: 50px; }
+
+/* ---------- the open book ---------- */
+.rdbook {
+  --rd-paper: #FFFFFF; --rd-ink: #222222; --rd-faint: #666666; --rd-board: #F0F0F0; --rd-board-2: #E0E0E0; --rd-accent: #00519E;
+  --rd-edge: #F0F0F0; --rd-edge-2: #E0E0E0; --rd-gutter: 0, 20, 40; --rd-shade: #001428;
+  --rd-fs: 50px; --rd-lh: 1.4;
+  position: relative; flex: 1; min-height: 0; display: flex; padding: 14px 22px 26px 14px;
+  /* the turning leaf never leaves the book (it would cover the buttons). A square clip: a rounded one
+     would make Chrome mask every 3D layer of the leaf (measured: much slower) */
+  overflow: hidden;
+}
+/* the cover board, rounded, drawn behind the pages */
+.rdbook::before { content: ""; position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 5px; background: var(--rd-board); border: 1px solid #E0E0E0; }
+.rdbook.two { padding: 14px 22px 26px; }
+.rdbook.fit1 { --rd-fs: 46px; }
+.rdbook.fit2 { --rd-fs: 42px; }
+.rdbook.fit3 { --rd-fs: 38px; }
+.stage.big .rdbook { --rd-fs: 58px; }
+.stage.big .rdbook.fit1 { --rd-fs: 53px; }
+.stage.big .rdbook.fit2 { --rd-fs: 48px; }
+.stage.big .rdbook.fit3 { --rd-fs: 44px; }
+.stage.land .rdbook { --rd-fs: 40px; --rd-lh: 1.36; }
+.stage.land .rdbook.fit1 { --rd-fs: 37px; }
+.stage.land .rdbook.fit2 { --rd-fs: 34px; }
+.stage.land .rdbook.fit3 { --rd-fs: 31px; }
+.stage.land.big .rdbook { --rd-fs: 46px; }
+.stage.land.big .rdbook.fit1 { --rd-fs: 42px; }
+.stage.land.big .rdbook.fit2 { --rd-fs: 38px; }
+.stage.land.big .rdbook.fit3 { --rd-fs: 35px; }
+/* a far eye: the lifted page comes a little towards the reader; with the depth halved on the leaf
+   (scaleZ) and the book clipping, it stays inside the book frame */
+.rdblock { position: relative; flex: 1; min-width: 0; display: flex; perspective: 4800px; perspective-origin: 50% 50%; }
+.rdbook.two .rdblock { perspective: 4200px; }
+.rdside { position: relative; flex: 1; min-width: 0; overflow: hidden; }
+/* the block of pages under the open pages (a few paper edges) */
+.rdside.R { box-shadow: 2px 3px 0 var(--rd-edge), 4px 6px 0 var(--rd-edge-2), 6px 9px 0 var(--rd-edge), 8px 12px 0 var(--rd-edge-2); border-radius: 0 5px 5px 0; }
+.rdside.L { box-shadow: -2px 3px 0 var(--rd-edge), -4px 6px 0 var(--rd-edge-2), -6px 9px 0 var(--rd-edge), -8px 12px 0 var(--rd-edge-2); border-radius: 5px 0 0 5px; }
+.rdbook.one .rdside.R { border-radius: 2px 5px 5px 2px; }
+/* the paper edges meet under the spine */
+.rdbook.two .rdblock::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 18px; height: 12px; margin-left: -9px;
+  background: repeating-linear-gradient(180deg, var(--rd-edge) 0, var(--rd-edge) 3px, var(--rd-edge-2) 3px, var(--rd-edge-2) 6px); }
+
+/* one page of paper; the gutter shadow is on the spine side */
+.rdpg { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; padding: 40px 50px 62px 64px;
+  background-color: var(--rd-paper); color: var(--rd-ink); overflow: hidden; }
+.rdpg.R { background-image: linear-gradient(90deg, rgba(var(--rd-gutter), .3) 0, rgba(var(--rd-gutter), .1) 2.4%, rgba(var(--rd-gutter), .03) 6%, rgba(var(--rd-gutter), 0) 11%); border-radius: 0 5px 5px 0; }
+.rdpg.L { padding: 40px 64px 62px 50px; background-image: linear-gradient(270deg, rgba(var(--rd-gutter), .3) 0, rgba(var(--rd-gutter), .1) 2.4%, rgba(var(--rd-gutter), .03) 6%, rgba(var(--rd-gutter), 0) 11%); border-radius: 5px 0 0 5px; }
+.rdbook.one .rdpg.R { padding: 54px 54px 76px 70px; border-radius: 2px 5px 5px 2px;
+  background-image: linear-gradient(90deg, rgba(var(--rd-gutter), .22) 0, rgba(var(--rd-gutter), .06) 2.4%, rgba(var(--rd-gutter), 0) 7%); }
+/* the back of a page that leaves the book (one page): plain paper, a little darker */
+.rdbook .rdpg.R.back { background-color: #F0F0F0; background-image: linear-gradient(270deg, rgba(var(--rd-gutter), .2), rgba(var(--rd-gutter), 0) 8%); }
+.rdprobe { visibility: hidden; pointer-events: none; }
+.rdtx { flex: 1; min-height: 0; overflow: hidden; font-family: var(--font-text, var(--font)); font-size: var(--rd-fs); line-height: var(--rd-lh);
+  font-weight: 400; letter-spacing: 0; text-align: left; overflow-wrap: break-word; }
+.rdtx p { margin: 0 0 .42em; }
+.rdtx p.stanza { margin: 0 0 .62em; }
+/* a verse too long for the line goes on, indented, as in printed poems */
+.rdtx .vl { display: block; padding-left: 1.1em; text-indent: -1.1em; }
+.rdtx h3 { margin: .1em 0 .55em; font-family: inherit; font-size: .72em; font-weight: 400; letter-spacing: .14em; text-align: center; color: var(--rd-faint); }
+.rdtx .rdby { margin: 0 0 .9em; font-family: var(--font-label, var(--font)); font-size: 24px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase; color: var(--rd-faint); }
+.rdtx p.rdfirst::first-letter { float: left; font-size: 2.45em; line-height: .86; margin: .07em .08em 0 0; color: var(--rd-accent); }
+.rdtx .rdfin { margin: .5em 0 0; text-align: center; letter-spacing: .4em; color: var(--rd-faint); }
+.rdfolio { position: absolute; bottom: 18px; font-family: var(--font-text, var(--font)); font-size: 26px; line-height: 1; color: var(--rd-faint); font-variant-numeric: tabular-nums; }
+.rdpg.R .rdfolio { right: 40px; }
+.rdpg.L .rdfolio { left: 40px; }
+.rdbook.one .rdpg .rdfolio { left: 0; right: 0; bottom: 26px; text-align: center; }
+.stage.land .rdtx .rdby { font-size: 20px; }
+.stage.land .rdfolio { font-size: 22px; bottom: 16px; }
+
+/* ---------- the page that turns ---------- */
+.rdleaf { position: absolute; top: 0; bottom: 0; left: 50%; width: 50%; transform-style: preserve-3d; transform: scaleZ(.5); pointer-events: none; z-index: 3; }
+.rdbook.one .rdleaf { left: 0; width: 100%; }
+.rdst { position: absolute; top: 0; bottom: 0; left: 0; width: 12.5%; transform-origin: 0 50%; transform-style: preserve-3d; }
+.rdst .rdst { left: 100%; width: 100%; }
+/* faces 1 px wider than the strip, so no seam shows between strips; the content keeps the page width */
+.rdf, .rdb { position: absolute; top: 0; bottom: 0; left: 0; right: -1px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.rdb { left: -1px; right: 0; transform: rotateY(180deg); }
+.rdfc { position: absolute; top: 0; bottom: 0; width: calc(8 * (100% - 1px)); }
+.rdsh { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: var(--rd-shade); opacity: 0; }
+.rdcast { position: absolute; top: 0; bottom: 0; width: 100%; opacity: 0; pointer-events: none; z-index: 2; }
+.rdcast.r { left: 0; background: linear-gradient(90deg, rgba(var(--rd-gutter), 0) 0, rgba(var(--rd-gutter), .3) 6%, rgba(var(--rd-gutter), .12) 13%, rgba(var(--rd-gutter), .04) 21%, rgba(var(--rd-gutter), 0) 30%); }
+.rdcast.l { right: 0; background: linear-gradient(270deg, rgba(var(--rd-gutter), 0) 0, rgba(var(--rd-gutter), .26) 6%, rgba(var(--rd-gutter), .1) 13%, rgba(var(--rd-gutter), 0) 26%); }
+.rdleaf.go .rdst, .rdleaf.go .rdsh, .rdcast.go, .rdbook.one .rdleaf.go .rdf, .rdbook.one .rdleaf.go .rdb {
+  animation-duration: var(--rd-turn, 1500ms); animation-timing-function: linear; animation-fill-mode: both; }
+.rdleaf.go.rev .rdst, .rdleaf.go.rev .rdsh, .rdcast.go.rev, .rdbook.one .rdleaf.go.rev .rdf, .rdbook.one .rdleaf.go.rev .rdb { animation-direction: reverse; }
+.rdleaf.go .s0 { animation-name: rdk0; } .rdleaf.go .s1 { animation-name: rdk1; } .rdleaf.go .s2 { animation-name: rdk2; } .rdleaf.go .s3 { animation-name: rdk3; }
+.rdleaf.go .s4 { animation-name: rdk4; } .rdleaf.go .s5 { animation-name: rdk5; } .rdleaf.go .s6 { animation-name: rdk6; } .rdleaf.go .s7 { animation-name: rdk7; }
+.rdleaf.go .s0 > * > .rdsh { animation-name: rdsh0; } .rdleaf.go .s1 > * > .rdsh { animation-name: rdsh1; } .rdleaf.go .s2 > * > .rdsh { animation-name: rdsh2; }
+.rdleaf.go .s3 > * > .rdsh { animation-name: rdsh3; } .rdleaf.go .s4 > * > .rdsh { animation-name: rdsh4; } .rdleaf.go .s5 > * > .rdsh { animation-name: rdsh5; }
+.rdleaf.go .s6 > * > .rdsh { animation-name: rdsh6; } .rdleaf.go .s7 > * > .rdsh { animation-name: rdsh7; }
+.rdcast.r.go { animation-name: rdcastr; }
+.rdcast.l.go { animation-name: rdcastl; }
+.rdbook.one .rdleaf.go .rdf, .rdbook.one .rdleaf.go .rdb { animation-name: rdfade; }
+@media (prefers-reduced-motion: reduce) { .rdleaf { display: none; } }
+
+/* ---- generated by gen-turn.js: start ---- */
+@keyframes rdk0 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1.09deg); } 12% { transform: rotateY(-3.5deg); } 16% { transform: rotateY(-5.91deg); } 20% { transform: rotateY(-7.32deg); } 25% { transform: rotateY(-9.34deg); } 30% { transform: rotateY(-14.17deg); } 35% { transform: rotateY(-22.33deg); } 40% { transform: rotateY(-33.88deg); } 45% { transform: rotateY(-48.48deg); } 50% { transform: rotateY(-65.47deg); } 55% { transform: rotateY(-83.98deg); } 60% { transform: rotateY(-103.02deg); } 65% { transform: rotateY(-121.53deg); } 70% { transform: rotateY(-138.52deg); } 75% { transform: rotateY(-153.12deg); } 80% { transform: rotateY(-164.67deg); } 85% { transform: rotateY(-172.83deg); } 90% { transform: rotateY(-177.66deg); } 95% { transform: rotateY(-179.68deg); } 100% { transform: rotateY(-180deg); } }
+@keyframes rdk1 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-0.69deg); } 12% { transform: rotateY(-1.38deg); } 16% { transform: rotateY(-2.07deg); } 20% { transform: rotateY(-2.76deg); } 25% { transform: rotateY(-2.68deg); } 30% { transform: rotateY(-2.61deg); } 35% { transform: rotateY(-2.54deg); } 40% { transform: rotateY(-2.28deg); } 45% { transform: rotateY(-1.98deg); } 50% { transform: rotateY(-1.68deg); } 55% { transform: rotateY(-1.23deg); } 60% { transform: rotateY(-0.78deg); } 65% { transform: rotateY(-0.2deg); } 70% { transform: rotateY(0.46deg); } 75% { transform: rotateY(0.93deg); } 80% { transform: rotateY(1.28deg); } 85% { transform: rotateY(1.48deg); } 90% { transform: rotateY(1.08deg); } 95% { transform: rotateY(0.6deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk2 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-0.84deg); } 12% { transform: rotateY(-1.69deg); } 16% { transform: rotateY(-2.53deg); } 20% { transform: rotateY(-3.37deg); } 25% { transform: rotateY(-3.28deg); } 30% { transform: rotateY(-3.19deg); } 35% { transform: rotateY(-3.1deg); } 40% { transform: rotateY(-2.79deg); } 45% { transform: rotateY(-2.42deg); } 50% { transform: rotateY(-2.05deg); } 55% { transform: rotateY(-1.5deg); } 60% { transform: rotateY(-0.95deg); } 65% { transform: rotateY(-0.25deg); } 70% { transform: rotateY(0.56deg); } 75% { transform: rotateY(1.14deg); } 80% { transform: rotateY(1.56deg); } 85% { transform: rotateY(1.81deg); } 90% { transform: rotateY(1.32deg); } 95% { transform: rotateY(0.73deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk3 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1deg); } 12% { transform: rotateY(-1.99deg); } 16% { transform: rotateY(-2.99deg); } 20% { transform: rotateY(-3.99deg); } 25% { transform: rotateY(-3.88deg); } 30% { transform: rotateY(-3.77deg); } 35% { transform: rotateY(-3.66deg); } 40% { transform: rotateY(-3.29deg); } 45% { transform: rotateY(-2.86deg); } 50% { transform: rotateY(-2.43deg); } 55% { transform: rotateY(-1.78deg); } 60% { transform: rotateY(-1.13deg); } 65% { transform: rotateY(-0.29deg); } 70% { transform: rotateY(0.66deg); } 75% { transform: rotateY(1.34deg); } 80% { transform: rotateY(1.85deg); } 85% { transform: rotateY(2.14deg); } 90% { transform: rotateY(1.56deg); } 95% { transform: rotateY(0.87deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk4 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1.15deg); } 12% { transform: rotateY(-2.3deg); } 16% { transform: rotateY(-3.45deg); } 20% { transform: rotateY(-4.6deg); } 25% { transform: rotateY(-4.47deg); } 30% { transform: rotateY(-4.35deg); } 35% { transform: rotateY(-4.23deg); } 40% { transform: rotateY(-3.8deg); } 45% { transform: rotateY(-3.3deg); } 50% { transform: rotateY(-2.8deg); } 55% { transform: rotateY(-2.05deg); } 60% { transform: rotateY(-1.3deg); } 65% { transform: rotateY(-0.34deg); } 70% { transform: rotateY(0.76deg); } 75% { transform: rotateY(1.55deg); } 80% { transform: rotateY(2.13deg); } 85% { transform: rotateY(2.47deg); } 90% { transform: rotateY(1.8deg); } 95% { transform: rotateY(1deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk5 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1.3deg); } 12% { transform: rotateY(-2.61deg); } 16% { transform: rotateY(-3.91deg); } 20% { transform: rotateY(-5.21deg); } 25% { transform: rotateY(-5.07deg); } 30% { transform: rotateY(-4.93deg); } 35% { transform: rotateY(-4.79deg); } 40% { transform: rotateY(-4.31deg); } 45% { transform: rotateY(-3.74deg); } 50% { transform: rotateY(-3.17deg); } 55% { transform: rotateY(-2.32deg); } 60% { transform: rotateY(-1.47deg); } 65% { transform: rotateY(-0.39deg); } 70% { transform: rotateY(0.86deg); } 75% { transform: rotateY(1.76deg); } 80% { transform: rotateY(2.42deg); } 85% { transform: rotateY(2.8deg); } 90% { transform: rotateY(2.04deg); } 95% { transform: rotateY(1.13deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk6 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1.46deg); } 12% { transform: rotateY(-2.91deg); } 16% { transform: rotateY(-4.37deg); } 20% { transform: rotateY(-5.83deg); } 25% { transform: rotateY(-5.67deg); } 30% { transform: rotateY(-5.51deg); } 35% { transform: rotateY(-5.35deg); } 40% { transform: rotateY(-4.81deg); } 45% { transform: rotateY(-4.18deg); } 50% { transform: rotateY(-3.55deg); } 55% { transform: rotateY(-2.6deg); } 60% { transform: rotateY(-1.65deg); } 65% { transform: rotateY(-0.43deg); } 70% { transform: rotateY(0.96deg); } 75% { transform: rotateY(1.96deg); } 80% { transform: rotateY(2.7deg); } 85% { transform: rotateY(3.12deg); } 90% { transform: rotateY(2.28deg); } 95% { transform: rotateY(1.27deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdk7 { 0% { transform: rotateY(0deg); } 4% { transform: rotateY(0deg); } 8% { transform: rotateY(-1.61deg); } 12% { transform: rotateY(-3.22deg); } 16% { transform: rotateY(-4.83deg); } 20% { transform: rotateY(-6.44deg); } 25% { transform: rotateY(-6.26deg); } 30% { transform: rotateY(-6.09deg); } 35% { transform: rotateY(-5.92deg); } 40% { transform: rotateY(-5.32deg); } 45% { transform: rotateY(-4.62deg); } 50% { transform: rotateY(-3.92deg); } 55% { transform: rotateY(-2.87deg); } 60% { transform: rotateY(-1.82deg); } 65% { transform: rotateY(-0.48deg); } 70% { transform: rotateY(1.06deg); } 75% { transform: rotateY(2.17deg); } 80% { transform: rotateY(2.99deg); } 85% { transform: rotateY(3.45deg); } 90% { transform: rotateY(2.52deg); } 95% { transform: rotateY(1.4deg); } 100% { transform: rotateY(0deg); } }
+@keyframes rdsh0 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0; } 12% { opacity: 0.001; } 16% { opacity: 0.003; } 20% { opacity: 0.004; } 25% { opacity: 0.007; } 30% { opacity: 0.015; } 35% { opacity: 0.037; } 40% { opacity: 0.085; } 45% { opacity: 0.169; } 50% { opacity: 0.292; } 55% { opacity: 0.448; } 60% { opacity: 0.387; } 65% { opacity: 0.239; } 70% { opacity: 0.125; } 75% { opacity: 0.054; } 80% { opacity: 0.018; } 85% { opacity: 0.004; } 90% { opacity: 0; } 95% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes rdsh1 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0; } 12% { opacity: 0.002; } 16% { opacity: 0.005; } 20% { opacity: 0.008; } 25% { opacity: 0.011; } 30% { opacity: 0.021; } 35% { opacity: 0.046; } 40% { opacity: 0.096; } 45% { opacity: 0.182; } 50% { opacity: 0.306; } 55% { opacity: 0.458; } 60% { opacity: 0.381; } 65% { opacity: 0.237; } 70% { opacity: 0.128; } 75% { opacity: 0.058; } 80% { opacity: 0.021; } 85% { opacity: 0.006; } 90% { opacity: 0.001; } 95% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes rdsh2 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.001; } 12% { opacity: 0.003; } 16% { opacity: 0.008; } 20% { opacity: 0.014; } 25% { opacity: 0.018; } 30% { opacity: 0.03; } 35% { opacity: 0.058; } 40% { opacity: 0.111; } 45% { opacity: 0.198; } 50% { opacity: 0.322; } 55% { opacity: 0.471; } 60% { opacity: 0.373; } 65% { opacity: 0.235; } 70% { opacity: 0.131; } 75% { opacity: 0.062; } 80% { opacity: 0.025; } 85% { opacity: 0.008; } 90% { opacity: 0.002; } 95% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes rdsh3 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.001; } 12% { opacity: 0.006; } 16% { opacity: 0.014; } 20% { opacity: 0.023; } 25% { opacity: 0.028; } 30% { opacity: 0.042; } 35% { opacity: 0.074; } 40% { opacity: 0.13; } 45% { opacity: 0.219; } 50% { opacity: 0.342; } 55% { opacity: 0.487; } 60% { opacity: 0.363; } 65% { opacity: 0.233; } 70% { opacity: 0.135; } 75% { opacity: 0.068; } 80% { opacity: 0.03; } 85% { opacity: 0.012; } 90% { opacity: 0.003; } 95% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes rdsh4 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.002; } 12% { opacity: 0.009; } 16% { opacity: 0.022; } 20% { opacity: 0.037; } 25% { opacity: 0.042; } 30% { opacity: 0.059; } 35% { opacity: 0.095; } 40% { opacity: 0.153; } 45% { opacity: 0.243; } 50% { opacity: 0.366; } 55% { opacity: 0.495; } 60% { opacity: 0.352; } 65% { opacity: 0.23; } 70% { opacity: 0.14; } 75% { opacity: 0.075; } 80% { opacity: 0.037; } 85% { opacity: 0.017; } 90% { opacity: 0.005; } 95% { opacity: 0.001; } 100% { opacity: 0; } }
+@keyframes rdsh5 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.003; } 12% { opacity: 0.014; } 16% { opacity: 0.033; } 20% { opacity: 0.056; } 25% { opacity: 0.062; } 30% { opacity: 0.081; } 35% { opacity: 0.121; } 40% { opacity: 0.181; } 45% { opacity: 0.271; } 50% { opacity: 0.393; } 55% { opacity: 0.475; } 60% { opacity: 0.34; } 65% { opacity: 0.228; } 70% { opacity: 0.145; } 75% { opacity: 0.084; } 80% { opacity: 0.045; } 85% { opacity: 0.024; } 90% { opacity: 0.008; } 95% { opacity: 0.002; } 100% { opacity: 0; } }
+@keyframes rdsh6 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.004; } 12% { opacity: 0.02; } 16% { opacity: 0.048; } 20% { opacity: 0.081; } 25% { opacity: 0.087; } 30% { opacity: 0.109; } 35% { opacity: 0.153; } 40% { opacity: 0.214; } 45% { opacity: 0.304; } 50% { opacity: 0.423; } 55% { opacity: 0.452; } 60% { opacity: 0.327; } 65% { opacity: 0.224; } 70% { opacity: 0.151; } 75% { opacity: 0.093; } 80% { opacity: 0.056; } 85% { opacity: 0.033; } 90% { opacity: 0.012; } 95% { opacity: 0.003; } 100% { opacity: 0; } }
+@keyframes rdsh7 { 0% { opacity: 0; } 4% { opacity: 0; } 8% { opacity: 0.006; } 12% { opacity: 0.029; } 16% { opacity: 0.067; } 20% { opacity: 0.114; } 25% { opacity: 0.121; } 30% { opacity: 0.144; } 35% { opacity: 0.192; } 40% { opacity: 0.254; } 45% { opacity: 0.342; } 50% { opacity: 0.457; } 55% { opacity: 0.428; } 60% { opacity: 0.312; } 65% { opacity: 0.221; } 70% { opacity: 0.158; } 75% { opacity: 0.105; } 80% { opacity: 0.068; } 85% { opacity: 0.045; } 90% { opacity: 0.017; } 95% { opacity: 0.004; } 100% { opacity: 0; } }
+@keyframes rdcastr { 0% { opacity: 0; transform: translateX(94%); } 4% { opacity: 0; transform: translateX(94%); } 8% { opacity: 0.14; transform: translateX(93.57%); } 12% { opacity: 0.3; transform: translateX(91.91%); } 16% { opacity: 0.45; transform: translateX(89.02%); } 20% { opacity: 0.57; transform: translateX(85.6%); } 25% { opacity: 0.59; transform: translateX(84.63%); } 30% { opacity: 0.63; transform: translateX(81.46%); } 35% { opacity: 0.71; transform: translateX(74.6%); } 40% { opacity: 0.78; transform: translateX(63.4%); } 45% { opacity: 0.85; transform: translateX(45.82%); } 50% { opacity: 0.9; transform: translateX(21.46%); } 55% { opacity: 0; transform: translateX(-6%); } 60% { opacity: 0; transform: translateX(-6%); } 65% { opacity: 0; transform: translateX(-6%); } 70% { opacity: 0; transform: translateX(-6%); } 75% { opacity: 0; transform: translateX(-6%); } 80% { opacity: 0; transform: translateX(-6%); } 85% { opacity: 0; transform: translateX(-6%); } 90% { opacity: 0; transform: translateX(-6%); } 95% { opacity: 0; transform: translateX(-6%); } 100% { opacity: 0; transform: translateX(-6%); } }
+@keyframes rdcastl { 0% { opacity: 0; transform: translateX(6%); } 4% { opacity: 0; transform: translateX(6%); } 8% { opacity: 0; transform: translateX(6%); } 12% { opacity: 0; transform: translateX(6%); } 16% { opacity: 0; transform: translateX(6%); } 20% { opacity: 0; transform: translateX(6%); } 25% { opacity: 0; transform: translateX(6%); } 30% { opacity: 0; transform: translateX(6%); } 35% { opacity: 0; transform: translateX(6%); } 40% { opacity: 0; transform: translateX(6%); } 45% { opacity: 0; transform: translateX(6%); } 50% { opacity: 0; transform: translateX(6%); } 55% { opacity: 0.01; transform: translateX(5.66%); } 60% { opacity: 0.63; transform: translateX(-23.13%); } 65% { opacity: 0.79; transform: translateX(-47.82%); } 70% { opacity: 0.61; transform: translateX(-66.16%); } 75% { opacity: 0.36; transform: translateX(-79.02%); } 80% { opacity: 0.19; transform: translateX(-86.51%); } 85% { opacity: 0.09; transform: translateX(-90.27%); } 90% { opacity: 0.03; transform: translateX(-92.81%); } 95% { opacity: 0.01; transform: translateX(-93.75%); } 100% { opacity: 0; transform: translateX(-94%); } }
+@keyframes rdfade { 0%, 62% { opacity: 1; } 90%, 100% { opacity: 0; } }
+/* ---- generated by gen-turn.js: end ---- */
+
+/* ---------- dark mode: the paper stays paper, a little softer ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rdbook { --rd-paper: #FFFFFF; --rd-edge: #E0E0E0; --rd-edge-2: #C8C8C8; --rd-board: #E0E0E0; --rd-board-2: #C8C8C8; }
+}
+:root[data-theme="dark"] .rdbook { --rd-paper: #FFFFFF; --rd-edge: #E0E0E0; --rd-edge-2: #C8C8C8; --rd-board: #E0E0E0; --rd-board-2: #C8C8C8; }
+
+/* ---------- 2026-11-14 · the Bellatrix Play family look on the upright tablet ----------
+   js/reading.js draws its screens in Play's own box (.bp, css/play.css: 617 x 1097 design pixels,
+   enlarged x1.75 to 1080 x 1920) with Play's classes: the white band with the name, Help and Finish,
+   the page, the player bar, the tabs. Only what a book needs differently is here, under .bk.
+   The steps keep their choices and actions; the engine's own cards and buttons are hidden. */
+#screen.bk-screen > .cards, #screen.bk-screen > .opts, #screen.bk-screen > .actions, #screen.bk-screen > .picture { display: none !important; }
+.stage:not(.land) .bp.bk .m-main-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage:not(.land) .bp.bk .m-nav-item { font-size: 13px; }
+.bp.bk .bp-art > svg { fill: none; }
+/* Home: covers three across, the title on two lines, where this resident is */
+.bp.bk .m-topbar h1 { white-space: normal; }
+.stage:not(.land) .bp.bk .m-song-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bp.bk .m-cover-wrap { aspect-ratio: 120 / 140; background: #F0F0F0; }
+.bp.bk .bk-cover { display: block; }
+.bp.bk .bk-cover svg { position: absolute; left: 8%; top: 5%; width: 84%; height: 90%; }
+.bp.bk .m-card-play { width: 48px; height: 48px; right: 8px; bottom: 8px; }
+.bp.bk .m-song-info { padding: 8px 2px 2px; }
+.bp.bk .m-song-info h3 { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 15px; line-height: 1.25; }
+.bp.bk .m-song-info p { font-size: 13px; }
+.bp.bk .m-song-info .bk-prog { margin-top: 3px; color: #00519E; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* the player bar: the cover of the book, a bigger title, Previous page / play or pause / Next page with their words */
+.bp.bk .bk-thumb { display: block; flex: none; }
+.bp.bk .bk-thumb svg { width: 100%; height: 100%; }
+.bp.bk .m-player .bk-thumb.m-np-img { width: 50px; height: 70px; border-radius: 0; }
+.bp.bk .m-now-playing strong { font-size: 18px; }
+.bp.bk .m-now-playing div > span { font-size: 14px; }
+.bp.bk .m-transport { gap: 12px; }
+.bp.bk .m-transport .bk-turn { width: auto; min-width: 168px; height: 60px; padding: 0 12px; border: 1px solid #E0E0E0; border-radius: 5px; display: flex; align-items: center; justify-content: center; gap: 4px;
+  color: #00519E; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.bp.bk .m-player-tools .m-tool-button { min-width: 78px; height: 60px; border: 1px solid #E0E0E0; font-size: 12px; }
+.bp.bk .m-progress { height: 6px; }
+.stage:not(.land) .bp.bk .m-player { height: 204px; row-gap: 8px; }
+.stage:not(.land) .bp.bk .m-progress-row { max-width: none; font-size: 13px; }
+.stage:not(.land) .bp.bk .m-main { bottom: 280px; }
+.stage:not(.land) .bp.bk.bk-nobar .m-main { bottom: 76px; }
+/* the page: plain white paper with a thin rule (no board, no paper edges), the type for the x1.75 box */
+.bp.bk .bk-read { flex: 1; min-height: 0; display: flex; padding: 14px 18px 12px; }
+.bp.bk .rdbook { --rd-fs: 27px; --rd-lh: 1.42; padding: 0; }
+.bp.bk .rdbook.fit1 { --rd-fs: 25px; }
+.bp.bk .rdbook.fit2 { --rd-fs: 23px; }
+.bp.bk .rdbook.fit3 { --rd-fs: 21px; }
+.stage.big .bp.bk .rdbook { --rd-fs: 31px; }
+.stage.big .bp.bk .rdbook.fit1 { --rd-fs: 29px; }
+.stage.big .bp.bk .rdbook.fit2 { --rd-fs: 27px; }
+.stage.big .bp.bk .rdbook.fit3 { --rd-fs: 24px; }
+.bp.bk .rdbook::before { display: none; }
+.bp.bk .rdside.R { box-shadow: none; border: 1px solid #E0E0E0; border-radius: 5px; }
+.bp.bk .rdbook.one .rdpg.R { padding: 26px 30px 42px; background-image: none; border-radius: 5px; }
+.bp.bk .rdtx .rdby { font-size: 14px; }
+.bp.bk .rdfolio { font-size: 15px; }
+.bp.bk .rdbook.one .rdpg .rdfolio { bottom: 14px; }
+/* the chapters, as Play's lists */
+.bp.bk .m-history-row { min-height: 78px; }
+.bp.bk .m-history-row.is-cur { background: #F0F6FC; }
+.bp.bk .bk-chno { color: #00519E; font: 400 26px/1 var(--m-serif); text-align: center; font-variant-numeric: tabular-nums; }
+.bp.bk .bk-chrow .m-history-song strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 17px; line-height: 1.25; }
+.bp.bk .bk-more { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.bp.bk .bk-more .m-ai-new { margin-left: 0; font-size: 15px; text-align: center; }
+/* one short line (no book, one moment, a Premium book, the end) */
+.bp.bp-msg.bk .bk-lead { max-width: 520px; color: #666666; font-size: 20px; line-height: 1.3; }
+.bp.bp-msg.bk .bk-lockcov { width: 150px; }
+.bp.bp-msg.bk .bk-lockcov svg { width: 100%; height: auto; }
+/* ---------- end of the family look ---------- */

@@ -1,0 +1,249 @@
+/* The kitchen page (cuisine.html). Suavia identity (css/brand.css): Suavia blue #00519E header bar, white page,
+   Roboto Condensed, thin blue-tinted lines, corners 4 px. No shadows, no cards, no pills, no gradients; colour only in
+   blue, white and greys. Big numbers for the cooks. Screen: 1440 x 900 and a 10-inch tablet. Print: A4, black on
+   white, the quantities first, then one list per meal for the trays. */
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body.cui { margin: 0; background: #FFFFFF; color: #222222; font: 400 16px/1.4 var(--font); color-scheme: light; }
+.cui button, .cui input, .cui select { font-family: var(--font); }
+.cui :focus-visible { outline: 2px solid #00A0E3; outline-offset: 1px; }
+
+/* ---------- the header bar ---------- */
+.chead { position: sticky; top: 0; z-index: 6; display: flex; align-items: center; gap: 14px; height: 56px; padding: 0 24px; background: #00519E; color: #FFFFFF; }
+.cback { color: #FFFFFF; font-size: 15px; font-weight: 500; text-decoration: none; padding: 8px 10px 8px 0; white-space: nowrap; }
+.cback::before { content: "‹ "; }
+.cback[hidden] { display: none; }
+.clogo { width: 26px; height: 26px; flex: none; }
+.chead h1 { margin: 0; font-size: 21px; font-weight: 500; color: #FFFFFF; letter-spacing: .01em; white-space: nowrap; }
+.cviews { display: flex; align-self: stretch; margin-left: 22px; }
+.cviews button { border: 0; border-top: 3px solid transparent; border-bottom: 3px solid transparent; background: transparent; color: #FFFFFF; opacity: .75;
+  font-size: 17px; font-weight: 500; padding: 0 18px; cursor: pointer; white-space: nowrap; }
+.cviews button:hover { opacity: 1; }
+.cviews button.on { opacity: 1; border-bottom-color: #FFFFFF; }
+.clang { display: flex; gap: 2px; margin-left: auto; }
+.clang button { border: 0; background: transparent; color: #FFFFFF; opacity: .7; font-size: 14px; font-weight: 700; letter-spacing: .05em; padding: 8px 8px; min-height: 40px; border-radius: 4px; cursor: pointer; }
+.clang button.on { opacity: 1; box-shadow: inset 0 -3px 0 #9FD3F5; }
+
+/* ---------- controls ---------- */
+.cbtn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 14px; box-sizing: border-box;
+  border: 1px solid #00519E; border-radius: 4px; background: #FFFFFF; color: #00519E; font-size: 16px; font-weight: 500; line-height: 1; cursor: pointer; white-space: nowrap; }
+.cbtn:hover { background: #EEF4FA; }
+.cbtn.cprimary { background: #00519E; color: #FFFFFF; }
+.cbtn.cprimary:hover { background: #003E79; }
+.cbtn.cquiet { border-color: #B4C8DD; color: #444444; }
+.cbtn.csq { width: 40px; padding: 0; font-size: 26px; font-weight: 400; }
+.cbtn.con { background: #E3ECF6; font-weight: 700; }
+.cbtn:disabled { opacity: .4; cursor: default; background: #FFFFFF; }
+.cbtn.cprimary:disabled { background: #00519E; }
+.clink { border: 0; background: transparent; color: #00519E; font-size: 14px; padding: 4px 0; text-decoration: underline; cursor: pointer; }
+.cui input[type=text], .cui input[type=date], .cui input[type=datetime-local], .cui select {
+  box-sizing: border-box; min-height: 40px; padding: 0 10px; border: 1px solid #B4C8DD; border-radius: 4px; background: #FFFFFF; color: #222222; font-size: 16px; }
+.cui input[type=text]:focus, .cui input[type=date]:focus, .cui input[type=datetime-local]:focus, .cui select:focus { border-color: #00519E; outline: 1px solid #00519E; outline-offset: 0; }
+.cui input[type=checkbox] { accent-color: #00519E; }
+.cerr { margin: 10px 0 0; padding-left: 10px; border-left: 3px solid #003E79; color: #222222; font-weight: 700; }
+.cgrow { flex: 1; }
+.cmuted { color: #8A949E; }
+
+/* ---------- waiting, access ---------- */
+.cwait { margin: 60px 24px; text-align: center; color: #666666; }
+.clogin, .coffline { max-width: 460px; margin: 64px auto; padding: 0 20px; }
+.cfield { display: block; font-size: 19px; font-weight: 500; color: #00519E; }
+.crow { display: flex; gap: 10px; margin-top: 10px; }
+.cui #cCode { width: 210px; min-height: 52px; font-size: 26px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.crow .cbtn { min-height: 52px; padding: 0 22px; font-size: 18px; }
+.chint { margin: 10px 0 0; color: #555555; font-size: 15px; }
+.coffline .cbtn { margin-top: 14px; }
+
+/* ---------- the day ---------- */
+.cday { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 22px; padding: 12px 24px; border-bottom: 1px solid #C5D6E8; }
+.cdaynav { display: flex; align-items: center; gap: 6px; }
+.cui #cDate { width: 160px; font-size: 16px; }
+.cdaytext { display: flex; align-items: baseline; gap: 10px; }
+.cdaylabel { font-size: 23px; font-weight: 500; color: #00519E; white-space: nowrap; }
+.crel { font-size: 17px; color: #555555; }
+.cstate { margin-left: auto; font-size: 16px; color: #333333; }
+.cstate.cclosed { font-weight: 700; color: #003E79; }
+.cnotice { margin: 0; padding: 10px 24px 10px 19px; border-left: 5px solid #003E79; background: #F0F0F0; color: #222222; font-weight: 500; }
+.cnetline { margin: 0; padding: 8px 24px 8px 21px; }
+
+/* ---------- the tools of a view (stay under the header bar) ---------- */
+.ctools { position: sticky; top: 56px; z-index: 5; display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; padding: 10px 24px; background: #F5F8FB; border-bottom: 1px solid #C5D6E8; }
+.ctday { font-size: 17px; font-weight: 700; color: #00519E; white-space: nowrap; padding-right: 6px; }
+.cdead { display: flex; align-items: center; gap: 8px; font-weight: 500; color: #333333; }
+.cui #cDeadline { width: 205px; }
+.ccopy { display: flex; align-items: center; gap: 6px; }
+.cui #cCopyFrom { max-width: 290px; }
+.csavestate { color: #555555; font-size: 15px; }
+.csavestate.cdirty { color: #003E79; font-weight: 700; }
+.csavestate.cbad { color: #222222; font-weight: 700; padding-left: 8px; border-left: 3px solid #003E79; }
+#cSave { min-width: 120px; }
+.cnote { margin: 12px 24px 0; color: #333333; font-size: 15px; padding-left: 10px; border-left: 3px solid #9FD3F5; }
+
+/* ---------- the menu editor ---------- */
+.ceditor { padding: 4px 24px 48px; }
+.cmeal { margin-top: 18px; }
+.cmeal h2, .ctm h3, .crm h3 { margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #00519E; font-size: 22px; font-weight: 500; color: #00519E; }
+.ccourses { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px 20px; align-items: start; }
+.ccourse h3, .ctc h4, .csec { margin: 0 0 8px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #333333; }
+.cdish { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 8px 12px; margin-bottom: 10px; padding: 12px; border: 1px solid #C5D6E8; border-radius: 4px; }
+.cph { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.cphbox { position: relative; display: flex; align-items: center; justify-content: center; width: 88px; height: 88px; box-sizing: border-box; overflow: hidden;
+  border: 1px solid #C5D6E8; border-radius: 4px; background: #F5F8FB; color: #00519E; font-size: 13px; font-weight: 500; text-align: center; line-height: 1.2; }
+.cphbox img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cphadd { border-style: dashed; border-color: #9DB7D2; background: #FFFFFF; cursor: pointer; padding: 6px; }
+.cphadd:hover { background: #EEF4FA; }
+.cphadd input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.cphadd:focus-within { outline: 2px solid #00A0E3; outline-offset: 1px; }
+.cphbusy { color: #555555; }
+.cpherr { font-size: 13px; font-weight: 700; color: #222222; max-width: 88px; }
+.cfields { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cui .cfields input[type=text] { width: 100%; }
+.cui .cfields .cname { font-size: 17px; font-weight: 500; }
+.cui .cfields .cdesc, .cui .cfields .call { font-size: 15px; min-height: 36px; }
+.ctags { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0 10px; }
+.ctag { display: flex; align-items: center; gap: 7px; min-height: 32px; font-size: 15px; color: #333333; cursor: pointer; }
+.ctag input { width: 18px; height: 18px; margin: 0; flex: none; }
+.clast { display: flex; align-items: center; gap: 10px; }
+.cui .cfields .clast input[type=text] { flex: 1; width: auto; min-width: 0; }
+.cremove { flex: none; color: #555555; }
+.coff { margin: 0 0 10px; padding: 12px; border: 1px dashed #C5D6E8; border-radius: 4px; color: #777777; font-style: italic; }
+.cadd { width: 100%; border-style: dashed; }
+
+/* ---------- the menu card ("Speisekarte"): four categories side by side ---------- */
+.cfor { display: flex; align-items: center; gap: 4px 14px; margin: 0; padding: 0; border: 0; }
+.cfor legend { float: left; padding: 0 4px 0 0; font-weight: 500; color: #333333; }
+.cui #cCardUntil { min-height: 40px; padding: 0 8px; border: 1px solid #B4C8DD; border-radius: 4px; font-size: 16px; font-family: var(--font); color: #222222; background: #FFFFFF; }
+.cui #cCardUntil:focus { border-color: #00519E; outline: 1px solid #00519E; outline-offset: 0; }
+.ccats { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px 20px; align-items: start; margin-top: 18px; }
+.ccat h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 0 0 12px; padding-bottom: 6px; border-bottom: 2px solid #00519E; font-size: 22px; font-weight: 500; color: #00519E; }
+.ccount { font-size: 14px; font-weight: 400; color: #666666; }
+.ctr summary { cursor: pointer; font-size: 14px; color: #00519E; padding: 2px 0; }
+.ctr summary:hover { text-decoration: underline; }
+.ctrgrid { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.cui .cfields .ctrin { font-size: 15px; min-height: 36px; }
+.clastcard { min-height: 28px; }
+.cfrom { display: block; font-size: 13px; color: #00519E; text-transform: uppercase; letter-spacing: .05em; }
+.cnote-card { margin: 0 0 12px; }
+
+/* ---------- the orders ---------- */
+.ccounts { display: flex; flex-wrap: wrap; gap: 6px 26px; align-items: baseline; }
+.cstat { display: flex; align-items: baseline; gap: 7px; }
+.cbig { font-size: 28px; font-weight: 700; line-height: 1; color: #00519E; font-variant-numeric: tabular-nums; }
+.clab { font-size: 15px; color: #444444; }
+.cstat.cres .cbig { color: #333333; }
+.cupdated { color: #666666; font-size: 14px; }
+.cupdated.cbad { color: #222222; font-weight: 700; }
+.cprinthead, .cponly { display: none; }
+.csec { margin: 20px 24px 10px; }
+.ctotals { padding: 0 24px; }
+.ctm { margin-bottom: 14px; }
+.ctcs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 20px; align-items: start; }
+.ctc[data-course=starter] { grid-column: 1; }
+.ctc[data-course=main] { grid-column: 2; }
+.ctc[data-course=dessert] { grid-column: 3; }
+.ctc[data-course=drinks] { grid-column: 4; }
+.ctc { padding: 10px 14px 6px; border: 1px solid #C5D6E8; border-radius: 4px; }
+.ctc h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.csum { font-size: 14px; font-weight: 400; text-transform: none; letter-spacing: 0; color: #666666; }
+.ctt { width: 100%; border-collapse: collapse; }
+.ctt td { padding: 6px 0; border-top: 1px solid #E1EAF3; vertical-align: middle; }
+.ctt tr:first-child td { border-top: 0; }
+.ctt .cnum { width: 58px; padding-right: 14px; text-align: right; font-size: 34px; font-weight: 700; line-height: 1.05; color: #00519E; font-variant-numeric: tabular-nums; }
+.ctt .cdn { font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.cdname { display: block; }
+.csmall { display: block; font-size: 14px; color: #555555; }
+.ctt tr.cask .cnum { font-size: 24px; color: #333333; }
+.ctt tr.cask .cdn { font-size: 15px; color: #444444; }
+.cempty { padding: 6px 0 20px; color: #555555; }
+.cempty p { margin: 0 0 10px; font-size: 18px; }
+.crooms { padding: 0 24px 48px; }
+.crm { margin-bottom: 26px; }
+.cscroll { overflow-x: auto; }
+.crt { width: 100%; border-collapse: collapse; font-size: 16px; }
+.crt th { padding: 8px 10px; border-bottom: 2px solid #00519E; text-align: left; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #555555; white-space: nowrap; }
+.crt td { padding: 9px 10px; border-bottom: 1px solid #DCE6F0; vertical-align: top; }
+.crt tbody tr:hover td { background: #F7FAFC; }
+.crt td.cr { font-size: 18px; font-weight: 700; color: #00519E; white-space: nowrap; }
+.crt td.cnm { font-weight: 500; }
+.crt td.cnotes { font-size: 15px; color: #333333; min-width: 120px; }
+.callg { font-weight: 700; }
+.crt td.cpo { white-space: nowrap; }
+.crt td.cst { color: #666666; font-style: italic; }
+.crt td.cst-ask { color: #222222; font-style: normal; font-weight: 700; }
+.crt .cask { font-weight: 700; color: #222222; }
+.crt th.cdl, .crt td.cdl { width: 108px; white-space: nowrap; }
+.cdlab { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; cursor: pointer; }
+.cdel { width: 24px; height: 24px; margin: 0; cursor: pointer; }
+.cbox { display: none; }
+.cdt { font-size: 14px; color: #555555; font-variant-numeric: tabular-nums; }
+.crt tr.cdone td, .crt tr.cdone td.cr, .crt tr.cdone .cask { color: #8A949E; }
+/* wide screens: the lunch and dinner lists share their column widths */
+@media screen and (min-width: 1100px) {
+  .crt { table-layout: fixed; }
+  .crt th.cr { width: 80px; }
+  .crt th.cnm { width: 170px; }
+  .crt th.cnotes { width: 230px; }
+  .crt th.cpo { width: 80px; }
+}
+
+/* ---------- a 10-inch tablet, portrait ---------- */
+@media (max-width: 900px) {
+  .chead, .cday, .ctools { padding-left: 16px; padding-right: 16px; }
+  .cviews { margin-left: 6px; }
+  .cviews button { padding: 0 12px; }
+  .ceditor, .ctotals, .crooms { padding-left: 16px; padding-right: 16px; }
+  .csec { margin-left: 16px; margin-right: 16px; }
+  .cnotice { padding-left: 11px; padding-right: 16px; }
+  .cstate { margin-left: 0; }
+  .ccourses { grid-template-columns: 1fr; }
+  .crt td.cnotes { min-width: 0; }
+}
+@media (max-width: 600px) {
+  .chead h1 { display: none; }
+  .ctcs { grid-template-columns: 1fr; }
+  .ctc[data-course] { grid-column: auto; }
+}
+
+/* ---------- A4 print: quantities first, then the list per meal; black on white, no controls ---------- */
+@media print {
+  @page { size: A4 portrait; margin: 12mm 11mm; }
+  html, body.cui { background: #FFFFFF; color: #000000; font-size: 10pt; }
+  .chead, .cday, .ctools, .cnotice, .cnetline, #cMenu, #cCard, #cLoginBox, #cOffline, #cWait, .cui button, .cempty .cbtn { display: none !important; }
+  .cfrom { font-size: 7pt; color: #000000; }
+  #cApp, #cOrders { display: block !important; }
+  .cprinthead { display: block; margin: 0 0 3mm; }
+  .cprinthead h1 { margin: 0 0 1mm; font-size: 15pt; font-weight: 700; color: #000000; }
+  .cprinthead p { margin: 0; font-size: 9.5pt; color: #000000; }
+  .csec { margin: 4mm 0 2mm; font-size: 8.5pt; color: #000000; }
+  .ctotals, .crooms { padding: 0; }
+  .cmeal h2, .ctm h3, .crm h3 { margin: 0 0 2mm; padding-bottom: 1mm; border-bottom: 1.2pt solid #000000; font-size: 12pt; font-weight: 700; color: #000000; }
+  .ctm { margin-bottom: 3mm; break-inside: avoid; }
+  .ctcs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; }
+  .ctc { padding: 1.5mm 2.5mm 1mm; border: 0.6pt solid #666666; border-radius: 0; break-inside: avoid; }
+  .ctc h4 { font-size: 8pt; color: #000000; margin-bottom: 1mm; }
+  .csum { font-size: 8pt; color: #000000; }
+  .ctt td { padding: 1mm 0; border-top: 0.4pt solid #AAAAAA; }
+  .ctt .cnum { width: 11mm; padding-right: 2.5mm; font-size: 16pt; color: #000000; }
+  .ctt tr.cask .cnum { font-size: 12pt; color: #000000; }
+  .ctt .cdn, .ctt tr.cask .cdn { font-size: 9.5pt; color: #000000; }
+  .csmall { font-size: 8.5pt; color: #000000; }
+  .crm { margin-bottom: 4mm; }
+  .crm + .crm { break-before: page; }
+  .cponly { display: inline; font-weight: 400; }
+  .cscroll { overflow: visible; }
+  .crt { font-size: 9.5pt; }
+  .crt thead { display: table-header-group; }
+  .crt tr { break-inside: avoid; }
+  .crt th { padding: 1.2mm 1.8mm; border-bottom: 1pt solid #000000; font-size: 7.5pt; color: #000000; }
+  .crt td { padding: 1.4mm 1.8mm; border-bottom: 0.4pt solid #999999; color: #000000; }
+  .crt td.cr { font-size: 10.5pt; color: #000000; }
+  .crt td.cnotes { font-size: 8.5pt; color: #000000; }
+  .crt td.cst { color: #000000; }
+  .crt tbody tr:hover td { background: transparent; }
+  .crt tr.cdone td, .crt tr.cdone td.cr, .crt tr.cdone .cask { color: #000000; }
+  .crt th.cdl, .crt td.cdl { width: 16mm; }
+  .cdel { display: none; }
+  .cbox { display: inline-block; width: 3.8mm; height: 3.8mm; box-sizing: border-box; border: 0.8pt solid #000000; }
+  .crt tr.cdone .cbox { display: none; }
+  .cdt { font-size: 8.5pt; color: #000000; }
+}

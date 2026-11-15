@@ -1,0 +1,203 @@
+/* Care V1 modules B and C: the life album (js/album.js), the free reading (js/reading.js) and their
+   Care Team tab (js/album-staff.js). Robot screen: 1080 x 1920 portrait, ".land" for the 1920 x 1080
+   head screen. Chrome 95 WebView: no :has, no color-mix, no blend modes.
+   1.15: the "Melodie" look (tokens of css/lab.css): cream cards, deep green, apricot. 1.16 typography: see the end. */
+
+/* A Previous button on the first picture or page: visibly off. */
+#screen.albphoto .btn[disabled], #screen.rdreader .btn[disabled] { opacity: .35; }
+
+/* ---------- life album: theme cards ---------- */
+.albcover { position: absolute; inset: 0; display: block; background: var(--bg); }
+.albcover svg, .albcover img { display: block; width: 100%; height: 100%; object-fit: cover; }
+#screen.albthemes .card .tag { background: var(--surface); color: var(--ink); }
+
+/* ---------- life album: one picture at a time ---------- */
+.picture.albpic { background: #FFFFFF; }
+.picture.albpic svg { display: block; width: 100%; height: 100%; }
+.picture.albpic img.albimg { display: block; width: 100%; height: 100%; object-fit: contain; }
+.albtext { display: flex; flex-direction: column; gap: 10px; text-align: center; }
+.albcaption { margin: 0; font-family: var(--font-display); font-size: 78px; line-height: 1.08; font-weight: 400; color: var(--brand); }
+.albq { margin: 0; font-size: 46px; line-height: 1.25; color: var(--muted); }
+.albcount { margin: 0; font-size: 30px; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* 1.16 (memories): "Hear again" tells the picture's story again; small, beside the counter, so the
+   three main buttons stay Previous / Next / I like it. */
+.albmeta { margin: 0; display: flex; align-items: center; justify-content: center; gap: 24px; min-height: 30px; }
+.albagain { display: inline-flex; align-items: center; gap: 14px; min-height: 76px; padding: 0 30px; border-radius: 5px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; font: inherit; font-size: 34px; font-weight: 700; cursor: pointer; }
+.albagain svg { display: block; width: 40px; height: 40px; flex: none; }
+.albagain:active { background: #F0F0F0; }
+.stage.big .albcaption { font-size: 88px; }
+.stage.big .albq { font-size: 54px; }
+.btn.albheart { flex-direction: row; gap: 22px; border-color: #E0E0E0; color: var(--heart); }
+.btn.albheart .bico svg { display: block; width: 64px; height: 64px; }
+.btn.albheart.on { background: #F0F0F0; border-color: var(--heart); color: var(--heart); }
+.picture.albthanksbox { background: transparent; display: grid; place-items: center; }
+.albthanks { display: grid; place-items: center; width: 620px; height: 620px; max-width: 100%; max-height: 100%; border-radius: 50%; background: #F0F0F0; color: var(--heart); }
+.albthanks svg { width: 420px; height: 420px; animation: albbeat 3.2s ease-in-out infinite; }
+@keyframes albbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .albthanks svg { animation: none; } }
+
+/* Photo du jour under Bellatrix's face on the waiting screen. */
+.albday { margin: 0; flex: 0 0 auto; height: 620px; display: flex; flex-direction: column; border-radius: 5px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); box-shadow: none; }
+.albdaypic { flex: 1; min-height: 0; display: block; background: #F0F0F0; }
+.albdaypic svg, .albdaypic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.albday figcaption { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; padding: 14px 26px; font-size: 38px; background: var(--surface); }
+.albday figcaption b { color: var(--brand); }
+
+.stage.land .albcaption { font-size: 66px; }
+.stage.land .albthanks { width: 440px; height: 440px; }
+.stage.land .albq { font-size: 40px; }
+.stage.land .albcount { font-size: 26px; }
+.stage.land .albagain { min-height: 64px; font-size: 28px; padding: 0 24px; }
+.stage.land .albagain svg { width: 32px; height: 32px; }
+.stage.land .btn.albheart .bico svg { width: 52px; height: 52px; }
+.stage.land .albthanks svg { width: 360px; height: 360px; }
+.stage.land .albday { height: 420px; }
+.stage.land .albday figcaption { font-size: 30px; padding: 10px 20px; }
+
+/* ---------- free reading: Today ---------- */
+.picture.rdtodaybox { background: transparent; display: grid; place-items: center; }
+.rdtoday { display: grid; justify-items: center; gap: 4px; width: min(100%, 760px); padding: 40px 32px 34px; border-radius: 5px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; text-align: center; }
+.rdtoday .rddow { font-size: 46px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--brand); }
+.rdtoday .rdnum { font-size: 190px; font-weight: 700; line-height: 1.02; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--brand); }
+.rdtoday .rdmon { font-size: 46px; text-transform: capitalize; }
+.rdtoday .rdtime { display: flex; align-items: baseline; gap: 22px; margin-top: 14px; }
+.rdtoday .rdtime b { font-size: 76px; font-variant-numeric: tabular-nums; }
+.rdtoday .rdtime i { font-style: normal; font-size: 42px; color: var(--muted); }
+.rdwxslot { min-height: 10px; }
+.rdwx { display: flex; align-items: center; gap: 20px; margin-top: 18px; padding: 16px 30px; border-radius: 5px; background: #F0F0F0; }
+.rdwx b { font-size: 70px; font-variant-numeric: tabular-nums; }
+.rdwx svg.rdwxicon { width: 116px; height: 116px; flex: none; }
+.rdwxtext { display: flex; flex-direction: column; align-items: flex-start; font-size: 42px; text-align: left; }
+.rdwxtext small { font-size: 30px; color: var(--muted); }
+.rdwx.off { font-size: 36px; color: var(--muted); }
+.stage.land .rdtoday { padding: 24px 24px 22px; }
+.stage.land .rdtoday .rddow { font-size: 42px; }
+.stage.land .rdtoday .rdnum { font-size: 150px; }
+.stage.land .rdtoday .rdmon { font-size: 40px; }
+.stage.land .rdtoday .rdtime b { font-size: 60px; }
+.stage.land .rdtoday .rdtime i { font-size: 36px; }
+.stage.land .rdwx { margin-top: 10px; padding: 10px 22px; }
+.stage.land .rdwx b { font-size: 56px; }
+.stage.land .rdwx svg.rdwxicon { width: 90px; height: 90px; }
+.stage.land .rdwxtext { font-size: 34px; }
+
+/* ---------- free reading: the story pages ---------- */
+#screen.rdreader header h2 { font-size: 56px; line-height: 1.1; }
+.picture.rdtext { background: var(--surface); color: var(--ink); border: 1px solid var(--line); padding: 40px 50px; overflow-y: auto; }
+.rdpage p { margin: 0 0 22px; font-size: 52px; line-height: 1.42; }
+.rdpage.verse p.stanza { font-size: 50px; line-height: 1.36; margin-bottom: 30px; }
+.rdpage h3 { margin: 0 0 18px; font-size: 40px; letter-spacing: .1em; color: var(--brand); }
+.stage.big .rdpage p { font-size: 60px; }
+.stage.big .rdpage.verse p.stanza { font-size: 56px; }
+.rdtools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
+.rdspeed { display: flex; }
+.rdsp { min-height: 84px; padding: 0 30px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; font-size: 36px; font-weight: 700; }
+.rdsp + .rdsp { border-left-width: 0; }
+.rdsp:first-child { border-radius: 5px 0 0 5px; }
+.rdsp:last-child { border-radius: 0 5px 5px 0; }
+.rdsp.on { background: #F0F0F0; color: #00519E; border-color: #00519E; border-left-width: 2px; }
+.rdfav { display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 0 28px; border-radius: 5px; border: 2px solid #E0E0E0; background: #FFFFFF; color: #333333; font-size: 34px; font-weight: 700; }
+.rdfav svg { width: 46px; height: 46px; }
+.rdfav.on { background: #F0F0F0; border-color: var(--heart); }
+.rdpageno { font-size: 34px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.btn.rdfavbtn { flex-direction: row; gap: 18px; }
+.btn.rdfavbtn .bico svg { width: 52px; height: 52px; display: block; }
+.stage.land .picture.rdtext { padding: 28px 40px; }
+.stage.land .rdpage p { font-size: 44px; line-height: 1.4; margin-bottom: 18px; }
+.stage.land .rdpage.verse p.stanza { font-size: 42px; }
+.stage.land #screen.rdreader header h2 { font-size: 52px; }
+.stage.land .rdsp { min-height: 72px; font-size: 32px; padding: 0 22px; }
+.stage.land .rdfav { min-height: 72px; font-size: 30px; }
+.stage.land .rdpageno { font-size: 30px; }
+
+/* Locked Premium book: a crown, the title, no price. */
+.opt.rdlocked { border-color: #E0E0E0; }
+.opt.rdlocked .lbl::after { content: " ·  Premium"; font-size: .6em; font-weight: 700; color: var(--brand); }
+.picture.rdcrownbox { background: #FFFFFF; display: grid; place-items: center; }
+.rdcrown { display: grid; justify-items: center; gap: 30px; padding: 40px; text-align: center; }
+.rdcrown svg { width: 340px; height: 340px; }
+.rdcrown b { font-family: var(--font-display); font-weight: 400; font-size: 66px; line-height: 1.12; color: var(--brand); }
+.stage.land .rdcrown svg { width: 260px; height: 260px; }
+.stage.land .rdcrown b { font-size: 50px; }
+
+/* Horoscope and 50 years ago. */
+.picture.rdsignbox, .picture.rdfactbox { background: transparent; display: grid; place-items: center; }
+.rdsign { display: grid; justify-items: center; gap: 24px; }
+.rdsign svg { width: 380px; height: 380px; }
+.rdfun { font-size: 40px; font-weight: 700; padding: 10px 30px; border-radius: 5px; background: #F0F0F0; color: var(--brand); }
+.rdmsg { margin: 0; font-family: var(--font-display); font-size: 66px; line-height: 1.24; text-align: center; font-weight: 400; color: var(--brand); }
+.stage.big .rdmsg { font-size: 70px; }
+.rdfact { display: grid; justify-items: center; width: min(100%, 560px); padding: 0 0 30px; border-radius: 5px; background: var(--surface); border: 1px solid var(--line); box-shadow: none; overflow: hidden; }
+.rdfact .rdfyear { order: -1; width: 100%; padding: 18px 0; text-align: center; background: #F0F0F0; color: #00519E; font-size: 66px; font-weight: 700; letter-spacing: .06em; border-bottom: 1px solid #E0E0E0; }
+.rdfact .rdfday { font-size: 200px; font-weight: 700; line-height: 1.05; margin-top: 16px; letter-spacing: -.02em; color: var(--brand); }
+.rdfact .rdfmon { font-size: 54px; text-transform: capitalize; }
+.stage.land .rdsign svg { width: 300px; height: 300px; }
+.stage.land .rdfun { font-size: 34px; }
+.stage.land .rdmsg { font-size: 52px; }
+.stage.land .rdfact .rdfday { font-size: 160px; }
+.stage.land .rdfact .rdfyear { font-size: 54px; }
+.rdtileart { display: grid; place-items: center; width: 100%; height: 100%; background: #FFFFFF; }
+.rdtileart svg { width: 62%; height: 62%; }
+
+/* ---------- Care Team tab "Album & Reading" ---------- */
+.arpanel h3 { margin: 10px 0 4px; font-size: 15px; }
+.arhead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; }
+.arhead h2 { font-size: 18px; }
+.arwho { min-width: 160px; margin: 0; }
+.aradd { border: 1px dashed var(--line); border-radius: 5px; padding: 12px 14px; }
+.araddrow { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 16px; align-items: start; }
+.arthumb { display: grid; place-items: center; width: 180px; aspect-ratio: 4 / 3; border-radius: 5px; overflow: hidden; background: var(--bg); }
+.arthumb img, .arthumb svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.arthumb.sm { width: 64px; flex: none; }
+.arfields { display: flex; flex-direction: column; gap: 4px; }
+.arfields .filebtn { align-self: flex-start; }
+.archips { display: flex; flex-wrap: wrap; gap: 8px; }
+.archip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 5px; padding: 6px 12px; font-size: 14px; }
+.archip.off { opacity: .6; text-decoration: line-through; }
+.argrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.arph { margin: 0; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; background: var(--surface); display: flex; flex-direction: column; }
+.arph.off .arimg { opacity: .45; }
+.arimg { position: relative; aspect-ratio: 4 / 3; background: var(--bg); }
+.arimg img, .arimg svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.arfam, .aroff { position: absolute; left: 8px; top: 8px; padding: 2px 10px; border-radius: 5px; font-size: 12px; font-weight: 700; background: #E6F1FA; color: #00325F; }
+.aroff { left: auto; right: 8px; background: #00325F; color: #FFFFFF; }
+.arph figcaption { display: flex; flex-direction: column; gap: 6px; padding: 10px; }
+.arph figcaption input, .arph figcaption select { font-size: 14px; }
+.arph .row { gap: 6px; flex-wrap: nowrap; }
+.arph .row select { flex: 1; min-width: 0; }
+.arlikes { color: #00519E; font-weight: 700; white-space: nowrap; }
+.arnotes textarea { min-height: 70px; }
+.arkpis { display: flex; flex-wrap: wrap; gap: 10px; }
+.arkpis span { display: flex; flex-direction: column; min-width: 120px; padding: 10px 14px; border-radius: 5px; background: var(--bg); font-size: 13px; color: var(--muted); }
+.arkpis b { font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.artop { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.artop li { display: flex; align-items: center; gap: 12px; }
+.artop li > span:nth-child(2) { flex: 1; display: flex; flex-direction: column; }
+.tbl tr.aravoid td { background: #F0F6FC; }
+.ardayprev { display: flex; align-items: center; gap: 12px; }
+.ardayprev .arthumb { width: 140px; }
+.arfound { display: flex; flex-wrap: wrap; gap: 6px; }
+.arreq { padding: 8px 12px; border-radius: 5px; background: #E6F1FA; color: #00325F; font-weight: 700; }
+.arlist { margin: 0; padding-left: 18px; }
+.arread .grow { flex: 1; min-width: 200px; }
+@media (max-width: 640px) {
+  .araddrow { grid-template-columns: 1fr; }
+  .arthumb { width: 100%; max-width: 260px; }
+  .argrid { grid-template-columns: 1fr 1fr; }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .arfam { background: #17406A; color: #E6F1FA; }
+  :root:not([data-theme="light"]) .tbl tr.aravoid td { background: #17406A; }
+  :root:not([data-theme="light"]) .arreq { background: #17406A; color: #E6F1FA; }
+}
+
+/* ---------- 1.16 · Typography (agent V): LabLand's roles (see the end of css/lab.css) ---------- */
+.albcaption { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); line-height: 1; }
+/* Bellatrix's question and the captions: regular weight */
+.albq, .albday figcaption { font-family: var(--font-text); font-weight: var(--w-text); letter-spacing: var(--track-text); line-height: var(--lh-text); }
+.albagain { font-family: var(--font); font-weight: var(--w-ui); }
+/* Care Team: album flags in upper case, chips in the grotesque */
+.arfam, .aroff, .arkpis span { font-family: var(--font-label); font-weight: var(--w-ui); letter-spacing: var(--track-label); text-transform: uppercase; }
+.archip { font-family: var(--font); font-weight: var(--w-strong); }
+.arkpis b { font-family: var(--font-display); font-weight: var(--w-title); letter-spacing: var(--track-title); }
+/* ---------- end of Typography 1.16 ---------- */
