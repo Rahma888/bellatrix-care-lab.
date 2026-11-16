@@ -614,9 +614,12 @@ var FamilyMessages = (function () {
   /* The resident's own settings, as the care team set them (as for a family call, js/patient.js). */
   function residentStart(code, ids, team, now) {
     var s = {}; try { s = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { s = {}; }
-    var p = (s.patients || {})[code] || {}, pr = p.prefs || {}, st = s.settings || {}, o = Lab.opt;
+    var p = (s.patients || {})[code] || {}, pr = p.prefs || {}, st = s.settings || {}, o = Lab.opt, wasAir = o.camMode === 'air';
     o.participant = code; o.staff = st.staff || ''; o.zone = ''; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
-    o.camMode = st.camMode || 'off'; o.camMove = false; o.voice = false;
+    /* 16 Nov: messages opened right after an activity done by pointing (the closing "surprise") keep the pointing;
+       on a robot with a head and a tablet, pointing is on by default (as for the family visit). */
+    var linkedTablet = !!(window.LinkPatient && LinkPatient.configured && LinkPatient.configured());
+    o.camMode = wasAir || linkedTablet ? 'air' : (st.camMode || 'off'); o.camMove = false; o.voice = false;   /* touch always works too */
     o.profile = pr.profile || ''; o.greet = pr.greet || ''; o.rate = pr.rate || 0.92; o.volume = pr.volume || 0.9;
     o.textSize = pr.textSize || 'normal'; o.subtitles = !!pr.subtitles; o.lang = I18N.valid(pr.lang); o.mood = pr.mood !== false;
     Lab.patient = code;

@@ -95,7 +95,9 @@
   function residentStart(code) {
     var s = store(), p = (s.patients || {})[code] || {}, pr = p.prefs || {}, st = s.settings || {}, o = Lab.opt;
     o.participant = code; o.staff = st.staff || ''; o.zone = ''; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
-    o.camMode = st.camMode || 'off'; o.camMove = false; o.voice = false;
+    /* 16 Nov: on a robot with a head and a tablet, pointing in the air is on (touch always works too). */
+    var linkedTablet = !!(window.LinkPatient && LinkPatient.configured && LinkPatient.configured());
+    o.camMode = o.camMode === 'air' || linkedTablet ? 'air' : (st.camMode || 'off'); o.camMove = false; o.voice = false;
     o.profile = pr.profile || ''; o.greet = pr.greet || ''; o.rate = pr.rate || 0.92; o.volume = pr.volume || 0.9;
     o.textSize = pr.textSize || 'normal'; o.subtitles = !!pr.subtitles; o.lang = I18N.valid(pr.lang || lastLang()); o.mood = false;
     Lab.patient = code;
