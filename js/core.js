@@ -604,7 +604,7 @@
      recorded); the buttons marked data-b and data-a="click" are chosen with the same OK. A session that starts
      takes the camera over; after IDLE_AIR_MS, or when the page is hidden, the camera goes off. The session's
      record is not touched (no log lines, no camera time). */
-  var IDLE_AIR_MS = 180000, IDLE_TICK_MS = 500;
+  var IDLE_AIR_MS = 60000, IDLE_TICK_MS = 500;   /* 16 Nov: one minute, the time "Call my family" stays (js/callreq-patient.js) */
   var idle = { on: false, until: 0, timer: 0 };
   function idleTargets() { return !!(stage && stage.querySelector('button[data-b][data-a="click"]')); }
   function idleCamOn() {
@@ -1664,6 +1664,7 @@
     if ($('setup')) $('app').hidden = true;
     var rec = S.rec;
     S.step = null;
+    Lab.lastEndAt = Date.now();   /* js/callreq-patient.js: "Call my family" only just after an activity */
     if (Lab.onSessionEnd) Lab.onSessionEnd(rec);
     idleStart();
   }

@@ -266,3 +266,9 @@ body #toast { z-index: 70; background: var(--accent); color: var(--on-accent); b
 .st-dvid { position: fixed; left: 0; top: 0; right: 0; bottom: 0; width: 100vw; height: 100vh; z-index: 2147483000; background: #000000; }
 .st-vplay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; background: #000000; display: block; }
 .st-vclose { position: absolute; z-index: 2; top: 12px; right: 14px; appearance: none; border: 0; border-radius: 50%; width: 52px; height: 52px; background: rgba(255,255,255,.92); color: #00519E; font-size: 30px; line-height: 1; cursor: pointer; }
+
+/* Start screen of the head (js/splash-staff.js, 16 Nov): the care home logo; over the menu, under dialogs and the status */
+.h-splash { position: fixed; inset: 0; z-index: 55; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vh; background: #FFFFFF; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.h-splash[hidden] { display: none; }
+.h-splash-logo { height: 62vh; max-width: 80vw; width: auto; object-fit: contain; pointer-events: none; }
+.h-splash-hint { font: 500 18px/1.2 var(--font, sans-serif); color: #00519E; opacity: .75; letter-spacing: .02em; }

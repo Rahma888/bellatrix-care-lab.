@@ -74,12 +74,17 @@
     var s = document.getElementById('screen');
     return s && !Lab.isOn() && s.querySelector('.picture.facebox') && s.querySelector('header') ? s : null;
   }
-  var painting = false;
+  var painting = false, AFTER_MS = 60 * 1000;
   function decorate() {
     if (painting || !patientPage()) return;
     var s = waitingScreen(), code = currentCode();
     var old = s ? s.querySelector('.crqwait') : document.querySelector('#screen .crqwait');
-    var show = !!s && hasFamily(code) && !staffOnly() && !runSoon();
+    /* 16 Nov (Rahma): not on the start screen any more, only at the end of an activity, for AFTER_MS (the time the
+       pointing stays on there, js/core.js IDLE_AIR_MS); then the waiting screen shows the logo alone again. */
+    var since = Date.now() - (Lab.lastEndAt || 0), recent = !!Lab.lastEndAt && since < AFTER_MS;
+    var show = !!s && recent && hasFamily(code) && !staffOnly() && !runSoon();
+    clearTimeout(decorate.t);
+    if (show) decorate.t = setTimeout(decorate, AFTER_MS - since + 300);
     if (!show) { if (old) { painting = true; old.parentNode.removeChild(old); painting = false; } return; }
     var L = lastLang(), asked = pending(code);
     var html = '<button type="button" class="btn' + (asked ? ' crqasked' : ' primary') + '" data-crq="ask" data-b="crq" data-a="click"><span class="bico">' + (asked ? CHECK : PHONE) + '</span><span class="blbl">' + Lab.esc(I18N.t(L, asked ? 'Call asked' : 'Call my family')) + '</span></button>';
