@@ -10,7 +10,7 @@
   var POSE_CDN = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 
   var T = {
-    SMOOTH_MS: 1500, SEATED_MS: 2000, BAD_MS: 3000, UNKNOWN_MS: 8000, REPEAT_MS: 25000, TICK_MS: 250
+    SMOOTH_MS: 1500, SEATED_MS: 2000, BAD_MS: 3000, UNKNOWN_MS: 8000, REPEAT_MS: 25000, TICK_MS: 250, ERR_MAX: 8
   };
   var TEXT = {
     en: 'Could you please sit down comfortably? I will wait for you.',
@@ -141,16 +141,18 @@
   function defaultLoadModel() {
     return loadVision().then(function (x) {
       var path = x.base ? x.base + '/' + POSE_MODEL : POSE_CDN;
+      /* 16 Nov (test at c1): in 'VIDEO' mode MediaPipe stopped after 2 to 18 pictures on the tablet with "Packet
+         timestamp mismatch ... free_memory", the check ended as 'unavailable' and the activity started without
+         asking. 'IMAGE' mode needs no timestamps (14 s without an error on the same tablet); 4 pictures a second
+         are enough here, the watcher smooths over 1.5 s anyway. */
       function make(delegate) {
-        return x.V.PoseLandmarker.createFromOptions(x.fs, { baseOptions: { modelAssetPath: path, delegate: delegate }, runningMode: 'VIDEO', numPoses: 1 });
+        return x.V.PoseLandmarker.createFromOptions(x.fs, { baseOptions: { modelAssetPath: path, delegate: delegate }, runningMode: 'IMAGE', numPoses: 1 });
       }
       return make('GPU').catch(function () { return make('CPU'); });
     }).then(function (m) {
-      var last = 0;
       return {
-        detect: function (src, ts) {
-          if (ts <= last) ts = last + 1; last = ts;
-          var r = m.detectForVideo(src, ts);
+        detect: function (src) {
+          var r = m.detect(src);
           return r && r.landmarks && r.landmarks[0] ? r.landmarks[0] : null;
         },
         close: function () { try { m.close(); } catch (e) {} }
@@ -251,9 +253,10 @@
     });
     /* 16 Nov: what the check saw is kept on the tablet (labels and counts only, never a picture) and in the
        console, so a test that went wrong can be read afterwards: localStorage 'bellatrix-posture-last'. */
-    var seen = { seated: 0, standing: 0, lying: 0, unknown: 0, none: 0 }, t0 = now(), lastSeen = null;
+    var seen = { seated: 0, standing: 0, lying: 0, unknown: 0, none: 0, errors: 0 }, t0 = now(), lastSeen = null, lastErr = '', errRun = 0;
     function note(r) {
       var n = { at: Date.now(), result: r, ms: now() - t0, frames: seen, last: lastSeen };
+      if (lastErr) n.error = lastErr;
       try { var st = deps.storage || root.localStorage; if (st.setItem) st.setItem('bellatrix-posture-last', JSON.stringify(n)); } catch (e) { /* no storage */ }
       try { if (root.console && console.info) console.info('[posture] ' + JSON.stringify(n)); } catch (e) { /* silent */ }
     }
@@ -285,8 +288,15 @@
             seen[lm ? lab : 'none']++;
             if (lm) lastSeen = { label: lab, head: last.head, torso: last.torso, thigh: last.thigh, shin: last.shin };
             watcher.feed(lab, t);
+            errRun = 0;
           }
-        } catch (e) { busy = false; end('unavailable'); return; }
+        } catch (e) {
+          /* 16 Nov: one bad picture does not end the check; ERR_MAX in a row (about 2 s) do. */
+          busy = false; seen.errors++; errRun++;
+          lastErr = String((e && e.message) || e).slice(0, 160);
+          if (errRun >= T.ERR_MAX) end('unavailable');
+          return;
+        }
         busy = false;
       }, T.TICK_MS);
     });

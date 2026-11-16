@@ -183,3 +183,22 @@ test('API (16 Nov): the result and the label counts are kept for the next look',
   const n = JSON.parse(kept['bellatrix-posture-last']);
   assert.equal(n.result, 'seated'); assert.ok(n.frames.lying > 10 && n.frames.seated > 5); assert.equal(n.last.label, 'seated');
 });
+test('API (16 Nov, c1): a picture that fails now and then does not end the check; only many in a row do', async () => {
+  let n = 0;
+  const a = fakeEnv((s) => { n++; if (n % 3 === 0) throw new Error('Packet timestamp mismatch'); return s.t < 6000 ? lying() : seated(); });
+  const kept = {}; a.deps.storage = { getItem: () => null, setItem: (k, v) => { kept[k] = v; } };
+  let r1 = null;
+  Posture.ensureSeated({ lang: 'de', say: (x) => a.state.said.push(x), deps: a.deps }, (r) => { r1 = r; });
+  await flush(); await drive(a.state, 14000);
+  assert.equal(r1, 'seated');
+  assert.equal(a.state.said.length, 1);
+  const k = JSON.parse(kept['bellatrix-posture-last']);
+  assert.ok(k.frames.errors > 3); assert.match(k.error, /timestamp/);
+  const b = fakeEnv(() => { throw new Error('gone'); });
+  let r2 = null;
+  Posture.ensureSeated({ deps: b.deps }, (r) => { r2 = r; });
+  await flush(); await drive(b.state, 1500);
+  assert.equal(r2, null);
+  await drive(b.state, 2500);
+  assert.equal(r2, 'unavailable'); assert.equal(b.state.camStopped, 1);
+});
