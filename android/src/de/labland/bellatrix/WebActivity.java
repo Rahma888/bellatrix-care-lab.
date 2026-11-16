@@ -367,6 +367,13 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
             try { return Hands.get(a).stateJson(); } catch (Throwable t) { return "{\"running\":false,\"error\":\"" + t.getClass().getSimpleName() + "\"}"; }
         }
 
+        /** 16 Nov: a small picture of the hands' camera every ms for the page's body model (0 = off), as
+         *  window.__bellatrixHands({pic:"data:image/jpeg;base64,..", w, h}). */
+        @JavascriptInterface
+        public void handsPictures(int ms) {
+            try { Hands.get(a).pictures(ms); } catch (Throwable t) { Log.w(TAG, "handsPictures: " + t); }
+        }
+
         /** Settings for the next handsStart: {"camera":"id","backend":"cpu|gpu","rot":0|90|180|270}. */
         @JavascriptInterface
         public void handsConfig(String json) {
@@ -467,12 +474,34 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
     /* ---------- hand points from the app's own tracking (Hands) ---------- */
     volatile String handsLatest;
     final AtomicBoolean handsPending = new AtomicBoolean(false);
+    volatile String picLatest;
+    final AtomicBoolean picPending = new AtomicBoolean(false);
 
     /** Called by Hands on its own thread: only the newest result waits for the UI thread, never a queue. */
     @Override
     public void hands(String json) {
+        // 16 Nov: the pictures for the body model have their own slot, so a hand result never replaces one
+        if (json != null && json.startsWith("{\"pic\"")) {
+            picLatest = json;
+            if (picPending.compareAndSet(false, true)) runOnUiThread(new PicDelivery(this));
+            return;
+        }
         handsLatest = json;
         if (handsPending.compareAndSet(false, true)) runOnUiThread(new HandsDelivery(this));
+    }
+
+    static final class PicDelivery implements Runnable {
+        final WebActivity a;
+
+        PicDelivery(WebActivity a) { this.a = a; }
+
+        @Override
+        public void run() {
+            a.picPending.set(false);
+            String j = a.picLatest;
+            a.picLatest = null;
+            if (j != null && a.web != null && !a.isDestroyed()) a.web.evaluateJavascript("window.__bellatrixHands&&window.__bellatrixHands(" + j + ")", null);
+        }
     }
 
     static final class HandsDelivery implements Runnable {

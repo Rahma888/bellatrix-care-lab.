@@ -4,16 +4,19 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
 import android.os.SystemClock;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Surface;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 /**
@@ -80,6 +83,15 @@ public final class Hands {
     // Delivery to the page (compute thread).
     long nextHandAt, lastNullAt;
     boolean lastHad;
+
+    /* 16 Nov (Rahma: Seated Move Along must point as smoothly as the other activities): while the page counts
+     * movements, the camera stays with the hands here and the page gets a small picture of the same frame every
+     * picturesEveryMs for its body model, as {"pic":"data:image/jpeg;base64,.."}. 0 = off. Nothing is kept. */
+    static final int PIC_STEP = 2;          // every 2nd pixel: 640 x 480 -> 320 x 240, enough for the body model
+    static final int PIC_QUALITY = 70;      // JPEG quality: about 15 KB a picture
+    volatile int picturesEveryMs;
+    long lastPictureAt;
+    int[] picPixels = new int[0];
 
     private Hands(Context app) {
         this.app = app;
@@ -252,11 +264,43 @@ public final class Hands {
         }
     }
 
+    /** The page asks for pictures (ms between two) or stops them (0). */
+    public void pictures(int everyMs) {
+        picturesEveryMs = everyMs <= 0 ? 0 : Math.max(100, everyMs);
+    }
+
+    /** A small upright copy of the frame for the page (compute thread). */
+    private void publishPicture(long arrived) {
+        Sink s = sink;
+        if (s == null || frame.width < PIC_STEP || frame.height < PIC_STEP) return;
+        int w = frame.width / PIC_STEP, h = frame.height / PIC_STEP;
+        if (picPixels.length != w * h) picPixels = new int[w * h];
+        int[] src = frame.pixels;
+        for (int y = 0; y < h; y++) {
+            int si = y * PIC_STEP * frame.width, di = y * w;
+            for (int x = 0; x < w; x++) {
+                int c = src[si + x * PIC_STEP];   // ABGR (red lowest) -> ARGB for the Bitmap
+                picPixels[di + x] = (c & 0xFF00FF00) | ((c & 0xFF) << 16) | ((c >> 16) & 0xFF);
+            }
+        }
+        Bitmap b = Bitmap.createBitmap(picPixels, w, h, Bitmap.Config.ARGB_8888);
+        ByteArrayOutputStream out = new ByteArrayOutputStream(24000);
+        b.compress(Bitmap.CompressFormat.JPEG, PIC_QUALITY, out);
+        b.recycle();
+        String data = Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+        if (running) s.hands("{\"pic\":\"data:image/jpeg;base64," + data + "\",\"w\":" + w + ",\"h\":" + h + "}");
+    }
+
     void process() {
         long arrived = yuv.arrivedAtMs;
         try {
             if (!running || !modelsReady) return;
             frame.fill(yuv, rotation);
+            int every = picturesEveryMs;
+            if (every > 0 && arrived - lastPictureAt >= every) {
+                lastPictureAt = arrived;
+                try { publishPicture(arrived); } catch (Throwable t) { Log.w(TAG, "picture: " + t); }
+            }
             if (!engine.process(frame, arrived)) return;
             measure();
             publish(arrived);

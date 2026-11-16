@@ -499,6 +499,7 @@
       /* The hands are followed in the app: the page's camera stays off (the camera has one user). */
       if (cam.stream) stopCam();
       if (!nhStart() && wantCam(st) && !cam.stream) startCam();
+      else nhPictures(!!(st && st.pose));
     } else {
       nhStop();   /* before the page opens its own camera (seated movements, call) */
       want = wantCam(st);
@@ -522,7 +523,32 @@
     try { off = localStorage.getItem('bellatrix-hands-native') === '0'; } catch (e) { off = false; }
     return !off && !!(window.BellatrixApp && window.BellatrixApp.handsStart && window.BellatrixApp.handsStop);
   }
-  function nhWanted(st) { return !nh.failed && !!st && !st.pose && !st.callVideo && wantCam(st) && nhApi(); }
+  /* 16 Nov (Rahma: Seated Move Along must point as smoothly as the other activities): on the movement pages in
+     'air' mode the app keeps the camera for the hands too and sends a small picture every NH_PIC_MS for the body
+     model here (window.__bellatrixHands({pic})); the page's own camera stays off. Without that bridge: as before. */
+  var NH_PIC_MS = 200;
+  function nhPics() { return !!(window.BellatrixApp && window.BellatrixApp.handsPictures); }
+  function nhWanted(st) { return !nh.failed && !!st && (!st.pose || (Lab.opt.camMode === 'air' && nhPics())) && !st.callVideo && wantCam(st) && nhApi(); }
+  function nhPictures(on) {
+    var ms = on && nhPics() ? NH_PIC_MS : 0;
+    if (nh.picMs === ms) return;
+    nh.picMs = ms;
+    try { if (nhPics()) window.BellatrixApp.handsPictures(ms); } catch (e) { /* an app without pictures */ }
+  }
+  function nhPicture(d) {
+    var st = S.step;
+    if (!st || !st.pose || nh.picBusy) return;
+    if (!cam.pose) { ensureModel('pose'); return; }
+    nh.picBusy = true;
+    var img = new Image();
+    img.onload = function () {
+      nh.picBusy = false;
+      if (S.step !== st || !cam.pose) return;
+      try { poseFrame(cam.pose.detect(img), performance.now()); } catch (e) { log('Detection error: ' + e.message, 'app', 'error'); }
+    };
+    img.onerror = function () { nh.picBusy = false; };
+    img.src = d.pic;
+  }
   function nhConfig() {
     if (!window.BellatrixApp.handsConfig) return;
     var c = {}, v;
@@ -547,6 +573,7 @@
   }
   function nhStop() {
     if (!nh.on) return;
+    nhPictures(false);
     nh.on = false;
     try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ }
     if (S.rec) S.rec.camMs += Date.now() - nh.onAt;
@@ -561,6 +588,7 @@
   }
   window.__bellatrixHands = function (d) {
     if (!d || !nh.on) return;
+    if (d.pic) { nhPicture(d); return; }
     if (d.error) { nhFail(d.error); syncCam(); if (S.step) render(); return; }
     if (d.w > 0 && d.h > 0) { nh.w = d.w; nh.h = d.h; }
     var lm = null, i, p;

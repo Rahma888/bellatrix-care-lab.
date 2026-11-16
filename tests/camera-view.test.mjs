@@ -246,6 +246,22 @@ else {
       // a session that starts takes the camera over; then the stub goes again
       await ev("(function(){Lab.start('hello',{preview:true,ready:true});try{Lab.endSession('test');}catch(e){}delete window.BellatrixApp;return true;})()");
     });
+    await test('page: Seated Move Along in the app (16 Nov): the movement pages keep the app camera for the hands and ask it for pictures; the page camera stays off', async () => {
+      const r = await ev("(async function(){function w(ms){return new Promise(function(r){setTimeout(r,ms)})}" +
+        "window.__nh={start:0,stop:0,pics:[]};window.BellatrixApp={handsStart:function(){__nh.start++;return 'ok';},handsStop:function(){__nh.stop++;},handsConfig:function(){},handsPictures:function(ms){__nh.pics.push(ms);}};" +
+        "try{Lab.endSession('test');}catch(e){}var cm=Lab.opt.camMove;Lab.opt.camMode='air';Lab.opt.camMove=true;Lab.opt.voice=false;Lab.start('move',{preview:true,ready:true});await w(600);" +
+        "var T=Lab._t,ids=[];for(var k=0;k<4;k++){var st=T.state.step;ids.push(st&&st.id);if(!st||st.pose)break;T.doAction(0,'touch');await w(500);}" +
+        "var st2=T.state.step,out={ids:ids,pose:!!(st2&&st2.pose),air:T.airMode(st2),pageCam:!!(window.CamView&&CamView.stream()),start:__nh.start,pics:__nh.pics.slice()};" +
+        "window.__bellatrixHands({pic:'data:image/gif;base64,R0lGODlhAQABAAAAACw=',w:1,h:1});" +
+        "try{Lab.endSession('test');}catch(e){}out.after=__nh.pics.slice();Lab.opt.camMove=cm;delete window.BellatrixApp;return JSON.stringify(out);})()");
+      const d = JSON.parse(r);
+      assert.equal(d.pose, true, 'on a movement page ' + r);
+      assert.equal(d.air, true, 'pointing on');
+      assert.equal(d.pageCam, false, 'the page camera stays off: the app keeps it ' + r);
+      assert.ok(d.start >= 1, 'the app camera runs');
+      assert.equal(d.pics[d.pics.length - 1], 200, 'pictures every 200 ms asked ' + r);
+      assert.equal(d.after[d.after.length - 1], 0, 'pictures off at the end ' + r);
+    });
     await test('page: a camera that gives an empty picture at 1280 x 960 is opened again plainly (16 Nov, robot tablet)', async () => {
       await ev("(function(){localStorage.removeItem('bellatrix-cam-plain');var md=navigator.mediaDevices,o=md.getUserMedia.bind(md);window.__gumOrig=o;" +
         "md.getUserMedia=function(c){var w=c&&c.video&&c.video.width;if(w&&w.ideal===1280){var cv=document.createElement('canvas');cv.width=2;cv.height=2;cv.getContext('2d').fillRect(0,0,2,2);return Promise.resolve(cv.captureStream(5));}return o(c);};" +
