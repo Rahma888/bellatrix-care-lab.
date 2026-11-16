@@ -1393,15 +1393,26 @@
     /* on the head its own server plays the file (with byte ranges); the app's /videos/ path is the fallback */
     var srv = '';
     try { var hi = window.BellatrixApp && BellatrixApp.linkServer ? JSON.parse(BellatrixApp.linkServer() || '{}') : {}; if (hi && hi.running) srv = 'http://127.0.0.1:8765/'; } catch (e) { srv = ''; }
-    st.innerHTML = '<div class="st-dvid"><video class="st-vplay" controls autoplay playsinline src="' + srv + 'videos/Bellatrix-demo-' + String(l).toUpperCase() + '.mp4"></video>' +
-      '<button type="button" class="st-vclose" data-dvclose="1" aria-label="' + esc(T('Close')) + '">\u00d7</button></div>';
-    var v = st.querySelector('video');
+    /* 16 Nov (Rahma): the whole screen, over the demo's own bar; only the cross on top */
+    stopDemoVideo();
+    var d = document.createElement('div');
+    d.id = 'stDemoVid'; d.className = 'st-dvid';
+    d.innerHTML = '<video class="st-vplay" controls autoplay playsinline src="' + srv + 'videos/Bellatrix-demo-' + String(l).toUpperCase() + '.mp4"></video>' +
+      '<button type="button" class="st-vclose" aria-label="' + esc(T('Close')) + '">\u00d7</button>';
+    document.body.appendChild(d);
+    d.querySelector('.st-vclose').addEventListener('click', function () { stopDemoVideo(); chooseLang(); });
+    var v = d.querySelector('video');
     v.addEventListener('ended', function () { stopDemoVideo(); chooseLang(); });
     v.addEventListener('error', function () { stopDemoVideo(); startIn(l); });   /* no film on this robot: the guided demo */
+    try { if (d.requestFullscreen) d.requestFullscreen().catch(function () { /* the fixed layer already covers the screen */ }); } catch (e) { /* idem */ }
   }
   function stopDemoVideo() {
-    var v = $('stDemoStage') ? $('stDemoStage').querySelector('video') : null;
+    var d = $('stDemoVid');
+    if (!d) return;
+    var v = d.querySelector('video');
     if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (e) { /* gone */ } }
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) { /* not in full screen */ }
+    d.parentNode.removeChild(d);
   }
   function startIn(l) {
     demo.lang = I18N.valid(l);
