@@ -190,6 +190,31 @@ else {
       r = await feed(0.5, 0.88, 40);
       assert.ok(r.ay === 1920 && /^(back|help|stop)$/.test(r.hover || ''), 'bottom: ' + JSON.stringify(r));
     });
+    await test('page: close the hand to choose (16 Nov): open hand never chooses, closed hand chooses once, then open again', async () => {
+      await ev("localStorage.removeItem('bellatrix-air-snap');localStorage.removeItem('bellatrix-air-confirm');true");
+      await ev("(function(){var o=document.querySelector('[data-b=conftest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','conftest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__conf0=Lab._air().chosen;true;})()");
+      /* A real-looking hand around (cx, cy) in the camera picture: open (fingers out) or closed (fingers folded). */
+      const hand = (cx, cy, closed, n, t0) => ev("(function(){var cx=" + cx + ",cy=" + cy + ",cl=" + (closed ? 'true' : 'false') + ",t=" + (t0 || 'performance.now()') + ",i,j;function P(dx,dy){return {x:cx+dx,y:cy+dy,z:0};}" +
+        "for(i=0;i<" + n + ";i++){var lm=[];lm[0]=P(0,0.12);for(j=1;j<=4;j++)lm[j]=P(-0.03*j,0.10-0.02*j);" +
+        "[[5,-0.04],[9,-0.013],[13,0.013],[17,0.04]].forEach(function(f){var b=f[0],x=f[1];lm[b]=P(x,0.04);lm[b+1]=P(x,cl?0.0:-0.02);lm[b+2]=P(x,cl?0.05:-0.06);lm[b+3]=P(x,cl?0.08:-0.09);});" +
+        "Lab._t.airFrame(lm,t+i*33);}var a=Lab._air();return {key:a.key,closed:a.closed,needOpen:a.needOpen,clicks:a.chosen-window.__conf0,t:t+" + n + "*33};})()");
+      let r = await hand(0.5, 0.5, false, 60);
+      assert.equal(r.clicks, 0, 'an open hand held still on a button never chooses: ' + JSON.stringify(r));
+      assert.equal(r.closed, false);
+      r = await hand(0.5, 0.5, true, 40, r.t);
+      assert.equal(r.closed, true, 'fingers folded = closed hand');
+      assert.equal(r.clicks, 1, 'a closed hand chooses after the short count: ' + JSON.stringify(r));
+      r = await hand(0.5, 0.5, true, 60, r.t);
+      assert.equal(r.clicks, 1, 'keeping the hand closed does not choose twice');
+      r = await hand(0.5, 0.5, false, 20, r.t);
+      r = await hand(0.5, 0.5, true, 40, r.t);
+      assert.equal(r.clicks, 2, 'open, close again: the next choice');
+      await ev("localStorage.setItem('bellatrix-air-confirm','0');true");
+      r = await hand(0.1, 0.1, false, 15, r.t);   /* away from the button, then back to it */
+      r = await hand(0.5, 0.5, false, 60, r.t);
+      assert.equal(r.clicks, 3, "'bellatrix-air-confirm' '0': holding still chooses, as before");
+      await ev("localStorage.removeItem('bellatrix-air-confirm');document.querySelector('[data-b=conftest]').remove();true");
+    });
     await test('page: no page errors', async () => assert.equal(await ev("(Lab._t.state.rec&&Lab._t.state.rec.log||[]).filter(function(l){return /App error/.test(l.msg||l.text||'');}).length"), 0));
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);

@@ -888,7 +888,25 @@
      RELEASE_PX: after a press, the finger has to move this far (stage pixels, about one chess square)
      or the hand has to go down before anything can be pressed again. Without both, one finger held
      still clicked through Begin, Yes, and the next screens, whose buttons sit at the same place. */
-  var AIR = { X0: 0.21, X1: 0.79, Y0: 0.16, Y1: 0.67, SMOOTH: 0.45, DWELL_MS: 1100, STOP_MS: 2200, LOST_MS: 900, SETTLE_MS: 900, RELEASE_PX: 90 };
+  var AIR = { X0: 0.21, X1: 0.79, Y0: 0.16, Y1: 0.67, SMOOTH: 0.45, DWELL_MS: 1100, STOP_MS: 2200, LOST_MS: 900, SETTLE_MS: 900, RELEASE_PX: 90,
+    /* 16 Nov (the boss, for old people): the magnet chooses the button, but the count only starts once the hand is
+       CLOSED ("OK for this choice"). Closed this long counts (a few frames, no flicker): */
+    CLOSE_MS: 120,
+    /* and open again this long before the hand counts as open (a fist that loosens for one frame keeps counting): */
+    OPEN_MS: 250,
+    /* the count once the hand is closed (shorter than DWELL_MS: closing the hand is already a clear decision): */
+    CONFIRM_MS: 800,
+    /* Stop needs a longer closed hand, as before (Stop is the one button that must not be pressed by accident): */
+    CONFIRM_STOP_MS: 1500 };
+  /* 'bellatrix-air-confirm' '0' = the old way (holding still is enough); anything else = close the hand to choose. */
+  function airConfirm() { try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; } }
+  /* All four fingers folded (thumb free): the closed hand. */
+  function handClosed(lm) {
+    var w = lm[0];
+    if (!lm[9] || dist(lm[9], w) < 0.02) return false;   /* no real hand shape (too small to read): never "closed" */
+    function folded(tip, pip) { return dist(lm[tip], w) <= dist(lm[pip], w) * 1.12; }
+    return folded(8, 6) && folded(12, 10) && folded(16, 14) && folded(20, 18);
+  }
   var air = { x: 540, y: 960, seen: false, last: 0, key: null, since: 0, done: null, guard: null, ready: 0 }, hovered = null;
   /* On every new screen; the guard of the last press is kept on purpose (see RELEASE_PX). */
   function resetAir() { air.key = null; air.since = 0; air.done = null; air.seen = false; air.ready = performance.now() + AIR.SETTLE_MS; setRing(0); hover(null); var c = $('airCursor'); if (c) c.hidden = true; }
@@ -977,7 +995,7 @@
   }
   Lab._airDebug = function (clear) { var out = airLogBuf.slice(); if (clear) airLogBuf.length = 0; return out; };
   /* The pointer's position in stage pixels (filtered, and as drawn), for the checks. */
-  Lab._air = function () { return { x: air.x, y: air.y, dx: air.dx, dy: air.dy, key: air.key, seen: air.seen }; };
+  Lab._air = function () { return { x: air.x, y: air.y, dx: air.dx, dy: air.dy, key: air.key, seen: air.seen, closed: !!air.closed, needOpen: !!air.needOpen, done: air.done || null, chosen: air.chosen || 0 }; };
   /* The one conversion camera picture -> screen (CamView.toScreen: mirror, margins, clamp) on the stage's rectangle.
      air.x / air.y come from it; the drawn cursor glides to them and airSnap tests r.left + air.x * s, the same point.
      The 'bellatrix' engine (window following the hand) already spans the whole screen: no margins for it. */
@@ -1052,18 +1070,26 @@
     var pr = CV ? ptr.update(lm, now, fs.w, fs.h, false, false) : ptr.update(lm, now, fs.w, fs.h, !fl.x, fl.y);
     if (!pr) return;
     if (CV) pr = airScreen(pr, r);
-    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; }
+    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.needOpen = false; }
+    /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
+    var confirm = airConfirm(), shut = confirm && handClosed(lm);
+    if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
+    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; if (!air.closed) air.needOpen = false; }
+    /* While the hand is closed on a button, the pointer stays on that button: closing the hand moves the palm, and
+       the choice must not slide to a neighbour (nor scroll the page). */
+    var lockOn = confirm && air.closed && air.hold && air.hold.isConnected;
     var nx0 = pr.u * stageW(), ny0 = pr.v * stageH(), dts = Math.max(30, now - (air.last || now)) / 1000;
+    if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
     air.x = nx0; air.y = ny0;
     air.seen = true; air.last = now;
     airLog(now, pr);
-    flickScroll(pr.ru * stageW(), pr.rv * stageH(), now);
+    if (!lockOn) flickScroll(pr.ru * stageW(), pr.rv * stageH(), now);
     cur.hidden = false;
     airDrawStart();
     /* A team game (js/games.js) in its frame: over the frame the cursor belongs to the game. */
     if (Lab.airToFrame && Lab.airToFrame(air.x, air.y, now, r, s, setRing)) { hover(null); air.hold = null; air.snap = null; air.key = null; return; }
-    var b = airSnap(r, s);
+    var b = lockOn ? air.hold : airSnap(r, s);
     /* A hand at the very edge of the camera picture is seen badly: ask for it in the middle. */
     var edgeP = lm[9] || lm[0], nearEdge = !!edgeP && (edgeP.x < 0.04 || edgeP.x > 0.96 || edgeP.y < 0.03 || edgeP.y > 0.97);
     if (b) air.onAt = now;
@@ -1073,6 +1099,21 @@
     /* Moving to another button starts a new wait; the button just pressed stays quiet until the
        pointer has left it, so one long hold never presses twice. */
     if (key !== air.key) { air.key = key; air.since = now; air.done = null; }
+    if (confirm) {
+      /* Close the hand to choose: the count runs only while the hand is closed; opening it before the end cancels.
+         After a choice, the hand must open once before the next one (one closed hand never chooses twice). */
+      if (air.done && !air.closed) air.done = null;
+      hover(b);
+      setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.needOpen ? 'Open your hand' : air.closed ? 'Keep your hand closed' : 'Close your hand to choose');
+      if (!b || !air.closed || air.needOpen || key === air.done || now < air.ready) { setRing(0); air.since = now; return; }
+      var pc = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
+      setRing(pc);
+      if (pc >= 1) {
+        air.done = key; air.needOpen = true; setRing(0); air.chosen = (air.chosen || 0) + 1;
+        dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air');
+      }
+      return;
+    }
     if (air.guard && Math.abs(air.x - air.guard.x) + Math.abs(air.y - air.guard.y) > AIR.RELEASE_PX) air.guard = null;
     var waiting = !!air.guard || now < air.ready;
     hover(b);
@@ -1082,7 +1123,7 @@
     var p = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.STOP_MS : AIR.DWELL_MS));
     setRing(p);
     if (p >= 1) {
-      air.done = key; air.guard = { x: air.x, y: air.y }; setRing(0);
+      air.done = key; air.guard = { x: air.x, y: air.y }; setRing(0); air.chosen = (air.chosen || 0) + 1;
       dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air');
     }
   }
