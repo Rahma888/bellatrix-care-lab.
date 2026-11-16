@@ -23,7 +23,7 @@ foreach ($apk in 'Bellatrix.apk', 'BellatrixTablet.apk') {
     # Mode "route" (PLAN-NAV.md): LabLand's Vergil planner, the Kotlin runtime it needs, and the drive itself.
     foreach ($c in 'Lde/labland/vergil/navigation/RoutePlanner;', 'Lde/labland/vergil/navigation/PgmMap;',
         'Lde/labland/vergil/navigation/GridPathfinder;', 'Lde/labland/vergil/navigation/NavLog;', 'Lkotlin/jvm/internal/Intrinsics;',
-        'Lde/labland/bellatrix/RouteDrive;', 'Lde/labland/bellatrix/RobotBridge$RouteHost;', 'Lde/labland/bellatrix/RobotBridge$RouteNav;') {
+        'Lde/labland/bellatrix/RouteDrive;', 'Lde/labland/bellatrix/BlockSpot;', 'Lde/labland/bellatrix/RobotBridge$RouteHost;', 'Lde/labland/bellatrix/RobotBridge$RouteNav;') {
       Check ($text.Contains($c)) "$apk dex contains $c"
     }
     # Only one dex goes into the APK (build.ps1 adds classes.dex): a second one would be lost.

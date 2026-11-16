@@ -48,7 +48,7 @@ if (J) {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'bellatrix-route-'));
   try {
     execFileSync(J.javac, ['--release', '8', '-Xlint:-options', '-encoding', 'UTF-8', '-cp', JARS.join(path.delimiter), '-d', out,
-      path.join(ROOT, RD), path.join(ROOT, 'tests/route-sim/RouteSim.java')], { stdio: 'pipe' });
+      path.join(ROOT, RD), path.join(ROOT, 'android/src/de/labland/bellatrix/BlockSpot.java'), path.join(ROOT, 'tests/route-sim/RouteSim.java')], { stdio: 'pipe' });
     const r = spawnSync(J.java, ['-cp', [out].concat(JARS).join(path.delimiter), 'de.labland.bellatrix.RouteSim', OFFICE], { encoding: 'utf8', timeout: 120000 });
     lines = String(r.stdout || '').split(/\r?\n/);
     if (r.status !== 0 && !lines.some((l) => /^not ok - /.test(l))) simError = 'the simulation did not run: ' + (r.error || r.stderr || r.status);
@@ -81,7 +81,7 @@ test('every number of PLAN-NAV.md\'s table is a named constant with a one-line r
   const table = {
     INFLATE_M: '0.32', MAX_LEG_M: '10.0', TOLERANCE_M: '0.3', HANDOVER_M: '1.2', HANDOVER_LEG_SHARE: '0.5',
     LEG_BASE_MS: '6000L', LEG_MS_PER_M: '4000L', LEG_MAX_MS: '30000L', STALL_M: '0.10', STALL_MS: '8000L', AVOID_MS: '12000L',
-    BLOCK_RADIUS_M: '0.6', BLOCK_AHEAD_M: 'BLOCK_RADIUS_M + 0.3', MAX_REPLANS: '6', LEG_STARTS: '3', RESTART_DELAYS_MS: '{150L, 400L}',
+    BLOCK_RADIUS_M: '0.6', MAX_REPLANS: '6', LEG_STARTS: '3', RESTART_DELAYS_MS: '{150L, 400L}',
     WATCH_MS: '250L', TIMEOUT_GRACE_MS: '5000L',
   };
   const rows = s.split(/\r?\n/);
@@ -99,7 +99,7 @@ test('every number of PLAN-NAV.md\'s table is a named constant with a one-line r
   assert.match(rb, /startNavigation\(id, new Pose\(\(float\) x, \(float\) y, \(float\) theta\), tolerance, timeoutMs, l\)/);
   assert.match(s, /PgmMap\.INSTANCE\.parse\(pgm, Double\.valueOf\(INFLATE_M\)\)/);
   assert.match(s, /planner\.plan\(pose\[0\], pose\[1\], goalX, goalY, Double\.valueOf\(MAX_LEG_M\)\)/);
-  assert.match(s, /planner\.block\(at\[0\], at\[1\], BLOCK_RADIUS_M\)/);
+  assert.match(s, /planner\.block\(bx, by, BLOCK_RADIUS_M\)/);
 });
 
 test('the SDK codes of RouteDrive are RobotBridge\'s', () => {

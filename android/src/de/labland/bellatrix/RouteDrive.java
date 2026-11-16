@@ -5,6 +5,7 @@ import de.labland.vergil.navigation.PathSimplifier;
 import de.labland.vergil.navigation.PgmMap;
 import de.labland.vergil.navigation.RoutePlanner;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -56,8 +57,6 @@ final class RouteDrive implements Runnable {
     static final long AVOID_MS = 12000L;
     /** A blocked spot is a circle of this radius in the app's copy of the map. */
     static final double BLOCK_RADIUS_M = 0.6;
-    /** ... this far ahead of the robot: the obstacle is in front of the robot, not at the point; more than the radius keeps the robot's own cell free. */
-    static final double BLOCK_AHEAD_M = BLOCK_RADIUS_M + 0.3;
     /** Replans per drive; one more blocked leg ends the drive ("blocked"). */
     static final int MAX_REPLANS = 6;
     /** Starts per leg: the SDK answers -1 to any new goal while a navigation runs, so the 2nd and 3rd come after stopNavigation. */
@@ -216,6 +215,8 @@ final class RouteDrive implements Runnable {
     private final long startedAt, limitMs, resumeDelayMs;
     private int seenSuspensions;
     private boolean started;          // at least one startNavigation went out in this drive
+    /** The poses read on the route being driven (PLAN-NAV-UPDATE-1); only the drive's own thread touches it. */
+    private List<double[]> driven = new ArrayList<double[]>();
     private String base = "";         // the reason when nothing else goes on: "" or "replanning"
     private String lastWhy = "";      // why the last leg ended, for the log
 
@@ -242,15 +243,6 @@ final class RouteDrive implements Runnable {
     static long legTimeoutMs(double legM) {
         long ms = LEG_BASE_MS + Math.round(Math.max(0.0, legM) * LEG_MS_PER_M);
         return Math.min(ms, LEG_MAX_MS);
-    }
-
-    /** Where a blocked leg's obstacle probably stands: BLOCK_AHEAD_M ahead of the robot towards the point, at the point if that is closer. */
-    static double[] blockSpot(double[] pose, double x, double y) {
-        if (pose == null) return new double[] {x, y};
-        double dx = x - pose[0], dy = y - pose[1], d = Math.hypot(dx, dy);
-        if (!(d > 0.0)) return new double[] {x, y};
-        double f = Math.min(BLOCK_AHEAD_M / d, 1.0);
-        return new double[] {pose[0] + dx * f, pose[1] + dy * f};
     }
 
     @Override
@@ -291,6 +283,9 @@ final class RouteDrive implements Runnable {
                 + " m, " + (host.now() - t0) + " ms with reading");
         RoutePlanner planner = new RoutePlanner(grid);
         int replans = 0, blocks = 0;
+        // PLAN-NAV-UPDATE-1: the poses of the route being driven, for BlockSpot.centre. Emptied for every new route
+        // (start, after Blocked, after clearObstacles, after a recovery: each of them plans again below).
+        driven = new ArrayList<double[]>();
         host.attempt(token, 1);
         while (true) {
             if (!host.alive(token)) { host.log("drive ended elsewhere"); return; }
@@ -319,13 +314,15 @@ final class RouteDrive implements Runnable {
             }
             List<PathSimplifier.Waypoint> pts = route.getWaypoints();
             int legs = pts.size() - 1;
+            driven.clear();   // a pose from an earlier route must not count as progress on this one
             host.log("plan: " + pts.size() + " points, " + f1(route.getLengthMeters()) + " m, " + (host.now() - tp) + " ms");
             if (legs < 1) { finish("arrived", "", "already there"); return; }   // points.get(0) is the robot itself
             host.leg(token, 0, legs);
 
-            int result = ARRIVED;
+            int result = ARRIVED, legAt = 0;
             double tx = goalX, ty = goalY;
             for (int i = 1; i <= legs && result == ARRIVED; i++) {
+                legAt = i;
                 PathSimplifier.Waypoint prev = pts.get(i - 1), w = pts.get(i);
                 boolean last = i == legs;
                 // The last leg goes to the place itself (the planner's last point is a cell, up to 1 m off when the
@@ -349,11 +346,32 @@ final class RouteDrive implements Runnable {
                     finish("arrived", "", "all " + legs + " legs");
                     return;
                 case BLOCKED: {
-                    double[] at = blockSpot(pose(), tx, ty);
-                    planner.block(at[0], at[1], BLOCK_RADIUS_M);
+                    // PLAN-NAV-UPDATE-1: the circle goes where the robot met the obstacle (BlockSpot.centre), not
+                    // 0.9 m from where the robot's own navigation has taken it by now.
+                    double[] now = pose();
+                    if (now != null) driven.add(new double[] {now[0], now[1]});
+                    else if (!driven.isEmpty()) now = driven.get(driven.size() - 1);   // the last pose the watch read
+                    List<double[]> way = new ArrayList<double[]>();
+                    for (int k = 0; k < pts.size(); k++) {
+                        boolean end = k == legs;   // the last leg drives to the place itself, not the planner's last cell
+                        way.add(new double[] {end ? goalX : pts.get(k).getX(), end ? goalY : pts.get(k).getY()});
+                    }
+                    double bx, by;
+                    if (now == null) {   // no pose at all: at the point, as the old rule did without a pose
+                        bx = tx;
+                        by = ty;
+                        host.log("block (" + f2(bx) + ", " + f2(by) + ") at the point, no pose");
+                    } else {
+                        BlockSpot.Spot spot = BlockSpot.centre(way, legAt, driven, now[0], now[1]);
+                        bx = spot.x;
+                        by = spot.y;
+                        host.log(spot.fromRoute
+                                ? "block (" + f2(bx) + ", " + f2(by) + ") from route at (" + f2(spot.anchorX) + ", " + f2(spot.anchorY) + "), robot at (" + f2(now[0]) + ", " + f2(now[1]) + ")"
+                                : "block (" + f2(bx) + ", " + f2(by) + ") from robot at (" + f2(now[0]) + ", " + f2(now[1]) + ")");
+                    }
+                    planner.block(bx, by, BLOCK_RADIUS_M);
                     blocks++;
                     replans++;
-                    host.log("block: (" + f2(at[0]) + ", " + f2(at[1]) + ") radius " + f1(BLOCK_RADIUS_M) + " m");
                     if (replans > MAX_REPLANS) { finish("failed", "blocked", replans - 1 + " replans did not get through"); return; }
                     base = "replanning";
                     host.attempt(token, replans + 1);
@@ -418,6 +436,7 @@ final class RouteDrive implements Runnable {
     /** Waits for the answer of one start and watches the leg every WATCH_MS: handover, standstill, avoiding, time. */
     private int watch(Start s, double x, double y, double handover, long timeoutMs, double plannedM, long t) {
         double[] p0 = pose();
+        if (p0 != null) driven.add(new double[] {p0[0], p0[1]});
         // the handover radius is capped against the leg as it lies ahead at the start (the planned length without a pose)
         double legM = p0 != null ? Math.hypot(x - p0[0], y - p0[1]) : plannedM;
         double radius = Math.min(handover, legM * HANDOVER_LEG_SHARE);
@@ -436,6 +455,7 @@ final class RouteDrive implements Runnable {
             long now = host.now();
             double[] p = pose();
             if (p != null) {
+                driven.add(new double[] {p[0], p[1]});   // PLAN-NAV-UPDATE-1: every pose of the 250 ms watch
                 if (Double.isNaN(mx) || Math.hypot(p[0] - mx, p[1] - my) >= STALL_M) {
                     mx = p[0]; my = p[1]; movedAt = now;   // the last pose that counted as moving
                 } else if (now - movedAt >= STALL_MS) {

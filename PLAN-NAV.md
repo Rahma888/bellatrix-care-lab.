@@ -124,8 +124,8 @@ repeat:
         theta = last ? goal theta : heading of the point BEFORE it   (the direction the robot arrives in)
         result = leg(point, theta, tolerance 0.3 m, timeout, handover = last ? 0 : 1.2 m)
         Arrived   -> next point
-        Blocked   -> block a circle of 0.6 m, 0.9 m ahead of the robot towards the point
-                     (at the point itself if that is closer); replans++;
+        Blocked   -> block a circle of 0.6 m at BlockSpot.centre (PLAN-NAV-UPDATE-1.md: where the robot met the
+                     obstacle on the route; the old rule only as the fallback); replans++;
                      more than 6 -> failed, reason "blocked"; else reason "replanning", plan again
         Cancelled -> a stop nobody here asked for: failed, reason "stopped"
         Failed    -> stopNavigation, failed, with the SDK code
@@ -214,7 +214,11 @@ Each one a named constant with a one-line reason in the code. All of them come f
 | Leg timeout | 6 s + 4 s/m, at most 30 s | a fixed 30 s spent 4 of 7 minutes of a drive waiting on legs already decided |
 | Standstill | less than 0.10 m in 8 s | the robot first turns on the spot, a half turn takes 4 s |
 | Avoiding | 12 s from the first 1018 | of 10 avoidance moves that ended by themselves, 9 ended within 10 s |
-| Block | circle of 0.6 m, 0.9 m ahead of the robot | the obstacle is in front of the robot, not at the waypoint; 0.9 > 0.6 keeps the robot's own cell free |
+| Block | circle of 0.6 m at `BlockSpot.centre`, see `PLAN-NAV-UPDATE-1.md` | where the robot met the obstacle, not where its own navigation has taken it by the end of the leg |
+| On the route (update 1) | 0.5 m | above the robot's sway and the cut corners of the handover, below a detour round a block |
+| Centre past reached (update 1) | 0.6 m | the circle begins where the robot met the obstacle |
+| Clearance to the robot (update 1) | 0.9 m | the old lookahead: 0.9 > 0.6 keeps the robot's own cell free; also the fallback, 0.9 m from the robot towards the point |
+| Step (update 1) | 0.05 m | one cell of the planner's grid |
 | Replans | at most 6 | |
 | Drive limit | 5 min | today's `GLOBAL_LIMIT_MS` |
 | Starts per leg | 3, after `stopNavigation` 150 ms then 400 ms | the SDK answers `-1` to any new goal while a navigation runs |

@@ -363,30 +363,35 @@ final class RouteSim {
             if (p == null && (s.attempt < 2 || s.attempt > RouteDrive.MAX_REPLANS + 1)) p = "attempt " + s.attempt + ", expected 2 to 7";
             if (p == null && !s.reasons.contains("replanning")) p = "reason \"replanning\" never shown";
             if (p == null && !s.logHas("standstill")) p = "not ended by the standstill watch";
-            if (p == null && s.logCount("block: (") != s.attempt - 1) p = s.logCount("block: (") + " blocks for attempt " + s.attempt;
-            if (p == null) {   // the first block sits on the box: 0.9 m ahead of the robot that stopped 0.9 m before it
+            if (p == null && s.logCount("block (") != s.attempt - 1) p = s.logCount("block (") + " blocks for attempt " + s.attempt;
+            if (p == null) {   // the first block sits on the box: the robot stayed on the route (BlockSpot: from the route, 0.9 m clear of the robot, in 5 cm steps)
                 String first = null;
-                for (String l : s.logs) if (l.contains("block: (")) { first = l; break; }
-                double[] at = first == null ? null : numbers(first.substring(first.indexOf("block: (") + 8));
-                if (at == null || Math.hypot(at[0] - s.boxX, at[1] - s.boxY) > 0.02) {
+                for (String l : s.logs) if (l.contains("block (")) { first = l; break; }
+                double[] at = first == null ? null : numbers(first.substring(first.indexOf("block (") + 7));
+                if (first != null && !first.contains("from route at")) p = "first block not laid from the route: " + first;
+                else if (at == null || Math.hypot(at[0] - s.boxX, at[1] - s.boxY) > 0.1) {
                     p = "first block not on the box: " + first + String.format(Locale.ROOT, ", box at (%.3f, %.3f)", s.boxX, s.boxY);
                 }
             }
             report("a box in the hall: standstill, block 0.9 m ahead, replanning, arrives another way (" + (s.attempt - 1) + " replan(s))", s, p);
         }
 
-        { // 3. a cart in the door: the blocks wall the robot in, are dropped, and after 6 replans "blocked"
+        { // 3. a cart in the door: the blocks pile up, are dropped, and after 6 replans "blocked". With PLAN-NAV-UPDATE-1
+          //    the blocks lie on the cart, so the simulated robot (a point that only stops within boxFoot of the cart)
+          //    may also find the gap beside it and arrive: both end within the limits.
             Sim s = new Sim(hall, sx, sy, 0.0);
             s.boxX = 6.0; s.boxY = 4.6; s.boxFoot = 0.7;
             s.drive(gx, gy, gth, LIMIT_MS);
             String p = null;
-            if (!"failed".equals(s.state)) p = "not failed";
+            if ("arrived".equals(s.state)) p = arrivedProblem(s, gx, gy);
+            else if (!"failed".equals(s.state)) p = "neither failed nor arrived";
             else if (!"blocked".equals(s.reason) && !"no-route".equals(s.reason)) p = "reason \"" + s.reason + "\"";
             else if ("blocked".equals(s.reason) && s.attempt != RouteDrive.MAX_REPLANS + 1) p = "attempt " + s.attempt;
             else if (s.attempt > RouteDrive.MAX_REPLANS + 1) p = "more than " + RouteDrive.MAX_REPLANS + " replans";
             else if (!s.logHas("leave no route")) p = "the blocks were never dropped";
             else if (s.startsAfter(s.endAt) > 0) p = "a start after the end";
             else if (s.endAt > LIMIT_MS + RouteDrive.LEG_MAX_MS + RouteDrive.TIMEOUT_GRACE_MS) p = "longer than the drive limit";
+            if (p == null && "arrived".equals(s.state) && s.endAt > LIMIT_MS + RouteDrive.LEG_MAX_MS + RouteDrive.TIMEOUT_GRACE_MS) p = "longer than the drive limit";
             report("a cart in the door: blocks dropped when they leave no route, ends \"" + s.reason + "\" within the limits", s, p);
         }
 

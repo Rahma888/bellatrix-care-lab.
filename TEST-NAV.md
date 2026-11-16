@@ -73,7 +73,8 @@ Sebastian.
    - le robot s'arrête devant le carton ou l'évite ; s'il ne passe pas, après **8 s sans avancer** (ou **12 s
      d'évitement sans fin**), le panneau affiche **« Bloqué : recherche d'un chemin pour contourner. »** et **essai 2** ;
    - dans le journal : `leg … end: blocked (standstill …)` ou `(avoiding for 12 s …)`, puis
-     `block: (x, y) radius 0.6 m` et `replan 1 of 6` ;
+     `block (x, y) from route at (…), robot at (…)` (ou `from robot at (…)` si le robot n'était jamais sur
+     l'itinéraire) et `replan 1 of 6` ;
    - ensuite **il arrive par un autre chemin**, ou il termine dans les limites avec **Échec** et
      « Pas de passage pendant 5 minutes. » (`blocked`) ou « Aucun chemin sur la carte : porte fermée ou obstacle. »
      (`no-route`).
@@ -81,6 +82,19 @@ Sebastian.
    (plus au maximum une étape, 35 s).
 5. Si les blocages ne laissent plus aucun chemin, le journal dit `the … block(s) leave no route: all dropped, planning
    once more` : c'est voulu (Bellatrix oublie ses blocages et replanifie une fois).
+6. Mise à jour 1 (16 novembre) : si ce point 3 a déjà été fait avant la mise à jour, refais-le une fois après.
+
+## 3 bis. Un carton que le robot ne peut pas passer (mise à jour 1)
+
+1. Pose un carton **en travers d'un couloir étroit**, sur le trajet d'un lieu, pour que le robot ne puisse pas passer
+   et que sa propre navigation tourne et s'éloigne.
+2. **Y aller** vers ce lieu.
+3. Attendu :
+   - dans le journal : `block (x, y) from route at (…), robot at (…)` ;
+   - le centre du blocage (`block (x, y)`) est **de 0,6 m à environ 1 m après** le point `at (…)`, c'est-à-dire sur
+     le carton, et non là où le robot se trouve après avoir tourné ;
+   - après `replanning`, le robot **prend un autre chemin** et **ne revient pas** vers le même carton.
+4. Note : la position du carton, les lignes `block …` du journal, et si le robot est revenu vers le carton (oui/non).
 
 ## 4. STOP, puis l'arrêt d'urgence, pendant un trajet
 
