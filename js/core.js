@@ -1469,8 +1469,7 @@
     '<g fill="none" stroke="#00519E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M60 130 V78 M60 78 V30 M78 78 V24 M96 80 V30 M114 86 V46 M42 96 V64 M42 96 Q44 140 84 142 Q122 142 122 104 V86"/>' +
     '<path d="M168 80 H210 M198 68 L212 80 L198 92"/>' +
-    '<path d="M250 70 Q250 52 268 52 H300 Q318 52 318 70 V112 Q318 138 290 140 H272 Q250 138 250 112 Z M262 70 H306 M262 86 H306"/></g>' +
-    '<text x="84" y="158" font-size="15" text-anchor="middle" fill="#00243F">\u261d</text></svg>';
+    '<path d="M250 70 Q250 52 268 52 H300 Q318 52 318 70 V112 Q318 138 290 140 H272 Q250 138 250 112 Z M262 70 H306 M262 86 H306"/></g></svg>';
   function practiceStep(act) {
     var T = Lab.t;
     return {
