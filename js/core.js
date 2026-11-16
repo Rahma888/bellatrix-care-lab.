@@ -997,6 +997,14 @@
     CONFIRM_STOP_MS: 1500 };
   /* 'bellatrix-air-confirm' '0' = the old way (holding still is enough); anything else = close the hand to choose. */
   function airConfirm() { try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; } }
+  /* 16 Nov afternoon (Rahma): open hand = select (the pointer follows), closed hand = OK: the ring fills while the hand
+     stays closed on the button, then it is chosen; open again before the next OK. 'bellatrix-air-confirm':
+     'closeopen' = the morning's close-then-open OK, '0' = hold still as at first. */
+  function airConfirmMode() {
+    var v = null;
+    try { v = localStorage.getItem('bellatrix-air-confirm'); } catch (e) { v = null; }
+    return v === '0' ? null : v === 'closeopen' ? 'closeopen' : 'close';
+  }
   /* All four fingers folded (thumb free): the closed hand. */
   function handClosed(lm) {
     var w = lm[0];
@@ -1136,15 +1144,24 @@
     var pr = CV ? ptr.update(lm, now, fs.w, fs.h, false, false) : ptr.update(lm, now, fs.w, fs.h, !fl.x, fl.y);
     if (!pr) return;
     if (CV) pr = airScreen(pr, r);
-    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; }
+    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; air.needOpen = false; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
     var confirm = airConfirm(), shut = confirm && handClosed(lm), wasClosed = !!air.closed;
     if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
     else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; }
     /* The "OK" (16 Nov, Rahma): close the hand on a button, then open it again; only then the ring starts to fill.
        Closing on a button remembers it (squeeze); opening again arms it; a new close starts a new OK. */
-    if (confirm && air.closed && !wasClosed) { air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null; }
-    if (confirm && !air.closed && wasClosed) { if (air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now }; air.squeeze = null; }
+    var cmode = confirm ? airConfirmMode() : null;
+    if (confirm && air.closed && !wasClosed) {
+      air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null;
+      /* closed = OK: the ring starts at once on the button where the hand closed (not again before the hand opened) */
+      if (cmode === 'close' && air.squeeze && !air.needOpen) air.armed = { el: air.squeeze, at: now };
+    }
+    if (confirm && !air.closed && wasClosed) {
+      if (cmode === 'closeopen' && air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now };
+      else air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
+      air.squeeze = null; air.needOpen = false;
+    }
     /* While the hand is closed, and while the ring fills, the pointer stays on that button: closing and opening the
        hand moves the palm, and the choice must not slide to a neighbour (nor scroll the page). A big move of the
        hand away (2 x RELEASE_PX) cancels the OK. */
@@ -1175,12 +1192,15 @@
          closed. Every choice needs its own OK (holding still never chooses). */
       if (air.armed && (!b || air.armed.el !== b)) air.armed = null;
       hover(b);
-      setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Hold still to choose' : air.closed ? 'Now open your hand' : 'Close and open your hand to choose');
+      setHandText(cmode === 'close'
+        ? (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Keep your hand closed' : air.needOpen ? 'Open your hand' : 'Close your hand to choose')
+        : (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Hold still to choose' : air.closed ? 'Now open your hand' : 'Close and open your hand to choose'));
       if (!b || !air.armed || now < air.ready) { setRing(0); air.since = now; return; }
       var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
+        if (cmode === 'close') air.needOpen = true;   /* the next OK needs the hand opened first */
         dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
       }
       return;
@@ -1443,6 +1463,27 @@
       ]
     };
   }
+  /* 16 Nov (Rahma): a short practice of the gesture before every activity in pointing mode: one big button, chosen
+     the way all the others will be (open hand to point, closed hand = OK). Touch works too. */
+  var HAND_PIC = '<svg viewBox="0 0 360 160" width="360" height="160" aria-hidden="true" class="airpractice">' +
+    '<g fill="none" stroke="#00519E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M60 130 V78 M60 78 V30 M78 78 V24 M96 80 V30 M114 86 V46 M42 96 V64 M42 96 Q44 140 84 142 Q122 142 122 104 V86"/>' +
+    '<path d="M168 80 H210 M198 68 L212 80 L198 92"/>' +
+    '<path d="M250 70 Q250 52 268 52 H300 Q318 52 318 70 V112 Q318 138 290 140 H272 Q250 138 250 112 Z M262 70 H306 M262 86 H306"/></g>' +
+    '<text x="84" y="158" font-size="15" text-anchor="middle" fill="#00243F">\u261d</text></svg>';
+  function practiceStep(act) {
+    var T = Lab.t;
+    return {
+      id: 'air-practice', title: T('Point with an open hand. Close your hand to choose.'), noStop: true, back: false, noHistory: true, airPointer: true,
+      pic: HAND_PIC, picCls: 'airpracticebox',
+      say: T('Let us practise: point at the button with your open hand, then close your hand.'),
+      actions: [{ label: T('Got it'), primary: true, gesture: 'open', words: ['ok', 'okay', 'yes', 'got it', 'understood'], noLabelWords: true,
+        run: function () { log('Pointing practised', 'app', 'camera'); go(welcomeStep(act), { clear: true }); } }]
+    };
+  }
+  function welcomeOrPractice(act) {
+    return Lab.opt.camMode === 'air' && airConfirm() && airConfirmMode() === 'close' && S.camConsent === true && !act.noPractice ? practiceStep(act) : welcomeStep(act);
+  }
   /* The camera needs no question here: the care team gives consent before the session. */
   function afterYes() { moodThenStart(); }
   function startActivity() {
@@ -1501,7 +1542,7 @@
       pic: Lab.faceHtml('hero'), picCls: 'facebox',
       say: T('Ready when you are.'),
       actions: [{ label: T('Begin'), primary: true, gesture: 'open', words: ['begin', 'start', 'yes', 'ready', 'ok', 'okay', 'go'], noLabelWords: true,
-        run: function () { fullScreen(); Music.unlock(); log('Begin', 'app', 'start'); go(welcomeStep(S.act), { clear: true }); } }]
+        run: function () { fullScreen(); Music.unlock(); log('Begin', 'app', 'start'); go(welcomeOrPractice(S.act), { clear: true }); } }]
     };
   }
   function finish() {
@@ -1604,7 +1645,7 @@
        Lab.startData. */
     Lab.startData = o.data || null;
     if (o.direct) startActivity();
-    else go(o.ready ? readyStep(act) : welcomeStep(act), { clear: true });
+    else go(o.ready ? readyStep(act) : welcomeOrPractice(act), { clear: true });
   }
   function endSession(reason) {
     if (!S.on) return;

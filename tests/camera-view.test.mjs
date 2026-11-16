@@ -190,7 +190,7 @@ else {
       r = await feed(0.5, 0.88, 40);
       assert.ok(r.ay === 1920 && /^(back|help|stop)$/.test(r.hover || ''), 'bottom: ' + JSON.stringify(r));
     });
-    await test('page: OK = close and open the hand (16 Nov): open hand never chooses, closed alone neither, close+open chooses once', async () => {
+    await test('page: OK = closed hand (16 Nov, afternoon): open hand points and never chooses, closing on a button chooses once, open again for the next', async () => {
       await ev("localStorage.removeItem('bellatrix-air-snap');localStorage.removeItem('bellatrix-air-confirm');true");
       await ev("(function(){var o=document.querySelector('[data-b=conftest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','conftest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__conf0=Lab._air().chosen;true;})()");
       /* A real-looking hand around (cx, cy) in the camera picture: open (fingers out) or closed (fingers folded). */
@@ -200,20 +200,28 @@ else {
         "Lab._t.airFrame(lm,t+i*33);}var a=Lab._air();return {key:a.key,closed:a.closed,needOpen:a.needOpen,clicks:a.chosen-window.__conf0,t:t+" + n + "*33};})()");
       let r = await hand(0.5, 0.5, false, 60);
       assert.equal(r.clicks, 0, 'an open hand held still on a button never chooses: ' + JSON.stringify(r));
-      r = await hand(0.5, 0.5, true, 40, r.t);
+      r = await hand(0.5, 0.5, true, 15, r.t);
       assert.equal(r.closed, true, 'fingers folded = closed hand');
-      assert.equal(r.clicks, 0, 'a closed hand alone does not choose: the OK is close AND open');
+      r = await hand(0.5, 0.5, false, 20, r.t);
+      assert.equal(r.clicks, 0, 'closed only briefly (the ring not full), opened again: nothing chosen');
+      r = await hand(0.5, 0.5, true, 40, r.t);
+      assert.equal(r.clicks, 1, 'the hand closed on the button and kept closed: the ring fills and chooses: ' + JSON.stringify(r));
+      r = await hand(0.5, 0.5, true, 40, r.t);
+      assert.equal(r.clicks, 1, 'staying closed after a choice does not choose again');
+      assert.equal(r.needOpen, true, 'the next OK needs the hand opened first');
+      r = await hand(0.5, 0.5, false, 20, r.t);
+      r = await hand(0.5, 0.5, true, 40, r.t);
+      assert.equal(r.clicks, 2, 'open, then close again: the next choice');
+      await ev("localStorage.setItem('bellatrix-air-confirm','closeopen');true");
+      r = await hand(0.5, 0.5, false, 20, r.t);
+      r = await hand(0.5, 0.5, true, 15, r.t);
       r = await hand(0.5, 0.5, false, 40, r.t);
-      assert.equal(r.clicks, 1, 'close then open on the button = OK; the ring fills and chooses: ' + JSON.stringify(r));
-      r = await hand(0.5, 0.5, false, 60, r.t);
-      assert.equal(r.clicks, 1, 'staying open after a choice does not choose again');
-      r = await hand(0.5, 0.5, true, 10, r.t);
-      r = await hand(0.5, 0.5, false, 40, r.t);
-      assert.equal(r.clicks, 2, 'a new OK (close, open): the next choice');
+      assert.equal(r.clicks, 3, "'bellatrix-air-confirm' 'closeopen': the morning's close-then-open OK");
+      r = await hand(0.5, 0.5, false, 30, r.t);
       await ev("localStorage.setItem('bellatrix-air-confirm','0');true");
       r = await hand(0.1, 0.1, false, 15, r.t);   /* away from the button, then back to it */
       r = await hand(0.5, 0.5, false, 60, r.t);
-      assert.equal(r.clicks, 3, "'bellatrix-air-confirm' '0': holding still chooses, as before");
+      assert.equal(r.clicks, 4, "'bellatrix-air-confirm' '0': holding still chooses, as before");
       await ev("localStorage.removeItem('bellatrix-air-confirm');document.querySelector('[data-b=conftest]').remove();true");
     });
     await test('page: no page errors', async () => assert.equal(await ev("(Lab._t.state.rec&&Lab._t.state.rec.log||[]).filter(function(l){return /App error/.test(l.msg||l.text||'');}).length"), 0));
@@ -227,7 +235,7 @@ else {
       assert.ok(g.consent !== true && g.air === false, 'signs mode: no hand signs in Move, as before ' + JSON.stringify(g));
       await ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';return true;})()");
     });
-    await test('page: waiting screen (16 Nov): after an air session the app camera follows the hand, OK on "Call my family" presses it, a new session takes the camera over', async () => {
+    await test('page: waiting screen (16 Nov): after an air session the app camera follows the hand, the OK (closed hand) on "Call my family" presses it, a new session takes the camera over', async () => {
       await ev("(function(){window.__idle={start:0,stop:0,clicks:0};window.BellatrixApp={handsStart:function(){__idle.start++;return 'ok';},handsStop:function(){__idle.stop++;},handsConfig:function(){}};" +
         "try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
       await sleep(400);
@@ -238,8 +246,8 @@ else {
         "[[5,-0.04],[9,-0.013],[13,0.013],[17,0.04]].forEach(function(f){var b=f[0],x=f[1];lm[b]=P(x,0.04);lm[b+1]=P(x,cl?0.0:-0.02);lm[b+2]=P(x,cl?0.05:-0.06);lm[b+3]=P(x,cl?0.08:-0.09);});" +
         "return new Promise(function(res){var k=0;(function f(){window.__bellatrixHands({t:Date.now(),w:640,h:480,lm:lm});if(++k<" + n + ")setTimeout(f,33);else res(window.__idle.clicks);})();});})()");
       await sendHand(false, 40);
-      await sendHand(true, 25);
-      const clicks = await sendHand(false, 45);
+      await sendHand(true, 45);   // closed = OK (16 Nov afternoon): the ring fills while the hand stays closed
+      const clicks = await sendHand(false, 20);
       const after = await ev("(function(){var b=document.querySelector('[data-b=crqtest]');if(b)b.remove();return JSON.stringify(window.__idle);})()");
       assert.ok(on, 'the app camera starts on the waiting screen ' + after);
       assert.equal(clicks, 1, 'close then open on the button presses it once ' + after);
@@ -261,6 +269,13 @@ else {
       assert.ok(d.start >= 1, 'the app camera runs');
       assert.equal(d.pics[d.pics.length - 1], 200, 'pictures every 200 ms asked ' + r);
       assert.equal(d.after[d.after.length - 1], 0, 'pictures off at the end ' + r);
+    });
+    await test('page: practice step (16 Nov): in pointing mode the session begins with the gesture practice, then the welcome', async () => {
+      const r = await ev("(async function(){function w(ms){return new Promise(function(r){setTimeout(r,ms)})}try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true});await w(300);" +
+        "var a=Lab._t.state.step&&Lab._t.state.step.id;Lab._t.doAction(0,'touch');await w(300);var b=Lab._t.state.step&&Lab._t.state.step.id;" +
+        "try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='off';Lab.start('hello',{preview:true});await w(300);var c=Lab._t.state.step&&Lab._t.state.step.id;try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';return JSON.stringify({a:a,b:b,c:c});})()");
+      const d = JSON.parse(r);
+      assert.equal(d.a, 'air-practice', r); assert.equal(d.b, 'welcome', r); assert.equal(d.c, 'welcome', 'without pointing: no practice ' + r);
     });
     await test('page: a camera that gives an empty picture at 1280 x 960 is opened again plainly (16 Nov, robot tablet)', async () => {
       await ev("(function(){localStorage.removeItem('bellatrix-cam-plain');var md=navigator.mediaDevices,o=md.getUserMedia.bind(md);window.__gumOrig=o;" +
