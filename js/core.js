@@ -1823,15 +1823,12 @@
      (the stage gets the class "talking"). Big on the waiting screen, small at the top in a session. */
   /* 16 Nov (Rahma): the care home's logo (Suavia) instead of the big face on the waiting and "Ready" screens. */
   Lab.logoHtml = function () { return '<img class="hlogo" src="img/suavia-logo.svg" alt="Suavia" draggable="false">'; };
+  /* 16 Nov (Rahma): the care home's logo (Suavia) everywhere instead of the smiley; where it is small (the chip
+     during a session, the head's top bar) the Suavia cross alone, the full logo where it is big. */
   Lab.faceHtml = function (cls) {
-    return '<svg class="bface' + (cls ? ' ' + cls : '') + '" viewBox="0 0 200 200" aria-hidden="true" focusable="false">' +
-      '<circle class="fhead" cx="100" cy="100" r="94"/>' +
-      '<g class="feye"><ellipse class="fwhite" cx="68" cy="84" rx="17" ry="21"/><circle class="fpupil" cx="70" cy="87" r="9"/><circle class="fshine" cx="74" cy="81" r="3"/></g>' +
-      '<g class="feye"><ellipse class="fwhite" cx="132" cy="84" rx="17" ry="21"/><circle class="fpupil" cx="134" cy="87" r="9"/><circle class="fshine" cx="138" cy="81" r="3"/></g>' +
-      '<ellipse class="fcheek" cx="48" cy="120" rx="13" ry="8"/><ellipse class="fcheek" cx="152" cy="120" rx="13" ry="8"/>' +
-      '<path class="fsmile" d="M72 126 Q100 152 128 126"/>' +
-      '<ellipse class="fmouth" cx="100" cy="134" rx="18" ry="13"/>' +
-      '</svg>';
+    var small = !cls || cls === 'mini';
+    return '<img class="bface blogo' + (cls ? ' ' + cls : '') + (small ? ' blogo-mark' : '') + '" src="img/' + (small ? 'suavia-mark.svg' : 'suavia-logo.svg') +
+      '" alt="" aria-hidden="true" draggable="false">';
   };
   Lab.talk = function (on) { talk(on); };
   Lab.stageW = function () { return stageW(); };
