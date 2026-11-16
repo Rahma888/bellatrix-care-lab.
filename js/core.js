@@ -1461,7 +1461,10 @@
     S.rec.mood = { before: null, after: null };
     /* The care team gives the camera consent when it chooses hand signs or pointing: the camera
        starts with the first screen, so even Begin and "Yes" can be pointed at from a distance. */
-    if (signsMode() && !act.noHandSigns) { S.camConsent = true; S.rec.consent.hands = 'care team'; }
+    /* 16 Nov (Rahma): pointing in every activity. noHandSigns (Seated Move Along) only keeps hand SIGNS away
+       (arm movements must not be read as signs); pointing works there too, on every screen without the
+       body camera (steps with `pose` keep the camera for the movements, as before). */
+    if (signsMode() && (!act.noHandSigns || Lab.opt.camMode === 'air')) { S.camConsent = true; S.rec.consent.hands = 'care team'; }
     $('plog').innerHTML = '';
     $('staffTap').textContent = 'Staff is tapping: off';
     if ($('setup')) $('setup').hidden = true;

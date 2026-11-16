@@ -217,6 +217,16 @@ else {
       await ev("localStorage.removeItem('bellatrix-air-confirm');document.querySelector('[data-b=conftest]').remove();true");
     });
     await test('page: no page errors', async () => assert.equal(await ev("(Lab._t.state.rec&&Lab._t.state.rec.log||[]).filter(function(l){return /App error/.test(l.msg||l.text||'');}).length"), 0));
+    await test('page: pointing also in Seated Move Along (16 Nov); hand signs still kept away from it', async () => {
+      const st = (mode) => ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='" + mode + "';Lab.opt.camMove=false;Lab.start('move',{preview:true,ready:true});" +
+        "return new Promise(function(res){setTimeout(function(){var s=Lab._t.state;res({id:s.step&&s.step.id,consent:s.camConsent,air:Lab._t.airMode(s.step),buttons:document.querySelectorAll('#stage button[data-b][data-a]').length});},700);});})()");
+      const a = await st('air');
+      assert.ok(a.consent === true && a.air === true, 'air mode: pointing on the first Move screen ' + JSON.stringify(a));
+      assert.ok(a.buttons >= 2, 'buttons the pointer can choose ' + JSON.stringify(a));
+      const g = await st('signs');
+      assert.ok(g.consent !== true && g.air === false, 'signs mode: no hand signs in Move, as before ' + JSON.stringify(g));
+      await ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';return true;})()");
+    });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);
   stop();
