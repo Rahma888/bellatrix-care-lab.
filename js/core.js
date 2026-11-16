@@ -1070,15 +1070,21 @@
     var pr = CV ? ptr.update(lm, now, fs.w, fs.h, false, false) : ptr.update(lm, now, fs.w, fs.h, !fl.x, fl.y);
     if (!pr) return;
     if (CV) pr = airScreen(pr, r);
-    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.needOpen = false; }
+    if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
-    var confirm = airConfirm(), shut = confirm && handClosed(lm);
+    var confirm = airConfirm(), shut = confirm && handClosed(lm), wasClosed = !!air.closed;
     if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
-    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; if (!air.closed) air.needOpen = false; }
-    /* While the hand is closed on a button, the pointer stays on that button: closing the hand moves the palm, and
-       the choice must not slide to a neighbour (nor scroll the page). */
-    var lockOn = confirm && air.closed && air.hold && air.hold.isConnected;
+    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; }
+    /* The "OK" (16 Nov, Rahma): close the hand on a button, then open it again; only then the ring starts to fill.
+       Closing on a button remembers it (squeeze); opening again arms it; a new close starts a new OK. */
+    if (confirm && air.closed && !wasClosed) { air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null; }
+    if (confirm && !air.closed && wasClosed) { if (air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now }; air.squeeze = null; }
+    /* While the hand is closed, and while the ring fills, the pointer stays on that button: closing and opening the
+       hand moves the palm, and the choice must not slide to a neighbour (nor scroll the page). A big move of the
+       hand away (2 x RELEASE_PX) cancels the OK. */
     var nx0 = pr.u * stageW(), ny0 = pr.v * stageH(), dts = Math.max(30, now - (air.last || now)) / 1000;
+    if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > 2 * AIR.RELEASE_PX) air.armed = null;
+    var lockOn = confirm && ((air.closed && air.squeeze) || air.armed) && air.hold && air.hold.isConnected;
     if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
     air.x = nx0; air.y = ny0;
@@ -1100,16 +1106,16 @@
        pointer has left it, so one long hold never presses twice. */
     if (key !== air.key) { air.key = key; air.since = now; air.done = null; }
     if (confirm) {
-      /* Close the hand to choose: the count runs only while the hand is closed; opening it before the end cancels.
-         After a choice, the hand must open once before the next one (one closed hand never chooses twice). */
-      if (air.done && !air.closed) air.done = null;
+      /* Point, then "OK" = close and open the hand: the ring fills only after that, on the button where the hand
+         closed. Every choice needs its own OK (holding still never chooses). */
+      if (air.armed && (!b || air.armed.el !== b)) air.armed = null;
       hover(b);
-      setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.needOpen ? 'Open your hand' : air.closed ? 'Keep your hand closed' : 'Close your hand to choose');
-      if (!b || !air.closed || air.needOpen || key === air.done || now < air.ready) { setRing(0); air.since = now; return; }
-      var pc = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
+      setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Hold still to choose' : air.closed ? 'Now open your hand' : 'Close and open your hand to choose');
+      if (!b || !air.armed || now < air.ready) { setRing(0); air.since = now; return; }
+      var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
       setRing(pc);
       if (pc >= 1) {
-        air.done = key; air.needOpen = true; setRing(0); air.chosen = (air.chosen || 0) + 1;
+        air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
         dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air');
       }
       return;
