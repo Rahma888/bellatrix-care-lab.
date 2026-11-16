@@ -287,6 +287,32 @@ function headInfo() {
     clock: { offsetMin: Math.round((globalThis.__bellatrixClockOffset || 0) / 60000), synced: !!globalThis.__bellatrixClockSynced, error: globalThis.__bellatrixClockError || '' } };
 }
 
+function videoFile(req, res, url) {
+  const dir = process.env.BELLATRIX_VIDEOS || path.join(DATA_DIR, 'videos');
+  let name = '';
+  try { name = decodeURIComponent(url.pathname.slice('/videos/'.length)); } catch (e) { name = ''; }
+  const local = !req.headers['cf-connecting-ip'] && !req.headers['cf-ray'] && /^(::ffff:)?127\.0\.0\.1$|^::1$/.test(req.socket.remoteAddress || '');
+  if (!local || !/^[A-Za-z0-9._-]{1,80}\.mp4$/.test(name)) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found'); return; }
+  const full = path.join(dir, name);
+  fs.stat(full, (err, st) => {
+    if (err || !st.isFile()) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('Not found'); return; }
+    const total = st.size;
+    let start = 0, end = total - 1, partial = false;
+    const m = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || '').trim());
+    if (m && (m[1] || m[2])) {
+      partial = true;
+      if (m[1]) { start = Number(m[1]); if (m[2]) end = Math.min(total - 1, Number(m[2])); }
+      else { start = Math.max(0, total - Number(m[2])); }
+    }
+    if (start > end || start >= total) { res.writeHead(416, { 'Content-Range': 'bytes */' + total }); res.end(); return; }
+    const h = { 'Content-Type': 'video/mp4', 'Accept-Ranges': 'bytes', 'Content-Length': String(end - start + 1), 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' };
+    if (partial) h['Content-Range'] = 'bytes ' + start + '-' + end + '/' + total;
+    res.writeHead(partial ? 206 : 200, h);
+    if (req.method === 'HEAD') { res.end(); return; }
+    fs.createReadStream(full, { start, end }).on('error', () => res.destroy()).pipe(res);
+  });
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   /* Care V1 family portal and messages (labland/family-portal.mjs): it reads its own bodies (photos). */
@@ -295,6 +321,9 @@ const server = http.createServer((req, res) => {
   if (url.pathname.startsWith('/games/') || url.pathname === '/jeu' || url.pathname === '/jeu/') { gamesApi(req, res, url); return; }
   /* "Menu" (labland/meals.mjs): tomorrow's meals chosen on the tablet, the kitchen page /cuisine, /meals/... */
   if (url.pathname.startsWith('/meals/') || url.pathname === '/cuisine' || url.pathname === '/cuisine/') { mealsApi(req, res, url); return; }
+  /* 16 Nov: the demo films for Demo mode on this head (Android/data/<app>/files/videos), with byte ranges for the
+     player. Only for the head itself: never through the public tunnel (cloudflared adds cf-* headers). */
+  if (url.pathname.startsWith('/videos/')) { videoFile(req, res, url); return; }
   if (req.method === 'OPTIONS') {
     res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
     res.end();

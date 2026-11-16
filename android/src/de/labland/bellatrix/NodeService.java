@@ -91,6 +91,8 @@ public class NodeService extends Service {
                 File app = HeadServer.appDir(c), data = HeadServer.dataDir(c);
                 Os.setenv("BELLATRIX_DATA", data.getAbsolutePath(), true);
                 Os.setenv("PORTAL_DATA", new File(data, "portal").getAbsolutePath(), true);
+                File videos = c.getExternalFilesDir("videos");   // 16 Nov: the demo films (Demo mode), copied there by adb
+                if (videos != null) Os.setenv("BELLATRIX_VIDEOS", videos.getAbsolutePath(), true);
                 Os.setenv("HOME", new File(root, "home").getAbsolutePath(), true);
                 Os.setenv("TMPDIR", new File(root, "tmp").getAbsolutePath(), true);
                 String script = new File(app, "labland/store-server.mjs").getAbsolutePath();

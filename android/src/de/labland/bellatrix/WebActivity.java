@@ -116,6 +116,8 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
 
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            Uri u = request.getUrl();
+            if (u != null && HOST.equals(u.getHost()) && u.getPath() != null && u.getPath().startsWith("/videos/")) return a.serveVideo(u.getPath(), request.getRequestHeaders());
             return a.serve(request.getUrl());
         }
 
@@ -552,6 +554,65 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
         } catch (IOException e) {
             Log.w(TAG, "Not found in the app: " + path + " (" + e + ")");
             return notFound();
+        }
+    }
+
+    /** 16 Nov: the demo films from the app's own storage (Android/data/<app>/files/videos), with byte ranges so
+     *  the player can jump. Only plain file names; nothing is written. */
+    WebResourceResponse serveVideo(String path, Map<String, String> headers) {
+        String name = path.substring("/videos/".length());
+        if (!name.matches("[A-Za-z0-9._-]{1,80}") || !name.endsWith(".mp4")) return notFound();
+        File f = new File(getExternalFilesDir("videos"), name);
+        if (!f.isFile()) { Log.i(TAG, "No video " + name + " on this device."); return notFound(); }
+        try {
+            long total = f.length(), start = 0, end = total - 1;
+            String range = null;
+            if (headers != null) for (Map.Entry<String, String> e : headers.entrySet()) if ("range".equalsIgnoreCase(e.getKey())) range = e.getValue();
+            boolean partial = false;
+            if (range != null && range.startsWith("bytes=")) {
+                String[] p = range.substring(6).split("-", -1);
+                try {
+                    if (p[0].length() > 0) start = Long.parseLong(p[0].trim());
+                    if (p.length > 1 && p[1].trim().length() > 0) end = Math.min(total - 1, Long.parseLong(p[1].trim()));
+                    partial = start > 0 || end < total - 1;
+                } catch (NumberFormatException ex) { start = 0; end = total - 1; }
+            }
+            if (start >= total || start > end) { start = 0; end = total - 1; partial = false; }
+            FileInputStream in = new FileInputStream(f);
+            long skipped = 0;
+            while (skipped < start) { long k = in.skip(start - skipped); if (k <= 0) break; skipped += k; }
+            Map<String, String> h = new HashMap<>();
+            h.put("Accept-Ranges", "bytes");
+            h.put("Content-Length", String.valueOf(end - start + 1));
+            h.put("Cache-Control", "no-cache");
+            if (partial) h.put("Content-Range", "bytes " + start + "-" + end + "/" + total);
+            return new WebResourceResponse("video/mp4", null, partial ? 206 : 200, partial ? "Partial Content" : "OK", h, new Limited(in, end - start + 1));
+        } catch (IOException e) {
+            Log.w(TAG, "Video " + name + ": " + e);
+            return notFound();
+        }
+    }
+
+    /** At most n bytes of a stream (the end of a byte range). */
+    static final class Limited extends java.io.FilterInputStream {
+        long left;
+
+        Limited(InputStream in, long n) { super(in); left = n; }
+
+        @Override
+        public int read() throws IOException {
+            if (left <= 0) return -1;
+            int c = super.read();
+            if (c >= 0) left--;
+            return c;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (left <= 0) return -1;
+            int n = super.read(b, off, (int) Math.min(len, left));
+            if (n > 0) left -= n;
+            return n;
         }
     }
 
