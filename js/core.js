@@ -912,39 +912,8 @@
   function resetAir() { air.key = null; air.since = 0; air.done = null; air.seen = false; air.ready = performance.now() + AIR.SETTLE_MS; setRing(0); hover(null); var c = $('airCursor'); if (c) c.hidden = true; }
   function setRing(p) { var c = $('airCursor'); if (c) c.style.setProperty('--p', p); }
   function hover(b) { if (hovered === b) return; if (hovered) hovered.classList.remove('airhover'); hovered = b; if (b) b.classList.add('airhover'); }
-  /* Flick to scroll, like a phone feed but in the air: a quick vertical swipe of the pointing finger
-     (about half the screen in under half a second, mostly straight) scrolls the list under the cursor by a page. */
-  var flick = { h: [], lock: 0 };
-  function scrollable(el) {
-    for (var e = el; e && e !== document.documentElement; e = e.parentNode) {
-      if (e.nodeType !== 1) continue;
-      var oy = window.getComputedStyle(e).overflowY;
-      if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight + 8) return e;
-    }
-    return null;
-  }
-  function flickScroll(x, y, now) {
-    var h = flick.h, first, dy, dx, vert, i, r, sc, el, box = null, list, d;
-    h.push({ t: now, x: x, y: y });
-    while (h.length && now - h[0].t > 600) h.shift();
-    if (now < flick.lock || h.length < 3) return;
-    first = h[0]; dy = y - first.y; dx = x - first.x;
-    if (Math.abs(dy) >= stageH() * 0.17 && Math.abs(dx) <= Math.abs(dy) * 0.75) vert = true;
-    else if (Math.abs(dx) >= stageW() * 0.17 && Math.abs(dy) <= Math.abs(dx) * 0.75) vert = false;
-    else return;
-    r = stage.getBoundingClientRect(); sc = r.width / stageW();
-    el = document.elementFromPoint(r.left + x * sc, r.top + y * sc);
-    function fits(e) { var hz = e.getAttribute('data-d') === 'h'; return hz === !vert && (vert ? e.scrollHeight > e.clientHeight + 8 : e.scrollWidth > e.clientWidth + 8) && e.offsetParent !== null; }
-    for (var e = el; e && !box && e !== stage; e = e.parentNode) if (e.nodeType === 1 && e.hasAttribute && e.hasAttribute('data-s') && fits(e)) box = e;
-    if (!box) { list = stage.querySelectorAll('[data-s]'); for (i = 0; i < list.length && !box; i++) if (fits(list[i])) box = list[i]; }
-    if (!box && vert) { list = stage.querySelectorAll('*'); for (i = 0; i < list.length && !box; i++) if (scrollable(list[i]) === list[i]) box = list[i]; }
-    if (!box) return;
-    flick.lock = now + 700; flick.h = []; air.key = null; air.since = now;
-    var inv = 1; try { var iv = localStorage.getItem('bellatrix-flick-invert'); inv = iv === '0' ? 1 : (iv === '1' ? -1 : ((screen.height > screen.width && screen.width < 1000) ? -1 : 1)); } catch (e) { inv = 1; }
-    d = inv * (vert ? (dy < 0 ? 1 : -1) * box.clientHeight : (dx < 0 ? 1 : -1) * box.clientWidth) * 0.8;
-    try { box.scrollBy({ top: vert ? d : 0, left: vert ? 0 : d, behavior: 'smooth' }); } catch (err) { if (vert) box.scrollTop += d; else box.scrollLeft += d; }
-  }
-  Lab._flickScroll = flickScroll;
+  /* 16 Nov (Rahma): no scrolling by a swipe in the air any more, only pointing. Lists that are longer than the
+     screen keep their arrow buttons, which are chosen by pointing like any other button. */
   /* The front tablet's camera is the other way round for pointing: 'bellatrix-cam-flipx' / '-flipy' ('1' or '0') override the default (x flipped on the portrait tablet). */
   function camFlip() {
     var tab = screen.height > screen.width && screen.width < 1000, fx = tab, fy = false;
@@ -1090,7 +1059,6 @@
     air.x = nx0; air.y = ny0;
     air.seen = true; air.last = now;
     airLog(now, pr);
-    if (!lockOn) flickScroll(pr.ru * stageW(), pr.rv * stageH(), now);
     cur.hidden = false;
     airDrawStart();
     /* A team game (js/games.js) in its frame: over the frame the cursor belongs to the game. */
