@@ -75,11 +75,17 @@ test('watcher: lying counts like standing', () => {
   const h = harness(); h.run('lying', 0, 3250);
   assert.deepEqual(h.ev, ['show', 'say']);
 });
-test('watcher: unknown 8 s finishes with unknown; interruption resets', () => {
+test('watcher (16 Nov): unknown 8 s asks anyway, 20 s more without "seated" finishes with unknown; interruption resets', () => {
   const h = harness(); h.run('unknown', 0, 7750);
   assert.deepEqual(h.ev, []);
   h.run('unknown', 8000, 8250);
-  assert.deepEqual(h.ev, ['done:unknown']);
+  assert.deepEqual(h.ev, ['show', 'say']);
+  h.run('unknown', 8500, 27750);
+  assert.ok(!h.ev.includes('done:unknown'));
+  h.run('unknown', 28000, 28250);
+  assert.deepEqual(h.ev.slice(-2), ['hide', 'done:unknown']);
+  const s = harness(); s.run('unknown', 0, 9000); s.run('seated', 9250, 12000);
+  assert.deepEqual(s.ev, ['show', 'say', 'hide', 'done:seated'], 'asked, then seated: it starts');
   const g = harness(); g.run('unknown', 0, 6000); g.run('seated', 6250, 7500); g.run('unknown', 7750, 13000);
   assert.ok(!g.ev.some((e) => e === 'done:unknown'));
 });
@@ -119,11 +125,13 @@ test('API: standing then seated, phrase in each language', async () => {
     assert.equal(res, 'seated');
   }
 });
-test('API: unknown for 8 s ends with unknown', async () => {
+test('API (16 Nov): unknown asks once at 8 s, ends with unknown at 28 s', async () => {
   const { state, deps } = fakeEnv(() => upper());
   let res = null;
-  Posture.ensureSeated({ lang: 'fr', deps }, (r) => { res = r; });
+  Posture.ensureSeated({ lang: 'fr', say: (x) => state.said.push(x), deps }, (r) => { res = r; });
   await flush(); await drive(state, 9000);
+  assert.equal(res, null); assert.equal(state.said.length, 1);
+  await drive(state, 29000);
   assert.equal(res, 'unknown');
 });
 test('API: camera or model failure gives unavailable at once', async () => {
@@ -167,8 +175,10 @@ test('classify (16 Nov): sitting in a chair stays seated (head above, feet below
   // leaning back about 20 degrees in an armchair, lower legs down
   const lean = withHead(body({ S: [0.4, 0.36], H: [0.5, 0.6], K: [0.7, 0.62] }), 0.37, 0.24);
   assert.equal(Posture.classify(lean, 0.75), 'seated');
-  // only head and shoulders in the picture, upright: not known (the activity is not held back)
-  assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.6] }), 0.5, 0.4), 0.75), 'unknown');
+  // only head and shoulders in the picture, the head upright above them: seated in front of the robot
+  assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.6] }), 0.5, 0.4), 0.75), 'seated');
+  // ... but upside down (the head under the shoulders) is not known
+  assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.4] }), 0.5, 0.6), 0.75), 'unknown');
   // a picture upside down does not turn an upright person into a lying one
   assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.65], H: [0.5, 0.4], K: [0.5, 0.34] }), 0.5, 0.78), 0.75), 'seated');
 });
@@ -201,4 +211,15 @@ test('API (16 Nov, c1): a picture that fails now and then does not end the check
   assert.equal(r2, null);
   await drive(b.state, 2500);
   assert.equal(r2, 'unavailable'); assert.equal(b.state.camStopped, 1);
+});
+
+test('API (16 Nov, c1): nobody found upright, found in the picture turned a quarter = lying, the person is asked', async () => {
+  const { state, deps } = fakeEnv((s) => (s.t < 8000 ? null : seated()));
+  deps.turned = () => true;   // the turned picture shows a person (shoulders and head)
+  let res = null;
+  Posture.ensureSeated({ lang: 'de', say: (x) => state.said.push(x), deps }, (r) => { res = r; });
+  await flush(); await drive(state, 4000);
+  assert.deepEqual(state.said, ['Würden Sie sich bitte bequem hinsetzen? Ich warte auf Sie.'], 'lying: asked after about 3 s');
+  await drive(state, 12000);
+  assert.equal(res, 'seated');
 });

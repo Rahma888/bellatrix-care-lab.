@@ -10,7 +10,10 @@
   var POSE_CDN = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';
 
   var T = {
-    SMOOTH_MS: 1500, SEATED_MS: 2000, BAD_MS: 3000, UNKNOWN_MS: 8000, REPEAT_MS: 25000, TICK_MS: 250, ERR_MAX: 8
+    SMOOTH_MS: 1500, SEATED_MS: 2000, BAD_MS: 3000, UNKNOWN_MS: 8000, REPEAT_MS: 25000, TICK_MS: 250, ERR_MAX: 8,
+    /* 16 Nov (test at c1: nobody found in 28 of 29 pictures, the activity started): when nothing sure is seen for
+       UNKNOWN_MS the person is asked anyway, then UNKNOWN_WAIT_MS more is waited for "seated" before it starts. */
+    UNKNOWN_WAIT_MS: 20000
   };
   var TEXT = {
     en: 'Could you please sit down comfortably? I will wait for you.',
@@ -38,7 +41,7 @@
                  half-lying in bed, not sitting on a chair;
      HEAD_DEG    the head beside the shoulders (more than 55 degrees from above them) is lying, also when the
                  hips are under the blanket and cannot be seen. */
-  var A = { LYING_DEG: 45, HALF_DEG: 25, HEAD_DEG: 55 };
+  var A = { LYING_DEG: 45, HALF_DEG: 25, HEAD_DEG: 55, UPRIGHT_HEAD_DEG: 25 };
   function deg(x, y) { return Math.atan2(Math.abs(x), Math.abs(y)) * 180 / Math.PI; } /* from vertical */
   function headOf(lm, k) {
     var e = mid(lm, 7, 8, k);
@@ -62,7 +65,9 @@
         if (last.head > A.HEAD_DEG) return 'lying';
       }
     }
-    if (!H) return 'unknown';
+    /* 16 Nov: hips not seen (under the table, out of the picture) but the head clearly upright above the
+       shoulders: sitting in front of the robot (the tablet is at the height of a seated person). */
+    if (!H) return Hd && last.head != null && last.head <= A.UPRIGHT_HEAD_DEG && Hd.y < S.y ? 'seated' : 'unknown';
     var tx = H.x - S.x, ty = H.y - S.y, L = Math.sqrt(tx * tx + ty * ty);
     if (L < 0.04) return 'unknown';
     var torsoAngle = deg(tx, ty);
@@ -111,7 +116,11 @@
           if (overlay) { overlay = false; cb.hide(); }
           if (now - run.since >= T.SEATED_MS) return finish('seated');
         }
-        if (m === 'unknown' && now - run.since >= T.UNKNOWN_MS) return finish('unknown');
+        if (m === 'unknown' && now - run.since >= T.UNKNOWN_MS) {
+          if (now - run.since >= T.UNKNOWN_MS + T.UNKNOWN_WAIT_MS) return finish('unknown');
+          if (!overlay) { overlay = true; lastSay = now; cb.show(); cb.say(); }   /* not sure: ask anyway */
+          else if (now - lastSay >= T.REPEAT_MS) { lastSay = now; cb.say(); }
+        }
         if (bad && now - badSince >= T.BAD_MS) {
           if (!overlay) { overlay = true; lastSay = now; cb.show(); cb.say(); }
           else if (now - lastSay >= T.REPEAT_MS) { lastSay = now; cb.say(); }
@@ -229,6 +238,31 @@
     try { return (deps.storage || root.localStorage).getItem('bellatrix-posture-off') === '1'; } catch (e) { return false; }
   }
 
+  /* 16 Nov: the pose model hardly finds a person lying across the picture (it learned people upright). Nobody found:
+     the picture is turned a quarter both ways; a person found there with both shoulders and the head is lying. */
+  var turnCv = null;
+  function turned(src, dir) {
+    var w = src.width || src.videoWidth, h = src.height || src.videoHeight;
+    if (!w || !h || typeof document === 'undefined') return null;
+    if (!turnCv) turnCv = document.createElement('canvas');
+    turnCv.width = h; turnCv.height = w;
+    var c = turnCv.getContext('2d');
+    if (dir > 0) c.setTransform(0, 1, -1, 0, h, 0); else c.setTransform(0, -1, 1, 0, 0, w);
+    c.drawImage(src, 0, 0);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    return turnCv;
+  }
+  var lyingInTurned = function () { return false; };
+  function makeTurnedCheck(model) {
+    return function (f, t) {
+      for (var d = -1; d <= 1; d += 2) {
+        var cv = turned(f.source, d), lm = cv ? model.detect(cv, t + d) : null;
+        if (lm && ok(lm[11]) && ok(lm[12]) && (ok(lm[0]) || ok(lm[7]) || ok(lm[8]))) return true;
+      }
+      return false;
+    };
+  }
+
   /* opts: {lang, say(text), deps?}. done(result): 'seated' | 'unknown' | 'unavailable' | 'off'. Returns cancel(). */
   function ensureSeated(opts, done) {
     opts = opts || {};
@@ -278,6 +312,7 @@
       if (finished) { if (r[0]) try { r[0].stop(); } catch (e) {} if (r[1] && r[1].close) try { r[1].close(); } catch (e) {} return; }
       cam = r[0]; model = r[1];
       if (!cam || !model) { end('unavailable'); return; }
+      lyingInTurned = deps.turned || makeTurnedCheck(model);
       timer = setI(function () {
         if (finished || busy) return;
         busy = true;
@@ -285,6 +320,7 @@
           var f = cam.frame();
           if (f) {
             var t = now(), lm = model.detect(f.source, t), lab = lm ? classify(lm, f.aspect) : 'unknown';
+            if (!lm && lyingInTurned(f, t)) { lab = 'lying'; lm = true; last = { turned: true }; }
             seen[lm ? lab : 'none']++;
             if (lm) lastSeen = { label: lab, head: last.head, torso: last.torso, thigh: last.thigh, shin: last.shin };
             watcher.feed(lab, t);

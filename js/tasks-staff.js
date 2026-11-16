@@ -138,6 +138,7 @@ window.TasksStaff = (function () {
     if (!window.LinkStaff) return;
     LinkStaff.keepOutTasks = keepOutTasks;
     LinkStaff.onFinal = onFinal;
+    LinkStaff.onCornerStop = function () { end(S('The list stopped.')); };   /* 3 corner taps: the robot stops, so does the list */
     /* a list that was running when the page reloaded: the run in progress decides */
     if (st.run) { var c = cur(); if (!c || c.id !== st.run.runId) { st.run = null; save(); } }
     paint();

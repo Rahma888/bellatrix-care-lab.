@@ -24,12 +24,14 @@ window.LinkStaff = (function () {
   if (window.ST && ST.add) {
     ST.add('fr', {
       'Link code': 'Code de liaison', 'Test the link': 'Tester la liaison', 'The link works.': 'La liaison fonctionne.', 'The link does not answer.': 'La liaison ne répond pas.',
+      'Stopped.': 'Arrêté.',
       'Position': 'Position', 'e.g. Room 12': 'ex. Chambre 12', 'On the way': 'En route', 'With the patient': 'Chez le patient', 'Finished': 'Terminé', 'Cancelled': 'Annulé',
       '6 to 12 letters or digits.': '6 à 12 lettres ou chiffres.', 'The link needs an https server address.': 'La liaison demande une adresse de serveur en https.',
       'Link code saved.': 'Code de liaison enregistré.', 'Relay address': 'Adresse du relais', 'This head relay': 'Relais de la tête'
     });
     ST.add('de', {
       'Link code': 'Kopplungscode', 'Test the link': 'Verbindung testen', 'The link works.': 'Die Verbindung funktioniert.', 'The link does not answer.': 'Die Verbindung antwortet nicht.',
+      'Stopped.': 'Angehalten.',
       'Position': 'Ort', 'e.g. Room 12': 'z. B. Zimmer 12', 'On the way': 'Unterwegs', 'With the patient': 'Beim Patienten', 'Finished': 'Beendet', 'Cancelled': 'Abgebrochen',
       '6 to 12 letters or digits.': '6 bis 12 Buchstaben oder Ziffern.', 'The link needs an https server address.': 'Die Verbindung braucht eine https-Serveradresse.',
       'Link code saved.': 'Kopplungscode gespeichert.', 'Relay address': 'Relais-Adresse', 'This head relay': 'Relais des Kopfes'
@@ -117,6 +119,8 @@ window.LinkStaff = (function () {
       peek = false;
       if (drive) {
         var g = bell('robotGo', pos);
+        /* 16 Nov: still on its way home (or to an earlier place): stop that trip and go to the new place */
+        if (g === 'busy') { bell('robotStop'); g = bell('robotGo', pos); }
         cur.robot = true; cur.place = pos; cur.nav = g === 'ok' ? 'going' : 'failed';
       }
       since = 0; saveCur(); paint(); startLoop(); startNav();
@@ -304,16 +308,27 @@ window.LinkStaff = (function () {
 
   /* 16 Nov (testing): 3 taps in the top left corner, any time: from the full-screen status back to the Care Team
      screens (the run goes on and still shows in the bar next to Start); 3 taps again: the status again. */
+  /* 16 Nov (Rahma): the 3 taps also stop the robot at once, where it is: the trip stops, the run on the tablet is
+     cancelled without a trip to the base, a task list stops, and the Care Team screens show. */
   function cornerTap(e) {
     var t = e.touches && e.touches[0] ? e.touches[0] : e;
-    if (!cur || !base() || t.clientX > CORNER_PX || t.clientY > CORNER_PX) return;
+    if (t.clientX > CORNER_PX || t.clientY > CORNER_PX) return;
     var now = Date.now();
     cornerTaps = cornerTaps.filter(function (x) { return now - x < CORNER_MS; });
     cornerTaps.push(now);
     if (cornerTaps.length < CORNER_TAPS) return;
     cornerTaps = [];
-    peek = !peek;
+    bell('robotStop');
+    clearInterval(navT); navT = 0;
+    try { if (window.LinkStaff && typeof LinkStaff.onCornerStop === 'function') LinkStaff.onCornerStop(); } catch (err) { /* the list stops anyway */ }
+    if (cur && !final(cur.state)) {
+      if (cur.robot) { cur.homed = true; if (cur.nav === 'going') cur.nav = 'stopped'; }   /* stays where it stopped */
+      saveCur();
+      cancel();
+    }
+    peek = true;
     paint();
+    toast(S('Stopped.'));
   }
   function boot() {
     mountBar();
