@@ -30,23 +30,59 @@
     if (pa && pb) return { x: (pa.x + pb.x) / 2 * k, y: (pa.y + pb.y) / 2 };
     var p = pa || pb; return { x: p.x * k, y: p.y };
   }
+  /* 16 Nov (Rahma's test: lying on her bed, the robot arrived and started without asking her to sit up):
+     a back leaning on pillows was taken for "seated", because only more than 60 degrees counted as lying and
+     legs stretched out on a bed look like thighs on a chair. Now:
+     LYING_DEG   the back more than 45 degrees from upright is lying (in a chair people lean 10 to 25 degrees);
+     HALF_DEG    from 25 degrees, with the lower legs flat (ankles at the knees' height, not below them), it is
+                 half-lying in bed, not sitting on a chair;
+     HEAD_DEG    the head beside the shoulders (more than 55 degrees from above them) is lying, also when the
+                 hips are under the blanket and cannot be seen. */
+  var A = { LYING_DEG: 45, HALF_DEG: 25, HEAD_DEG: 55 };
+  function deg(x, y) { return Math.atan2(Math.abs(x), Math.abs(y)) * 180 / Math.PI; } /* from vertical */
+  function headOf(lm, k) {
+    var e = mid(lm, 7, 8, k);
+    if (e) return e;
+    return ok(lm[0]) ? { x: lm[0].x * k, y: lm[0].y } : null;
+  }
+  /* What the last picture showed (angles only, for the test on the tablet: Posture._last()). */
+  var last = {};
   /* landmarks: MediaPipe pose list (33 points, y down), image already upright.
      aspect = width / height of the image (x is scaled to keep angles true). */
   function classify(lm, aspect) {
+    last = {};
     if (!lm || lm.length < 29) return 'unknown';
     var k = aspect > 0 ? aspect : 0.75;
-    var S = mid(lm, 11, 12, k), H = mid(lm, 23, 24, k);
-    if (!S || !H) return 'unknown';
+    var S = mid(lm, 11, 12, k), H = mid(lm, 23, 24, k), Hd = headOf(lm, k);
+    if (!S) return 'unknown';
+    if (Hd) {
+      var hx = Hd.x - S.x, hy = Hd.y - S.y;
+      if (Math.sqrt(hx * hx + hy * hy) >= 0.03) {
+        last.head = Math.round(deg(hx, hy));
+        if (last.head > A.HEAD_DEG) return 'lying';
+      }
+    }
+    if (!H) return 'unknown';
     var tx = H.x - S.x, ty = H.y - S.y, L = Math.sqrt(tx * tx + ty * ty);
     if (L < 0.04) return 'unknown';
-    var torsoAngle = Math.atan2(Math.abs(tx), Math.abs(ty)) * 180 / Math.PI; /* from vertical */
-    if (torsoAngle > 60) return 'lying';
+    var torsoAngle = deg(tx, ty);
+    last.torso = Math.round(torsoAngle);
+    if (torsoAngle > A.LYING_DEG) return 'lying';
     var Kn = mid(lm, 25, 26, k);
     if (!Kn) return 'unknown';
     var dx = Kn.x - H.x, dy = Kn.y - H.y;
-    var thighAngle = Math.atan2(Math.abs(dx), Math.abs(dy)) * 180 / Math.PI;
+    var thighAngle = deg(dx, dy);
+    last.thigh = Math.round(thighAngle);
     if (dy > 0.75 * L && thighAngle < 35) return 'standing';
-    if (Math.abs(dy) < 0.5 * L) return 'seated';
+    if (Math.abs(dy) < 0.5 * L) {
+      var An = mid(lm, 27, 28, k);
+      if (An) {
+        var ax = An.x - Kn.x, ay = An.y - Kn.y;
+        last.shin = Math.round(deg(ax, ay));
+        if (torsoAngle > A.HALF_DEG && Math.sqrt(ax * ax + ay * ay) > 0.3 * L && last.shin > 60) return 'lying';
+      }
+      return 'seated';
+    }
     return 'unknown';
   }
 
@@ -213,9 +249,18 @@
       say: function () { if (typeof opts.say === 'function') { try { opts.say(text); } catch (e) {} } },
       done: function (r) { end(r); }
     });
+    /* 16 Nov: what the check saw is kept on the tablet (labels and counts only, never a picture) and in the
+       console, so a test that went wrong can be read afterwards: localStorage 'bellatrix-posture-last'. */
+    var seen = { seated: 0, standing: 0, lying: 0, unknown: 0, none: 0 }, t0 = now(), lastSeen = null;
+    function note(r) {
+      var n = { at: Date.now(), result: r, ms: now() - t0, frames: seen, last: lastSeen };
+      try { var st = deps.storage || root.localStorage; if (st.setItem) st.setItem('bellatrix-posture-last', JSON.stringify(n)); } catch (e) { /* no storage */ }
+      try { if (root.console && console.info) console.info('[posture] ' + JSON.stringify(n)); } catch (e) { /* silent */ }
+    }
     function end(r) {
       if (finished) return; finished = true;
       watcher.stop(); cleanup();
+      note(r);
       if (typeof done === 'function') done(r);
     }
     function cancel() { if (finished) return; finished = true; watcher.stop(); cleanup(); }
@@ -236,8 +281,10 @@
         try {
           var f = cam.frame();
           if (f) {
-            var t = now(), lm = model.detect(f.source, t);
-            watcher.feed(lm ? classify(lm, f.aspect) : 'unknown', t);
+            var t = now(), lm = model.detect(f.source, t), lab = lm ? classify(lm, f.aspect) : 'unknown';
+            seen[lm ? lab : 'none']++;
+            if (lm) lastSeen = { label: lab, head: last.head, torso: last.torso, thigh: last.thigh, shin: last.shin };
+            watcher.feed(lab, t);
           }
         } catch (e) { busy = false; end('unavailable'); return; }
         busy = false;
@@ -246,7 +293,8 @@
     return cancel;
   }
 
-  var Posture = { classify: classify, ensureSeated: ensureSeated, _createWatcher: createWatcher, _T: T, _TEXT: TEXT };
+  var Posture = { classify: classify, ensureSeated: ensureSeated, _createWatcher: createWatcher, _T: T, _TEXT: TEXT, _A: A,
+    _last: function () { return last; } };
   root.Posture = Posture;
   if (typeof module !== 'undefined' && module.exports) module.exports = Posture;
 })(typeof window !== 'undefined' ? window : globalThis);

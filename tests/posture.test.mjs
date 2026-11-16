@@ -146,3 +146,40 @@ test('API: off switch and cancel', async () => {
   assert.deepEqual(b.state.overlay, ['show', 'hide']);
   assert.equal(b.state.camStopped, 1); assert.equal(r2, null);
 });
+
+// ---- 16 Nov: Rahma lay on her bed and was not asked to sit up ----
+function withHead(lm, x, y) { lm[7] = { x: x - 0.02, y, visibility: 0.95 }; lm[8] = { x: x + 0.02, y, visibility: 0.95 }; return lm; }
+function legs(lm, ax, ay) { lm[27] = { x: ax - 0.06, y: ay, visibility: 0.95 }; lm[28] = { x: ax + 0.06, y: ay, visibility: 0.95 }; return lm; }
+test('classify (16 Nov): back on the pillows, legs flat on the bed, is lying', () => {
+  // back about 40 degrees from upright, knees at the hips' height, ankles further out at the same height
+  const lm = legs(body({ S: [0.32, 0.36], H: [0.5, 0.6], K: [0.75, 0.6] }), 0.98, 0.61);
+  assert.equal(Posture.classify(lm, 0.75), 'lying');
+  // the same back at 50 degrees, legs not seen: lying from the back alone
+  assert.equal(Posture.classify(body({ S: [0.2, 0.4], H: [0.5, 0.6] }), 0.75), 'lying');
+});
+test('classify (16 Nov): head beside the shoulders, hips under the blanket, is lying', () => {
+  const lm = withHead(body({ S: [0.45, 0.5] }), 0.25, 0.48);
+  assert.equal(Posture.classify(lm, 0.75), 'lying');
+});
+test('classify (16 Nov): sitting in a chair stays seated (head above, feet below the knees, leaning back a bit)', () => {
+  const upright = withHead(seated(), 0.5, 0.22);
+  assert.equal(Posture.classify(upright, 0.75), 'seated');
+  // leaning back about 20 degrees in an armchair, lower legs down
+  const lean = withHead(body({ S: [0.4, 0.36], H: [0.5, 0.6], K: [0.7, 0.62] }), 0.37, 0.24);
+  assert.equal(Posture.classify(lean, 0.75), 'seated');
+  // only head and shoulders in the picture, upright: not known (the activity is not held back)
+  assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.6] }), 0.5, 0.4), 0.75), 'unknown');
+  // a picture upside down does not turn an upright person into a lying one
+  assert.equal(Posture.classify(withHead(body({ S: [0.5, 0.65], H: [0.5, 0.4], K: [0.5, 0.34] }), 0.5, 0.78), 0.75), 'seated');
+});
+test('API (16 Nov): the result and the label counts are kept for the next look', async () => {
+  const { state, deps } = fakeEnv((s) => (s.t < 6000 ? lying() : seated()));
+  const kept = {}; deps.storage = { getItem: () => null, setItem: (k, v) => { kept[k] = v; } };
+  let res = null;
+  Posture.ensureSeated({ lang: 'fr', say: (x) => state.said.push(x), deps }, (r) => { res = r; });
+  await flush(); await drive(state, 12000);
+  assert.equal(res, 'seated');
+  assert.equal(state.said.length, 1);
+  const n = JSON.parse(kept['bellatrix-posture-last']);
+  assert.equal(n.result, 'seated'); assert.ok(n.frames.lying > 10 && n.frames.seated > 5); assert.equal(n.last.label, 'seated');
+});
