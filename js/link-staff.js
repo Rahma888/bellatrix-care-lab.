@@ -17,6 +17,9 @@ window.LinkStaff = (function () {
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
   var S = function (k, v) { return window.ST ? ST(k, v) : k; };
   var cur = null, since = 0, loop = 0, clearT = null, finalAt = 0, navT = 0, placeSig = '', posWho = null;
+  /* 16 Nov (testing): peek = the care team looks at the Care Team screens while a run goes on (3 taps in the top
+     left corner, again to see the status); collect = the next send goes to the task list (js/tasks-staff.js). */
+  var peek = false, collect = null, cornerTaps = [], CORNER_PX = 140, CORNER_TAPS = 3, CORNER_MS = 2500;
 
   if (window.ST && ST.add) {
     ST.add('fr', {
@@ -102,6 +105,8 @@ window.LinkStaff = (function () {
     var posEl = $('lkPos'), pos = String(position != null ? position : posEl ? posEl.value : '').trim().slice(0, 40);
     /* js/places.js strict mode only: with rooms on the map, '–' starts nothing */
     if (window.Places && Places.canStart && !Places.canStart(pos)) { toast(S('Choose a place.')); return Promise.resolve(); }
+    if (collect && Date.now() < collect.until) { var cf = collect.fn; collect = null; cf(run, pos); return Promise.resolve(); }
+    collect = null;
     run.position = pos;
     remember(pos);
     var drive = !!pos && robotPlaces().indexOf(pos) >= 0 && robotOn();   // the robot rolls there first
@@ -109,6 +114,7 @@ window.LinkStaff = (function () {
     if (drive) body.place = pos;
     return req('POST', 'run', { run: body }).then(function () {
       cur = { id: run.id, state: 'sent', preview: !!run.preview, at: Date.now(), done: false };
+      peek = false;
       if (drive) {
         var g = bell('robotGo', pos);
         cur.robot = true; cur.place = pos; cur.nav = g === 'ok' ? 'going' : 'failed';
@@ -142,6 +148,8 @@ window.LinkStaff = (function () {
     clearInterval(navT); navT = 0;
     /* 15 Nov: a round (the meal round, js/meals-staff.js) goes on to the next resident: no trip to the base in between */
     try { if (window.LinkStaff && typeof LinkStaff.keepOut === 'function' && LinkStaff.keepOut(cur)) return; } catch (e) { /* home as usual */ }
+    /* 16 Nov: the task list (js/tasks-staff.js) goes on to its next task: no trip to the base in between */
+    try { if (window.LinkStaff && typeof LinkStaff.keepOutTasks === 'function' && LinkStaff.keepOutTasks(cur)) return; } catch (e) { /* home as usual */ }
     if (cur.nav === 'going') bell('robotStop');
     var b = window.Places && Places.base ? Places.base() : '';   /* the BASE (js/places.js), else the home place */
     bell('robotGo', b || homePlace());
@@ -174,6 +182,7 @@ window.LinkStaff = (function () {
       loop++;
       clearTimeout(clearT);
       finalAt = Date.now(); /* stays until the care team taps the screen */
+      try { if (window.LinkStaff && typeof LinkStaff.onFinal === 'function') LinkStaff.onFinal(cur); } catch (e) { /* the list stops */ }
     }
   }
   /* The same inbox the patient app fills on one device: Results takes it from there. */
@@ -215,7 +224,7 @@ window.LinkStaff = (function () {
   }
   /* a quiet strip on every tab while a run is under way (Rahma: the status must be seen) */
   function topBar() {
-    var el = $('lkTop'), on = !!base() && cur;
+    var el = $('lkTop'), on = !!base() && cur && !peek;
     if (!on) { if (el) el.hidden = true; document.body.classList.remove('lk-full'); return; }
     if (!el) {
       el = document.createElement('div'); el.id = 'lkTop'; el.className = 'lk-top'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
@@ -293,8 +302,22 @@ window.LinkStaff = (function () {
     });
   }
 
+  /* 16 Nov (testing): 3 taps in the top left corner, any time: from the full-screen status back to the Care Team
+     screens (the run goes on and still shows in the bar next to Start); 3 taps again: the status again. */
+  function cornerTap(e) {
+    var t = e.touches && e.touches[0] ? e.touches[0] : e;
+    if (!cur || !base() || t.clientX > CORNER_PX || t.clientY > CORNER_PX) return;
+    var now = Date.now();
+    cornerTaps = cornerTaps.filter(function (x) { return now - x < CORNER_MS; });
+    cornerTaps.push(now);
+    if (cornerTaps.length < CORNER_TAPS) return;
+    cornerTaps = [];
+    peek = !peek;
+    paint();
+  }
   function boot() {
     mountBar();
+    document.addEventListener('pointerdown', cornerTap, true);
     try {
       var c = JSON.parse(ls(CUR) || 'null');
       if (c && c.id && !final(c.state) && Date.now() - c.at < 6 * 3600000 && base()) { cur = c; startLoop(); startNav(); }
@@ -310,5 +333,8 @@ window.LinkStaff = (function () {
     plug(); setInterval(function () { plug(); fillPos(); }, 20000);
   }
   if (typeof document !== 'undefined' && document.addEventListener && !window.__linkTest) document.addEventListener('DOMContentLoaded', boot);
-  return { configured: function () { return !!base(); }, send: send, cancel: cancel, _apply: apply, _fillPos: fillPos, _cur: function () { return cur; }, _boot: boot };
+  return { configured: function () { return !!base(); }, send: send, cancel: cancel, _apply: apply, _fillPos: fillPos, _cur: function () { return cur; }, _boot: boot,
+    /* the next send (within 5 s) is handed to fn(run, position) instead of going out (js/tasks-staff.js) */
+    collect: function (fn) { collect = fn ? { fn: fn, until: Date.now() + 5000 } : null; },
+    peeking: function () { return peek; }, _corner: cornerTap };
 })();

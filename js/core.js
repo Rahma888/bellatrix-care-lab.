@@ -657,7 +657,8 @@
   /* 16 Nov (Seated Move Along: "Ich suche Sie…" with Rahma in front): the robot tablet's own camera opens at
      1280 x 960 but delivers a black 2 x 2 picture; asked plainly it gives 480 x 640. When the picture stays
      empty, startCam opens it again plainly and the tablet remembers it ('bellatrix-cam-plain' = '1'). */
-  var CAM_EMPTY_MS = 2500;   /* how long an empty picture is waited for (the camera starts in well under a second) */
+  var CAM_EMPTY_MS = 2500;
+  var POSE_EVERY_MS = 120;   /* body model with pointing on: about 8 times a second (a movement lasts 1 to 2 s) */   /* how long an empty picture is waited for (the camera starts in well under a second) */
   function plainCam() { if (cam.plain) return true; try { return localStorage.getItem('bellatrix-cam-plain') === '1'; } catch (e) { return false; } }
   function camVideo(extra) {
     if (window.CamView && !plainCam()) return window.CamView.constraints(extra);
@@ -853,8 +854,10 @@
     cam.lastT = video.currentTime;
     if (st.pose) {
       if (!cam.pose) { ensureModel('pose'); return; }
-      poseFrame(cam.pose.detect(frameSource(video)), now);
+      /* 16 Nov: with pointing on the same picture, the body model runs every POSE_EVERY_MS (enough to count a
+         movement) and the hand model gets the rest of the time, so the cursor glides as on the other pages. */
       if (airMode(st) && !hw.failed) { hwStart(); if (hw.ready) hwSend(now); }
+      if (!airMode(st) || now - (cam.poseAt || 0) >= POSE_EVERY_MS) { cam.poseAt = now; poseFrame(cam.pose.detect(frameSource(video)), now); }
     } else if (airMode(st)) {
       if (!cam.hands) { ensureModel('hands'); return; }
       res = cam.hands.detectForVideo(frameSource(video), now);

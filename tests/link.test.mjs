@@ -268,3 +268,54 @@ test('bellatrix-link-server is the base of the /link/api/ calls', async () => {
   await head.LinkStaff.send({ id: 'R9', key: 'play', patient: 'P1', opt: {}, at: Date.now(), preview: false }, '');
   assert.equal(T.room(code).run.id, 'R9');
 });
+
+test('task list (16 Nov): Add catches the run instead of sending it; the list goes from place to place without the base, then home; 3 corner taps peek', async () => {
+  const code = 'task1234';
+  const R = T.room(code);
+  const calls = [];
+  let nav = { state: 'moving' };
+  const BellatrixApp = {
+    robotState: () => JSON.stringify({ connected: true, localized: true }),
+    robotPlaces: () => JSON.stringify([{ name: 'Room 12', x: 1, y: 2 }, { name: 'Room 14', x: 3, y: 2 }, { name: 'Home7', x: 0, y: 0 }]),
+    robotGo: (p) => { calls.push('go:' + p); return 'ok'; },
+    robotStop: () => { calls.push('stop'); return 'ok'; },
+    robotNav: () => JSON.stringify(nav),
+  };
+  const headLs = store({ 'bellatrix-call-server': URL0, 'bellatrix-link-code': code, 'bellatrix-home-place': 'Home7' });
+  const head = sandbox('js/link-staff.js', headLs, { Lab: { toast() {} }, BellatrixApp, __tasksTest: true });
+  vm.runInContext(src('js/tasks-staff.js'), head, { filename: 'js/tasks-staff.js' });
+  head.TasksStaff._boot();
+  // Add: the run Start would send is caught, nothing goes out
+  let caught = null;
+  head.LinkStaff.collect((run, pos) => { caught = { run, pos }; });
+  await head.LinkStaff.send({ id: 'A1', key: 'pairs', patient: 'P1', opt: {}, at: Date.now(), preview: false }, 'Room 12');
+  assert.equal(caught.pos, 'Room 12'); assert.equal(caught.run.key, 'pairs');
+  assert.equal(R.run, null, 'nothing sent'); assert.deepEqual(calls, []);
+  // two tasks, then the list
+  const st = head.TasksStaff._state();
+  st.list.push({ run: caught.run, pos: 'Room 12', label: 'P1 pairs' }, { run: { id: 'A2', key: 'quiz', patient: 'P2', opt: {}, at: 0, preview: false }, pos: 'Room 14', label: 'P2 quiz' });
+  head.TasksStaff.start();
+  assert.ok(await until(() => calls.includes('go:Room 12')), 'task 1: the robot drives to Room 12');
+  const id1 = head.LinkStaff._cur().id;
+  assert.notEqual(id1, 'A1', 'every task run gets its own id');
+  // corner taps: the status screen gives way to the Care Team screens and comes back
+  for (let i = 0; i < 3; i++) head.LinkStaff._corner({ clientX: 20, clientY: 30 });
+  assert.equal(head.LinkStaff.peeking(), true);
+  for (let i = 0; i < 3; i++) head.LinkStaff._corner({ clientX: 20, clientY: 30 });
+  assert.equal(head.LinkStaff.peeking(), false);
+  head.LinkStaff._corner({ clientX: 500, clientY: 30 }); head.LinkStaff._corner({ clientX: 500, clientY: 30 }); head.LinkStaff._corner({ clientX: 500, clientY: 30 });
+  assert.equal(head.LinkStaff.peeking(), false, 'taps elsewhere do nothing');
+  // task 1 finished: no trip to the base, task 2 goes to Room 14
+  nav = { state: 'arrived', place: 'Room 12' };
+  head.LinkStaff._apply({ id: id1, state: 'finished' });
+  assert.ok(!calls.includes('go:Home7'), 'between two tasks: not to the base');
+  assert.ok(await until(() => calls.includes('go:Room 14'), 5000), 'task 2: the robot drives on to Room 14');
+  const id2 = head.LinkStaff._cur().id;
+  assert.notEqual(id2, id1);
+  assert.equal(R.run.patient, 'P2');
+  // the last task finished: home, the list ends
+  nav = { state: 'arrived', place: 'Room 14' };
+  head.LinkStaff._apply({ id: id2, state: 'finished' });
+  assert.ok(await until(() => calls.includes('go:Home7')), 'after the last task: back to the base');
+  assert.equal(head.TasksStaff._state().run, null);
+});
