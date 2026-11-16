@@ -227,6 +227,25 @@ else {
       assert.ok(g.consent !== true && g.air === false, 'signs mode: no hand signs in Move, as before ' + JSON.stringify(g));
       await ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';return true;})()");
     });
+    await test('page: waiting screen (16 Nov): after an air session the app camera follows the hand, OK on "Call my family" presses it, a new session takes the camera over', async () => {
+      await ev("(function(){window.__idle={start:0,stop:0,clicks:0};window.BellatrixApp={handsStart:function(){__idle.start++;return 'ok';},handsStop:function(){__idle.stop++;},handsConfig:function(){}};" +
+        "try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      await sleep(400);
+      await ev("(function(){Lab.endSession('test');var b=document.createElement('button');b.setAttribute('data-b','crqtest');b.setAttribute('data-a','click');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='Call';b.addEventListener('click',function(){__idle.clicks++;});document.getElementById('stage').appendChild(b);return true;})()");
+      const on = await waitFor('window.__idle.start>=1', 3000);
+      const sendHand = (closed, n) => ev("(function(){var cx=0.5,cy=0.5,cl=" + (closed ? 'true' : 'false') + ",i,j;function P(dx,dy){return [cx+dx,cy+dy,0];}" +
+        "var lm=[];lm[0]=P(0,0.12);for(j=1;j<=4;j++)lm[j]=P(-0.03*j,0.10-0.02*j);" +
+        "[[5,-0.04],[9,-0.013],[13,0.013],[17,0.04]].forEach(function(f){var b=f[0],x=f[1];lm[b]=P(x,0.04);lm[b+1]=P(x,cl?0.0:-0.02);lm[b+2]=P(x,cl?0.05:-0.06);lm[b+3]=P(x,cl?0.08:-0.09);});" +
+        "return new Promise(function(res){var k=0;(function f(){window.__bellatrixHands({t:Date.now(),w:640,h:480,lm:lm});if(++k<" + n + ")setTimeout(f,33);else res(window.__idle.clicks);})();});})()");
+      await sendHand(false, 40);
+      await sendHand(true, 25);
+      const clicks = await sendHand(false, 45);
+      const after = await ev("(function(){var b=document.querySelector('[data-b=crqtest]');if(b)b.remove();return JSON.stringify(window.__idle);})()");
+      assert.ok(on, 'the app camera starts on the waiting screen ' + after);
+      assert.equal(clicks, 1, 'close then open on the button presses it once ' + after);
+      // a session that starts takes the camera over; then the stub goes again
+      await ev("(function(){Lab.start('hello',{preview:true,ready:true});try{Lab.endSession('test');}catch(e){}delete window.BellatrixApp;return true;})()");
+    });
     await test('page: a camera that gives an empty picture at 1280 x 960 is opened again plainly (16 Nov, robot tablet)', async () => {
       await ev("(function(){localStorage.removeItem('bellatrix-cam-plain');var md=navigator.mediaDevices,o=md.getUserMedia.bind(md);window.__gumOrig=o;" +
         "md.getUserMedia=function(c){var w=c&&c.video&&c.video.width;if(w&&w.ideal===1280){var cv=document.createElement('canvas');cv.width=2;cv.height=2;cv.getContext('2d').fillRect(0,0,2,2);return Promise.resolve(cv.captureStream(5));}return o(c);};" +
@@ -236,6 +255,21 @@ else {
       await ev("(function(){navigator.mediaDevices.getUserMedia=window.__gumOrig;localStorage.removeItem('bellatrix-cam-plain');try{Lab.endSession('test');}catch(e){}return true;})()");
       assert.ok(ok, 'opened again with a real picture ' + info);
       assert.match(info, /"log":1/);
+    });
+    await test('page: movement pages (16 Nov): pointing on in air mode, and any clear movement out and back is counted', async () => {
+      const r = await ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});" +
+        "var S=Lab._t.state,n=0,keep=S.step;S.step={id:'t-move',pose:{kind:'any',onSeen:function(){n++;}}};var air=Lab._t.airMode(S.step);Lab._t.resetPose();" +
+        "function body(wy,jit){var lm=[],i;for(i=0;i<33;i++)lm.push({x:0.5,y:0.9,visibility:0.2});function set(k,x,y){lm[k]={x:x+(Math.random()-0.5)*jit,y:y+(Math.random()-0.5)*jit,visibility:0.95};}" +
+        "set(11,0.4,0.4);set(12,0.6,0.4);set(0,0.5,0.3);set(13,0.38,0.58);set(14,0.62,0.58);set(15,0.42,wy);set(16,0.58,wy);return {landmarks:[lm]};}" +
+        "var t=1000,k;function run(wy,ms,jit){for(k=0;k<ms;k+=33){Lab._t.poseFrame(body(wy,jit),t);t+=33;}}" +
+        "run(0.75,1500,0.012);var still=n;run(0.5,700,0.01);run(0.75,1200,0.01);run(0.5,700,0.01);run(0.75,1200,0.01);var two=n;" +
+        "run(0.5,7000,0.01);run(0.5,1500,0.01);var moved=n;" +
+        "S.step=keep;try{Lab.endSession('test');}catch(e){}return JSON.stringify({air:air,still:still,two:two,moved:moved});})()");
+      const d = JSON.parse(r);
+      assert.equal(d.air, true, 'pointing on a movement page in air mode');
+      assert.equal(d.still, 0, 'resting with a little tremor counts nothing');
+      assert.equal(d.two, 2, 'two pushes forward and back count two');
+      assert.equal(d.moved, 3, 'hands left forward for long: one more count, then a new resting place (no endless count) ' + r);
     });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);

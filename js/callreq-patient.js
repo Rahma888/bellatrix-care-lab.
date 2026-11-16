@@ -82,7 +82,7 @@
     var show = !!s && hasFamily(code) && !staffOnly() && !runSoon();
     if (!show) { if (old) { painting = true; old.parentNode.removeChild(old); painting = false; } return; }
     var L = lastLang(), asked = pending(code);
-    var html = '<button type="button" class="btn' + (asked ? ' crqasked' : ' primary') + '" data-crq="ask"><span class="bico">' + (asked ? CHECK : PHONE) + '</span><span class="blbl">' + Lab.esc(I18N.t(L, asked ? 'Call asked' : 'Call my family')) + '</span></button>';
+    var html = '<button type="button" class="btn' + (asked ? ' crqasked' : ' primary') + '" data-crq="ask" data-b="crq" data-a="click"><span class="bico">' + (asked ? CHECK : PHONE) + '</span><span class="blbl">' + Lab.esc(I18N.t(L, asked ? 'Call asked' : 'Call my family')) + '</span></button>';
     if (old && old.getAttribute('data-h') === html) return;
     painting = true;
     if (!old) { old = document.createElement('div'); old.className = 'actions crqwait'; s.appendChild(old); }

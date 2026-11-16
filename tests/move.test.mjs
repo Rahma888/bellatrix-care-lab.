@@ -279,8 +279,14 @@ await test('camera counting kept as an option: arm movements counted by the came
     for (let r = 0; r < 3; r++) (x.kind ? x.onSeen() : did.run('touch'));
     L.timers.pop().fn();
   }
-  assert.ok(seen.some((k) => k) && seen.some((k) => !k), seen.join(','));
-  assert.ok(L.stats.moves.some((m) => m.counted === 'camera') && L.stats.moves.some((m) => m.counted === 'tap'));
+  // 16 Nov (Rahma): every movement is counted by the camera now; the ones without a test of their own as 'any'
+  assert.ok(seen.every((k) => k) && seen.includes('any'), seen.join(','));
+  assert.ok(L.stats.moves.every((m) => m.counted === 'camera'));
+  // breathing has nothing the camera can see: the button stays the main way
+  const b = engine(load({ camMove: true, document: fakeDocument() }), { content: { zone: 'breath', count: '2' } });
+  tap(b, 'Let’s begin'); tap(b, 'Ready');
+  assert.equal(b.cur.pose.kind, null);
+  assert.ok(b.cur.actions.find((a) => a.label === 'I did one').primary);
 });
 await test('drawings: every movement has an SVG that moves with CSS, and holds still for reduced motion', () => {
   const css = M.css();

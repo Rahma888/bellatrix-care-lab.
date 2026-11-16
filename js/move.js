@@ -576,7 +576,9 @@ var MoveLab = (function () {
       /* 3. One movement: the drawing moves, the counter fills with every "C'est fait" (or with what
          the camera sees, for the arm movements it knows); full, the next movement starts by itself. */
       function exercise(i) {
-        var x = session.items[i], last = i + 1 >= session.items.length, withCam = L.consentOf('move') === true, camCounts = withCam && !!x.pose;
+        /* 16 Nov: the movements the camera has no test for are counted as any clear movement out and back (core.js
+           'any'); only breathing stays with the button. */
+        var x = session.items[i], last = i + 1 >= session.items.length, withCam = L.consentOf('move') === true, kind = x.pose || (x.zone === 'breath' ? null : 'any'), camCounts = withCam && !!kind;
         var n = 0, full = false, st, dots = '';
         for (var d = 0; d < reps; d++) dots += '<i></i>';
         function next() { if (L.step() !== st) return; if (last) L.finish(); else L.go(exercise(i + 1), { replace: true }); }
@@ -614,7 +616,7 @@ var MoveLab = (function () {
           id: 'move-' + x.id, title: T(x.title), back: false,
           body: '<div class="figure mvbox">' + figure(x) +
             '<div class="reps" id="reps" aria-live="polite"><div class="dots">' + dots + '</div><div class="repnum"><b id="repNum">0</b> / ' + reps + '</div></div></div>' + ACK,
-          pose: withCam ? { kind: x.pose || null, onSeen: function () { add('camera'); } } : undefined,
+          pose: withCam ? { kind: kind, onSeen: function () { add('camera'); } } : undefined,
           say: T(x.how),
           noReprompt: withCam,
           actions: camCounts ? [show, skip, did] : [did, show, skip]

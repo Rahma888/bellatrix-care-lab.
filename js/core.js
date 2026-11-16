@@ -478,8 +478,10 @@
   function signsMode() { return Lab.opt.camMode === 'signs' || Lab.opt.camMode === 'air'; }
   /* Pointing in the air: everywhere in 'air' mode, and on steps that ask for it (Picture Pair)
      whenever the camera may be used for the hands. */
+  /* 16 Nov (Rahma): in 'air' mode also on the movement pages (st.pose): the same camera picture then goes to the
+     body model and, in the background worker, to the hand model (the app's own camera cannot run at the same time). */
   function airMode(st) {
-    return !!(st && signsMode() && S.camConsent === true && !cam.failed.hands && !cam.failed.camera && (!st.final || Lab.opt.camMode === 'air') && !st.pose && !st.noHands &&
+    return !!(st && signsMode() && S.camConsent === true && !cam.failed.hands && !cam.failed.camera && (!st.final || Lab.opt.camMode === 'air') && (!st.pose || Lab.opt.camMode === 'air') && !st.noHands &&
       (Lab.opt.camMode === 'air' || (st.airPointer && Lab.opt.camMode !== 'signs')));
   }
   function wantCam(st) {
@@ -569,6 +571,43 @@
     nh.n++;
     try { hwResult(lm); } catch (err) { log('Detection error: ' + err.message, 'app', 'error'); }
   };
+  /* 16 Nov (Rahma): pointing also on the waiting screen ("Hallo, ich bin Bellatrix" and "Call my family") for
+     IDLE_AIR_MS after a session in 'air' mode ended. The app's camera follows the hand as in a session (nothing is
+     recorded); the buttons marked data-b and data-a="click" are chosen with the same OK. A session that starts
+     takes the camera over; after IDLE_AIR_MS, or when the page is hidden, the camera goes off. The session's
+     record is not touched (no log lines, no camera time). */
+  var IDLE_AIR_MS = 180000, IDLE_TICK_MS = 500;
+  var idle = { on: false, until: 0, timer: 0 };
+  function idleTargets() { return !!(stage && stage.querySelector('button[data-b][data-a="click"]')); }
+  function idleCamOn() {
+    if (nh.on) return true;
+    var r;
+    try { nhConfig(); r = String(window.BellatrixApp.handsStart()); } catch (e) { r = 'error'; }
+    if (r !== 'ok') return false;
+    nh.on = true; nh.onAt = Date.now(); nh.n = 0;
+    return true;
+  }
+  function idleStop() {
+    if (idle.timer) { clearInterval(idle.timer); idle.timer = 0; }
+    if (idle.on && !S.on && nh.on) { nh.on = false; try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ } }
+    idle.on = false;
+    airHide();
+  }
+  function idleTick() {
+    if (S.on) { idle.on = false; if (idle.timer) { clearInterval(idle.timer); idle.timer = 0; } return; }   /* the session's own camera rules */
+    if (Date.now() > idle.until || document.hidden) { idleStop(); return; }
+    if (idle.on || !idleTargets()) return;
+    resetAir();
+    if (idleCamOn()) idle.on = true; else idleStop();
+  }
+  function idleStart() {
+    if (Lab.opt.camMode !== 'air' || !nhApi()) return;
+    idle.until = Date.now() + IDLE_AIR_MS;
+    if (!idle.timer) idle.timer = setInterval(idleTick, IDLE_TICK_MS);
+    idleTick();
+  }
+  /* The cursor goes with the camera: no ring left on the screen after a session (16 Nov). */
+  function airHide() { var c = $('airCursor'); if (c) c.hidden = true; hover(null); setRing(0); air.seen = false; }
   /* js/presence.js and js/posture.js call this before they open the page's camera. */
   window.__bellatrixHandsRelease = function () { nhStop(); };
   function loadVision() {
@@ -594,7 +633,9 @@
       var file = kind === 'pose' ? POSE_MODEL : HAND_MODEL;
       var path = x.base ? x.base + '/' + file : MODEL_CDN[file];
       function make(delegate) {
-        var o = { baseOptions: { modelAssetPath: path, delegate: delegate }, runningMode: 'VIDEO' };
+        /* 16 Nov: the body model in 'IMAGE' mode (in 'VIDEO' mode MediaPipe stopped on the tablet with "Packet
+           timestamp mismatch"); the hand model as before. */
+        var o = { baseOptions: { modelAssetPath: path, delegate: delegate }, runningMode: kind === 'pose' ? 'IMAGE' : 'VIDEO' };
         if (kind === 'pose') { o.numPoses = 1; return x.V.PoseLandmarker.createFromOptions(x.fs, o); }
         o.numHands = 1; return x.V.HandLandmarker.createFromOptions(x.fs, o);
       }
@@ -794,6 +835,7 @@
   }
   function hwResult(lm) {
     var st = S.step, now = performance.now();
+    if (!S.on) { if (idle.on && nh.on) airFrame(lm, now); return; }
     if (!st || (!cam.stream && !nh.on)) return;
     var res = { landmarks: lm ? [lm] : [] };
     if (airMode(st)) { handHook(st, res, now); airFrame(lm, now); }
@@ -811,7 +853,8 @@
     cam.lastT = video.currentTime;
     if (st.pose) {
       if (!cam.pose) { ensureModel('pose'); return; }
-      poseFrame(cam.pose.detectForVideo(frameSource(video), now), now);
+      poseFrame(cam.pose.detect(frameSource(video)), now);
+      if (airMode(st) && !hw.failed) { hwStart(); if (hw.ready) hwSend(now); }
     } else if (airMode(st)) {
       if (!cam.hands) { ensureModel('hands'); return; }
       res = cam.hands.detectForVideo(frameSource(video), now);
@@ -1107,7 +1150,7 @@
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
-        dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air');
+        dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
       }
       return;
     }
@@ -1121,7 +1164,7 @@
     setRing(p);
     if (p >= 1) {
       air.done = key; air.guard = { x: air.x, y: air.y }; setRing(0); air.chosen = (air.chosen || 0) + 1;
-      dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air');
+      dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
     }
   }
 
@@ -1144,8 +1187,30 @@
     cross: function (lm) { var w = shoulderWidth(lm); return (ok(lm[15]) && dist(lm[15], lm[12]) < POSE.CROSS * w) || (ok(lm[16]) && dist(lm[16], lm[11]) < POSE.CROSS * w); },
     out: function (lm) { var w = shoulderWidth(lm), d = lm[11].x > lm[12].x ? 1 : -1; return sideways(lm[15], lm[11], d, w) && sideways(lm[16], lm[12], -d, w); }
   };
-  var ps = { on: false, since: 0, off: 0, visible: null };
-  function resetPose() { ps = { on: false, since: 0, off: 0, visible: null }; }
+  /* 16 Nov (Rahma: "quand je fais les gestes le compteur ne s'ajoute pas"): kind 'any' counts every clear
+     movement out and back (hands pushed forward, a knee lifted…) for the movements without a test above.
+     Elbows, wrists, knees, ankles and the nose, measured from the middle of the shoulders in shoulder widths,
+     against the resting position (taken when still, slowly following): further than ANY_HIGH counts once,
+     back within ANY_LOW ends the movement. */
+  var ANY_PTS = [0, 13, 14, 15, 16, 25, 26, 27, 28], ANY_HIGH = 0.45, ANY_LOW = 0.2, ANY_FOLLOW = 0.1, ANY_STAY_MS = 6000;
+  function anyMove(lm, now) {
+    var w = shoulderWidth(lm), cx = (lm[11].x + lm[12].x) / 2, cy = (lm[11].y + lm[12].y) / 2, cur = {}, dev = 0, n = 0, i, k, b, dx, dy;
+    for (i = 0; i < ANY_PTS.length; i++) { k = ANY_PTS[i]; if (ok(lm[k])) cur[k] = { x: (lm[k].x - cx) / w, y: (lm[k].y - cy) / w }; }
+    if (!ps.base) { ps.base = cur; return false; }
+    for (k in cur) {
+      b = ps.base[k];
+      if (!b) { ps.base[k] = cur[k]; continue; }
+      dx = cur[k].x - b.x; dy = cur[k].y - b.y; dev = Math.max(dev, Math.sqrt(dx * dx + dy * dy)); n++;
+    }
+    var hit = n > 0 && dev > (ps.on ? ANY_LOW : ANY_HIGH);
+    /* out for longer than ANY_STAY_MS: a new resting place (hands moved to the armrest), not a movement */
+    if (ps.on && hit && now) { if (!ps.outAt) ps.outAt = now; else if (now - ps.outAt > ANY_STAY_MS) { ps.base = cur; ps.outAt = 0; return false; } } else ps.outAt = 0;
+    if (!ps.on && !hit && dev < ANY_LOW) for (k in cur) if (ps.base[k]) { ps.base[k].x += (cur[k].x - ps.base[k].x) * ANY_FOLLOW; ps.base[k].y += (cur[k].y - ps.base[k].y) * ANY_FOLLOW; }
+    return hit;
+  }
+  POSE_TEST.any = anyMove;
+  var ps = { on: false, since: 0, off: 0, visible: null, base: null };
+  function resetPose() { ps = { on: false, since: 0, off: 0, visible: null, base: null }; }
   function poseFrame(res, now) {
     var st = S.step, p = st.pose, lm = res && res.landmarks && res.landmarks[0];
     var visible = !!(lm && ok(lm[11]) && ok(lm[12]));
@@ -1155,7 +1220,7 @@
       if (p.onVisible) p.onVisible(visible);
     }
     if (!visible || !p.kind) { ps.since = 0; return; }
-    if (POSE_TEST[p.kind](lm)) {
+    if (POSE_TEST[p.kind](lm, now)) {
       ps.off = 0;
       if (!ps.on) {
         if (!ps.since) ps.since = now;
@@ -1276,7 +1341,9 @@
     log('Pressed: ' + a.label + via(src), src, 'action');
     if (a.run) a.run(src, a, i);
   }
-  function dispatch(a, i, src) {
+  function dispatch(a, i, src, el) {
+    /* 16 Nov: a plain button outside a session (the waiting screen's "Call my family"), chosen by pointing */
+    if (a === 'click') { if (el && src === 'air') { try { el.click(); } catch (e) { /* gone */ } } return; }
     if (a === 'c') choose(i, src);
     else if (a === 'a') doAction(i, src);
     else if (a === 'back') back(src);
@@ -1515,7 +1582,7 @@
     if (S.step && S.step.id === 'ready') S.rec.notStarted = true;
     leave();
     S.on = false;
-    quiet(); stopRec(); Music.stop(); stopCam(); nhStop();
+    quiet(); stopRec(); Music.stop(); stopCam(); nhStop(); airHide();
     stage.classList.remove('insession');
     stage.classList.remove('thinking');
     $('chipPreview').hidden = true;
@@ -1526,6 +1593,7 @@
     var rec = S.rec;
     S.step = null;
     if (Lab.onSessionEnd) Lab.onSessionEnd(rec);
+    idleStart();
   }
 
   /* ---------- staff panel, keys, taps ---------- */
@@ -1708,7 +1776,7 @@
   };
   /* For tests in the browser console and for the automated check. */
   Lab._t = { clean: clean, matchItems: matchItems, handleSpeech: handleSpeech, classify: classify, gestureTarget: gestureTarget, feed: feed, airFrame: airFrame, airMode: airMode,
-    POSE_TEST: POSE_TEST, poseFrame: poseFrame, state: S, chunks: chunks, choose: choose, doAction: doAction, markAttempt: markAttempt, api: API };
+    POSE_TEST: POSE_TEST, poseFrame: poseFrame, resetPose: resetPose, state: S, chunks: chunks, choose: choose, doAction: doAction, markAttempt: markAttempt, api: API };
 
   document.addEventListener('DOMContentLoaded', function () {
     stage = $('stage'); screenEl = $('screen'); video = $('cam');
