@@ -613,8 +613,13 @@
   /* The camera: by default as before; 'bellatrix-cam-label' (e.g. 'camera 2') picks one by its name, used for an external USB webcam.
      With js/camview.js the stream is asked for in 4:3, 1280 x 960, 30 images/s (ideal values: more field of view;
      a camera that only has 16:9 still opens). Without it: 640 x 480 as before. */
+  /* 16 Nov (Seated Move Along: "Ich suche Sie…" with Rahma in front): the robot tablet's own camera opens at
+     1280 x 960 but delivers a black 2 x 2 picture; asked plainly it gives 480 x 640. When the picture stays
+     empty, startCam opens it again plainly and the tablet remembers it ('bellatrix-cam-plain' = '1'). */
+  var CAM_EMPTY_MS = 2500;   /* how long an empty picture is waited for (the camera starts in well under a second) */
+  function plainCam() { if (cam.plain) return true; try { return localStorage.getItem('bellatrix-cam-plain') === '1'; } catch (e) { return false; } }
   function camVideo(extra) {
-    if (window.CamView) return window.CamView.constraints(extra);
+    if (window.CamView && !plainCam()) return window.CamView.constraints(extra);
     var c = { width: 640, height: 480 }, k;
     for (k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) c[k] = extra[k];
     return c;
@@ -650,6 +655,7 @@
       log('Camera on (not recorded)', 'app', 'camera');
       attachSelfView();
       updateCamChips();
+      checkPicture(stream);
       return video.play().then(function () { if (cam.stream === stream) detectLoop(); });
     }).catch(function (e) {
       cam.starting = false;
@@ -657,6 +663,23 @@
       if (current && cam.stream !== current) return;
       camFail('camera refused or used by another app: ' + (e && e.message ? e.message : e));
     });
+  }
+  /* The picture is checked on a video element of its own (the page's #cam may be handed to the camera
+     boxes): still 16 pixels wide or less after CAM_EMPTY_MS, the camera is opened again plainly. */
+  function checkPicture(stream) {
+    if (plainCam()) return;
+    var v2 = document.createElement('video');
+    v2.muted = true; v2.setAttribute('playsinline', ''); v2.srcObject = stream;
+    try { var p = v2.play(); if (p && p.catch) p.catch(function () { /* checked below anyway */ }); } catch (e) { /* checked below */ }
+    setTimeout(function () {
+      var w = v2.videoWidth, rs = v2.readyState;
+      try { v2.pause(); } catch (e) { /* gone */ } v2.srcObject = null;
+      if (cam.stream !== stream || plainCam() || rs < 2 || w > 16) return;
+      log('The camera gives no picture (' + w + ' px wide): opened again plainly', 'app', 'camera');
+      cam.plain = true;
+      try { localStorage.setItem('bellatrix-cam-plain', '1'); } catch (e) { /* this page only */ }
+      stopCam(); startCam();
+    }, CAM_EMPTY_MS);
   }
   function camFail(why) {
     cam.failed.camera = true;

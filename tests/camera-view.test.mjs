@@ -227,6 +227,16 @@ else {
       assert.ok(g.consent !== true && g.air === false, 'signs mode: no hand signs in Move, as before ' + JSON.stringify(g));
       await ev("(function(){try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';return true;})()");
     });
+    await test('page: a camera that gives an empty picture at 1280 x 960 is opened again plainly (16 Nov, robot tablet)', async () => {
+      await ev("(function(){localStorage.removeItem('bellatrix-cam-plain');var md=navigator.mediaDevices,o=md.getUserMedia.bind(md);window.__gumOrig=o;" +
+        "md.getUserMedia=function(c){var w=c&&c.video&&c.video.width;if(w&&w.ideal===1280){var cv=document.createElement('canvas');cv.width=2;cv.height=2;cv.getContext('2d').fillRect(0,0,2,2);return Promise.resolve(cv.captureStream(5));}return o(c);};" +
+        "try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      const ok = await waitFor("localStorage.getItem('bellatrix-cam-plain')==='1' && document.getElementById('cam').videoWidth>16", 9000);
+      const info = await ev("JSON.stringify({plain:localStorage.getItem('bellatrix-cam-plain'),w:document.getElementById('cam').videoWidth,log:(Lab._t.state.rec.events||[]).filter(function(l){return /plainly/.test(l.msg||'')}).length})");
+      await ev("(function(){navigator.mediaDevices.getUserMedia=window.__gumOrig;localStorage.removeItem('bellatrix-cam-plain');try{Lab.endSession('test');}catch(e){}return true;})()");
+      assert.ok(ok, 'opened again with a real picture ' + info);
+      assert.match(info, /"log":1/);
+    });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);
   stop();
