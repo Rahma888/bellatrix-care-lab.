@@ -1380,11 +1380,7 @@
     demoControls();
     st.innerHTML = '<div class="st-dlang"><h2>' + esc(T('Language of the demo')) + '</h2><div class="st-dlangs">' + DEMO_LANGS.map(function (x) {
       return '<button type="button" class="st-dlangbtn" data-dlang="' + x[0] + '" lang="' + x[0] + '"><b>' + x[0].toUpperCase() + '</b><span>' + esc(x[1]) + '</span></button>';
-    }).join('') + '</div>' +
-      /* 16 Nov (Rahma): the demo films, in the same Demo mode */
-      '<h2 class="st-dvh">' + esc(T('Demo videos')) + '</h2><div class="st-dlangs">' + DEMO_LANGS.map(function (x) {
-        return '<button type="button" class="st-dlangbtn st-dvbtn" data-dvideo="' + x[0] + '" lang="' + x[0] + '"><b>\u25b6 ' + x[0].toUpperCase() + '</b><span>' + esc(x[1]) + '</span></button>';
-      }).join('') + '</div></div>';
+    }).join('') + '</div></div>';
     var k = $('stDemoKick'), t = $('stDemoText');
     if (k) k.textContent = ''; if (t) t.textContent = '';
   }
@@ -1401,9 +1397,7 @@
       '<button type="button" class="st-vclose" data-dvclose="1" aria-label="' + esc(T('Close')) + '">\u00d7</button></div>';
     var v = st.querySelector('video');
     v.addEventListener('ended', function () { stopDemoVideo(); chooseLang(); });
-    v.addEventListener('error', function () {
-      st.innerHTML = '<div class="st-dlang"><h2>' + esc(T('This video is not on the robot yet.')) + '</h2><div class="st-dlangs"><button type="button" class="st-dlangbtn" data-dvclose="1"><b>\u2190</b><span>' + esc(T('Back')) + '</span></button></div></div>';
-    });
+    v.addEventListener('error', function () { stopDemoVideo(); startIn(l); });   /* no film on this robot: the guided demo */
   }
   function stopDemoVideo() {
     var v = $('stDemoStage') ? $('stDemoStage').querySelector('video') : null;
@@ -1461,7 +1455,9 @@
     if (!b) return;
     if (b.hasAttribute('data-dvideo')) { if (!demo.lang) playDemoVideo(b.getAttribute('data-dvideo')); return; }
     if (b.hasAttribute('data-dvclose')) { stopDemoVideo(); chooseLang(); return; }
-    if (b.hasAttribute('data-dlang')) { if (!demo.lang) startIn(b.getAttribute('data-dlang')); return; }
+    /* 16 Nov (Rahma): choosing the language plays the demo film of that language (the guided demo only when the
+       film is not on this robot) */
+    if (b.hasAttribute('data-dlang')) { if (!demo.lang) playDemoVideo(b.getAttribute('data-dlang')); return; }
     if (b.hasAttribute('data-chap')) { if (!demo.tour) return; if (demo.run) demo.run.jump(+b.getAttribute('data-chap')); else runDemo(+b.getAttribute('data-chap')); return; }
     var a = b.getAttribute('data-d'), r = demo.run;
     if (a === 'exit') { leaveDemo(); return; }
