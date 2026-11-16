@@ -64,6 +64,9 @@ const TOKEN = /^[A-Za-z0-9_-]{16,64}$/;
 const LIVE = ['open', 'later', 'calling'];
 /* The phone rings this long; a tap on "Answer" in the last seconds still gets in (the grace). */
 export const RING_MS = 45 * 1000;
+/* 16 Nov (Rahma, testing phase): no limit on the calls a relative may ask for in a day. The old limit (6 a day) comes
+   back with the environment variable BELLATRIX_CALLS_PER_DAY=6 on the server. */
+const CALLS_PER_DAY = Number(process.env.BELLATRIX_CALLS_PER_DAY) > 0 ? Number(process.env.BELLATRIX_CALLS_PER_DAY) : 0;
 const RING_GRACE_MS = 15 * 1000;
 /* The family is reminded after this many days without a call and without a message. Change it here. */
 export const REMIND_DAYS = 7;
@@ -321,7 +324,7 @@ export function createCallReq(opts = {}) {
       const old = mineLive();
       if (old) return [200, { ok: true, existing: true, request: reqView(old) }];
       const today = Object.values(d.requests).filter((q) => q.pid === pid && now() - Date.parse(q.at) < DAY).length;
-      if (today >= 6) return [429, { error: 'enough-today' }];
+      if (CALLS_PER_DAY && today >= CALLS_PER_DAY) return [429, { error: 'enough-today' }];
       const note = str(body.note, 120);
       if (LINK.test(note)) return [400, { error: 'no-links' }];
       const me = links(f.rid).find((x) => x.link === f.id) || {};
@@ -342,7 +345,7 @@ export function createCallReq(opts = {}) {
       let q = mineLive();
       if (q && q.state === 'calling') return [409, { error: 'calling' }];
       if (!q) {
-        if (Object.values(d.requests).filter((x) => x.pid === pid && now() - Date.parse(x.at) < DAY).length >= 6) return [429, { error: 'enough-today' }];
+        if (CALLS_PER_DAY && Object.values(d.requests).filter((x) => x.pid === pid && now() - Date.parse(x.at) < DAY).length >= CALLS_PER_DAY) return [429, { error: 'enough-today' }];
         const me = links(f.rid).find((x) => x.link === f.id) || {};
         q = { id: rnd(), rid: f.rid, robot: f.robot, code: f.code, label: f.label || '', from: 'family', pid, link: f.id, name: str(f.name, 40), relation: str(me.relation || '', 40), note: '', at: iso(now()) };
         d.requests[q.id] = q;
