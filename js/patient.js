@@ -51,12 +51,12 @@
       paint('<header><h2>' + esc(W.greeting) + '</h2></header>' +
         '<div class="picture todaybox dailywelcome">' + W.card + '</div>' +
         (W.line ? '<p class="note dwline">' + esc(W.line) + '</p>' : '') +
-        '<div class="picture facebox dwface">' + Lab.faceHtml('hero') + '</div>' +
+        '<div class="picture facebox dwface">' + Lab.logoHtml() + '</div>' +
         (wake ? '<p class="note fcwake">' + esc(T('Family calls: click once on this screen so that Bellatrix can ring and speak.')) + '</p>' : ''));
       return;
     }
     paint('<header><h2>' + esc(T('Hello, I am Bellatrix.')) + '</h2></header>' +
-      '<div class="picture facebox">' + Lab.faceHtml('hero') + '</div>' +
+      '<div class="picture facebox">' + Lab.logoHtml() + '</div>' +
       (wake ? '<p class="note fcwake">' + esc(T('Family calls: click once on this screen so that Bellatrix can ring and speak.')) + '</p>' : ''));
   }
   /* A session prepared by the care team starts at once on its Begin screen. Begin is a step of the

@@ -1077,3 +1077,8 @@ svg text { font-family: var(--font-display); }
 .stage .callgrid .tile { background: #F0F0F0; }
 .stage .self { background: #F0F0F0; }
 .stage .self.off span { color: #333333; }
+
+/* 16 Nov: the care home logo (Suavia) in place of the big face on the waiting and "Ready" screens */
+.picture.facebox .hlogo { display: block; width: auto; height: 78%; max-width: 86%; object-fit: contain; }
+.stage:not(.land) .picture.facebox .hlogo { width: 68%; height: auto; max-height: 74%; }
+.picture.facebox.dwface .hlogo { height: 90%; width: auto; max-width: 60%; }

@@ -1539,7 +1539,7 @@
     var T = Lab.t;
     return {
       id: 'ready', title: T('Ready when you are.'), noStop: true, back: false, noHistory: true, airPointer: true,
-      pic: Lab.faceHtml('hero'), picCls: 'facebox',
+      pic: Lab.logoHtml(), picCls: 'facebox',
       say: T('Ready when you are.'),
       actions: [{ label: T('Begin'), primary: true, gesture: 'open', words: ['begin', 'start', 'yes', 'ready', 'ok', 'okay', 'go'], noLabelWords: true,
         run: function () { fullScreen(); Music.unlock(); log('Begin', 'app', 'start'); go(welcomeOrPractice(S.act), { clear: true }); } }]
@@ -1821,6 +1821,8 @@
   Lab.arrange = arrange;
   /* Bellatrix's face: eyes that blink and look around, a mouth that moves while she speaks
      (the stage gets the class "talking"). Big on the waiting screen, small at the top in a session. */
+  /* 16 Nov (Rahma): the care home's logo (Suavia) instead of the big face on the waiting and "Ready" screens. */
+  Lab.logoHtml = function () { return '<img class="hlogo" src="img/suavia-logo.svg" alt="Suavia" draggable="false">'; };
   Lab.faceHtml = function (cls) {
     return '<svg class="bface' + (cls ? ' ' + cls : '') + '" viewBox="0 0 200 200" aria-hidden="true" focusable="false">' +
       '<circle class="fhead" cx="100" cy="100" r="94"/>' +
