@@ -156,7 +156,41 @@ var FamilyCall = (function () {
          one more try after a short pause, then the voice only. */
       return new Promise(function (ok) { setTimeout(ok, 700); }).then(function () { return md.getUserMedia(both); })
         .catch(function () { return md.getUserMedia({ audio: audio, video: false }); });
-    });
+    }).then(turned);
+  }
+  /* 16 Nov (Rahma: on the phone the resident was seen lying on the side): the robot tablet's camera (the Logi)
+     arrives sideways in the page; 'bellatrix-cam-rot' (90, 180, 270: the same turn as the pointing camera) turns the
+     call picture on a canvas before it is sent. Stopping the turned track stops the camera too. Elsewhere: as it is. */
+  var CALL_FPS = 24;
+  function turned(stream) {
+    var rot = 0;
+    try { var r = localStorage.getItem('bellatrix-cam-rot'); if (r === '90' || r === '180' || r === '270') rot = +r; } catch (e) { rot = 0; }
+    var vt = stream && stream.getVideoTracks()[0];
+    if (!rot || !vt || typeof document === 'undefined') return stream;
+    var cv = document.createElement('canvas');
+    if (!cv.captureStream) return stream;
+    var v = document.createElement('video'), cx = cv.getContext('2d'), on = true, timer = 0;
+    v.muted = true; v.setAttribute('playsinline', ''); v.srcObject = new MediaStream([vt]);
+    try { var p = v.play(); if (p && p.catch) p.catch(function () { /* drawn when it plays */ }); } catch (e) { /* idem */ }
+    function draw() {
+      if (!on) return;
+      var w = v.videoWidth, h = v.videoHeight;
+      if (!w || !h) return;
+      var sw = rot === 90 || rot === 270, cw = sw ? h : w, ch = sw ? w : h;
+      if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+      if (rot === 180) cx.setTransform(-1, 0, 0, -1, cw, ch);
+      else if (rot === 90) cx.setTransform(0, 1, -1, 0, cw, 0);
+      else cx.setTransform(0, -1, 1, 0, 0, ch);
+      cx.drawImage(v, 0, 0, w, h);
+      cx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    timer = setInterval(draw, Math.round(1000 / CALL_FPS));
+    var ct = cv.captureStream(CALL_FPS).getVideoTracks()[0];
+    if (!ct) { clearInterval(timer); return stream; }
+    var stop0 = ct.stop.bind(ct);
+    ct.stop = function () { on = false; clearInterval(timer); try { vt.stop(); } catch (e) { /* gone */ } try { v.srcObject = null; } catch (e) { /* gone */ } stop0(); };
+    vt.addEventListener('ended', function () { ct.stop(); });
+    return new MediaStream([ct].concat(stream.getAudioTracks()));
   }
 
   /* ---------- listening for calls (the patient screen) ---------- */
