@@ -587,7 +587,7 @@
     'Clean the screen': 'Désinfecter l’écran', 'Cleaning mode': 'Mode nettoyage', 'Start of shift: checklist': 'Début de service : checklist', 'Start': 'Commencer',
     'Start of shift': 'Début de service', 'Not done today': 'Pas encore fait aujourd’hui', 'Reminder waiting': 'Rappel en attente', 'Cleaning mode: {n} s': 'Mode nettoyage : {n} s',
     'Demo videos': 'Vidéos de démo', 'This video is not on the robot yet.': 'Cette vidéo n’est pas encore sur le robot.',
-    '5 to 7 minutes · nothing is saved': '5 à 7 minutes · rien n’est enregistré', 'Log': 'Journal', '1 entry': '1 entrée', '{n} entries': '{n} entrées',
+    'Demo video in 3 languages · 4 min': 'Vidéo de démo en 3 langues · 4 min', 'Log': 'Journal', '1 entry': '1 entrée', '{n} entries': '{n} entrées',
     'Settings': 'Réglages', 'Cleaning, battery, checklist': 'Nettoyage, batterie, checklist',
     /* checklist */
     'Battery': 'Batterie', 'Wi-Fi': 'Wi-Fi', 'Volume': 'Volume', 'Clean screen': 'Écran propre', 'Today’s content': 'Contenus du jour', 'Clear area': 'Zone dégagée',
@@ -646,7 +646,7 @@
     'Clean the screen': 'Bildschirm desinfizieren', 'Cleaning mode': 'Reinigungsmodus', 'Start of shift: checklist': 'Dienstbeginn: Checkliste', 'Start': 'Starten',
     'Start of shift': 'Dienstbeginn', 'Not done today': 'Heute noch nicht gemacht', 'Reminder waiting': 'Erinnerung offen', 'Cleaning mode: {n} s': 'Reinigungsmodus: {n} s',
     'Demo videos': 'Demo-Videos', 'This video is not on the robot yet.': 'Dieses Video ist noch nicht auf dem Roboter.',
-    '5 to 7 minutes · nothing is saved': '5 bis 7 Minuten · nichts wird gespeichert', 'Log': 'Protokoll', '1 entry': '1 Eintrag', '{n} entries': '{n} Einträge',
+    'Demo video in 3 languages · 4 min': 'Demo-Video in 3 Sprachen · 4 Min.', 'Log': 'Protokoll', '1 entry': '1 Eintrag', '{n} entries': '{n} Einträge',
     'Settings': 'Einstellungen', 'Cleaning, battery, checklist': 'Reinigung, Akku, Checkliste',
     'Battery': 'Akku', 'Wi-Fi': 'WLAN', 'Volume': 'Lautstärke', 'Clean screen': 'Sauberer Bildschirm', 'Today’s content': 'Inhalte des Tages', 'Clear area': 'Freier Bereich',
     'To do': 'Zu tun', 'Not available': 'Nicht verfügbar', 'critical': 'kritisch',

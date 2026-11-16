@@ -1077,7 +1077,7 @@
       '<div class="st-tiles">' +
       tile('open-checklist', 'checklist', T('Start of shift'), chkSub, c ? '' : 'st-due') +
       tile('open-clean', 'clean', T('Clean the screen'), cleanSub, d ? 'st-due' : '') +
-      tile('demo', 'demo', T('Demo mode'), esc(T('5 to 7 minutes · nothing is saved'))) +
+      tile('demo', 'demo', T('Demo mode'), esc(T('Demo video in 3 languages · 4 min'))) +
       tile('open-journal', 'journal', T('Log'), esc(n === 1 ? T('1 entry') : T('{n} entries', { n: n }))) +
       tile('open-settings', 'settings', T('Settings'), esc(T('Cleaning, battery, checklist'))) +
       '</div>';
