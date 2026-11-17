@@ -217,7 +217,7 @@ window.LinkStaff = (function () {
       n = document.createElement('select'); n.id = 'lkPos';
       n.innerHTML = '<option value="">\u2013</option>' + list.map(function (p) { return '<option value="' + esc(p) + '">' + esc(p) + '</option>'; }).join('');
       /* Places: the resident's room, else '–' (nothing by accident); the team's choice stays while the list changes */
-      var pick = P ? (isSel && prevWho === who && el.value ? el.value : P.roomOf(who)) : keep;
+      var pick = P ? (isSel && prevWho === who && el.value ? el.value : (P.defaultRoom ? P.defaultRoom(who) : P.roomOf(who))) : keep;
       n.value = list.indexOf(pick) >= 0 ? pick : '';
     } else {
       n = document.createElement('input'); n.id = 'lkPos'; n.type = 'text'; n.maxLength = 40; n.setAttribute('list', 'lkPlaces'); n.setAttribute('autocomplete', 'off');

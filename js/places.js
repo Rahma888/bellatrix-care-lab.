@@ -197,6 +197,10 @@ window.Places = (function () {
     if (!list.length) return v;   /* no robot now: what was saved */
     return rooms().indexOf(v) >= 0 ? v : '';
   }
+  /* 17 Nov (Rahma, testing): Position starts on '–' (no trip) by default; the resident's room is only the default
+     again with localStorage 'bellatrix-pos-default' = 'room'. */
+  function posNone() { return ls('bellatrix-pos-default') !== 'room'; }
+  function defaultRoom(code) { return posNone() ? '' : roomOf(code); }
   function setRoom(code, p) {
     if (!code) return false;
     if (window.StaffUI && StaffUI.setPref) return StaffUI.setPref(code, 'place', p || '');
@@ -537,7 +541,7 @@ window.Places = (function () {
   }
 
   return {
-    configured: configured, all: all, rooms: rooms, base: base, role: role, roomOf: roomOf, setRoom: setRoom, setRole: setRole, label: label,
+    configured: configured, all: all, rooms: rooms, base: base, role: role, roomOf: roomOf, defaultRoom: defaultRoom, posNone: posNone, setRoom: setRoom, setRole: setRole, label: label,
     pickerHtml: pickerHtml, strict: strict, canStart: canStart, meaning: meaning, navLog: navLog, openTest: openTest, closeTest: closeTest,
     settingsHtml: settingsHtml, navMode: navMode, setNavMode: setNavMode,
     _tick: tick, _go: go, _stop: stop, _relocalize: relocalize, _panelHtml: panelHtml, _logText: logText, _codeOf: codeOf, _boot: boot, _onChange: onChange
