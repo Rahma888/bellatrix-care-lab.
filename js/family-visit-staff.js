@@ -175,7 +175,7 @@ window.FamilyVisitStaff = (function () {
   function go(code, placeChosen) {
     var n = notices().filter(function (x) { return x.code === code; })[0];
     if (!n || st.busy) return;
-    var places = rooms(), here = placeChosen === '' || (placeChosen === undefined && !!(window.Places && Places.posNone && Places.posNone())), place = here ? '' : placeChosen || placeOf(code);   /* '' = '–' chosen: no driving */
+    var places = rooms(), here = placeChosen === '', place = here ? '' : placeChosen || placeOf(code);   /* '' = '–' chosen: no driving */
     if (places.length && !here && (!place || places.indexOf(place) < 0)) { st.asking = code; paint(true); return; }
     st.asking = ''; st.busy = code; paint(true);
     var run = runFor(n);
