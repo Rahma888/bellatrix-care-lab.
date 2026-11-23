@@ -282,6 +282,35 @@ else {
       assert.equal(r.heart.closed, false, 'a heart that left at the edge of the picture is lost, not closed ' + JSON.stringify(r));
       await ev("(function(){var b=document.querySelector('[data-b=hearttest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}delete window.BellatrixApp;return true;})()");
     });
+    await test('page: object + button (23 Nov): the red mark moves the pointer, one press (remote button or Space) chooses once; hiding the mark never chooses', async () => {
+      await ev("(function(){window.__ob={start:0,press:[],heart:[]};window.BellatrixApp={handsStart:function(){__ob.start++;return 'ok';},handsStop:function(){},handsConfig:function(){},handsHeart:function(on){__ob.heart.push(on);},handsPress:function(on){__ob.press.push(on);}};" +
+        "localStorage.setItem('bellatrix-air-input','object');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      await waitFor('window.__ob.start>=1', 4000);
+      await sleep(1000);
+      await ev("(function(){var o=document.querySelector('[data-b=objtest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','objtest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__ob0=Lab._air().chosen;return true;})()");
+      const mark = (x, y, a, n) => ev("(function(){var k=0;return new Promise(function(res){(function f(){window.__bellatrixHands({t:Date.now(),w:480,h:640,heart:" + (a ? "{x:" + x + ",y:" + y + ",a:" + a + ",n:300}" : 'null') + "});" +
+        "if(++k<" + n + ")setTimeout(f,33);else{var a=Lab._air(),hv=document.querySelector('.airhover');res({hover:hv?hv.getAttribute('data-b'):null,closed:a.closed,clicks:a.chosen-window.__ob0,text:document.getElementById('handText').textContent});}})();});})()");
+      const key = (k, rep) => ev("(function(){var e=new KeyboardEvent('keydown',{key:'" + k + "',repeat:" + (rep ? 'true' : 'false') + ",bubbles:true,cancelable:true});document.body.dispatchEvent(e);return {prevented:e.defaultPrevented,clicks:Lab._air().chosen-window.__ob0};})()");
+      let r = await mark(0.5, 0.5, 0.016, 40);
+      assert.equal(r.hover, 'objtest', 'the mark in the middle points at the button ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'pointing alone never chooses');
+      assert.ok(/Press the button|Appuyez/.test(r.text), 'the text asks for the press: ' + r.text);
+      r = await mark(0.5, 0.5, 0.004, 10);
+      r = await mark(0, 0, 0, 10);
+      assert.equal(r.clicks, 0, 'the mark hidden by the hand (no close/open OK in this mode) chooses nothing ' + JSON.stringify(r));
+      assert.equal(r.closed, false, 'never "closed" with the object');
+      r = await mark(0.5, 0.5, 0.016, 10);
+      let k = await key(' ');
+      assert.ok(k.prevented && k.clicks === 1, 'Space (a PC keyboard, or a remote) chooses the button under the pointer ' + JSON.stringify(k));
+      k = await key(' ', true);
+      assert.equal(k.clicks, 1, 'a key held down (repeat) does not choose again');
+      await ev('window.__bellatrixPress(24);true');   // the app forwards the remote's volume key
+      assert.equal(await ev('Lab._air().chosen-window.__ob0'), 2, 'the remote button forwarded by the app chooses too');
+      assert.ok((await ev('window.__ob.press')).indexOf(true) >= 0, 'the app was asked for the remote button ' + JSON.stringify(await ev('window.__ob')));
+      await ev("(function(){var b=document.querySelector('[data-b=objtest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}return true;})()");
+      assert.equal((await ev('window.__ob.press')).slice(-1)[0], false, 'after the session the volume keys are the volume again');
+      await ev('delete window.BellatrixApp;true');
+    });
     await test('page: Seated Move Along in the app (16 Nov): the movement pages keep the app camera for the hands and ask it for pictures; the page camera stays off', async () => {
       const r = await ev("(async function(){function w(ms){return new Promise(function(r){setTimeout(r,ms)})}" +
         "window.__nh={start:0,stop:0,pics:[]};window.BellatrixApp={handsStart:function(){__nh.start++;return 'ok';},handsStop:function(){__nh.stop++;},handsConfig:function(){},handsPictures:function(ms){__nh.pics.push(ms);}};" +

@@ -575,6 +575,7 @@
   function nhStop() {
     if (!nh.on) return;
     nhPictures(false);
+    pressSync(false);
     nh.on = false;
     try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ }
     if (S.rec) S.rec.camMs += Date.now() - nh.onAt;
@@ -598,18 +599,28 @@
      camera (a PC webcam: testing before the robot) js/heartspot.js finds the heart here (heartPageFrame). */
   var HEART = { CLOSE: 0.45, OPEN: 0.7, GONE_MS: 1500, UP: 0.08, DOWN: 0.02 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false };
-  function heartMode() {
+  /* 23 Nov (Rahma, second try: the heart was too hard to close the hand on): 'object' = a red mark on an object the
+     resident holds (e.g. a remote) moves the pointer the same way, and the OK is a PRESS: the remote's button (the app
+     forwards it, window.__bellatrixPress) or, on a PC, Space / Enter / Page keys. No close/open in that mode. */
+  function markInput() {
     var v = '';
     try { v = localStorage.getItem('bellatrix-air-input') || ''; } catch (e) { v = ''; }
-    if (v === 'heart') return true;
-    if (v === 'hand') return false;
-    return Lab.opt.airInput === 'heart';
+    if (v === 'heart' || v === 'object') return v;
+    if (v === 'hand') return '';
+    return Lab.opt.airInput === 'heart' || Lab.opt.airInput === 'object' ? Lab.opt.airInput : '';
+  }
+  function heartMode() { return !!markInput(); }
+  function pressMode() { return markInput() === 'object' && heartOn(); }
+  function pressSync(on) {
+    if (!(window.BellatrixApp && window.BellatrixApp.handsPress)) return;
+    try { window.BellatrixApp.handsPress(!!on); } catch (e) { /* an app without the remote */ }
   }
   function heartSupported() { return !!(window.BellatrixApp && window.BellatrixApp.handsHeart); }
   function heartPage() { return !nh.on && !!window.HeartSpot && heartMode(); }
   function heartOn() { return heartMode() && (nh.on ? heartSupported() : !!window.HeartSpot && !!cam.stream); }
   function heartSync() {
     hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false;
+    pressSync(markInput() === 'object');
     if (!heartSupported()) return;
     try { window.BellatrixApp.handsHeart(heartMode()); } catch (e) { /* an app without the heart */ }
   }
@@ -623,10 +634,11 @@
     return lm;
   }
   function heartResult(p, now) {
+    var press = markInput() === 'object';   /* the object: OK by pressing, never by closing the hand */
     if (p && isFinite(p.x) && isFinite(p.y)) {
       var a = +p.a || 0;
       if (!hz.base || now - hz.seenAt > HEART.GONE_MS) hz.base = a;
-      var shut = hz.closed ? a < HEART.OPEN * hz.base : a < HEART.CLOSE * hz.base;
+      var shut = press ? false : hz.closed ? a < HEART.OPEN * hz.base : a < HEART.CLOSE * hz.base;
       /* the open heart's size: follows a bigger heart quickly (closer), a smaller one slowly (further away) */
       if (!shut) { hz.base += (a - hz.base) * (a > hz.base ? HEART.UP : HEART.DOWN); hz.last = { x: +p.x, y: +p.y, a: a }; }
       hz.closed = shut; hz.seenAt = now;
@@ -635,8 +647,8 @@
     /* not seen: hidden in the fist (it was just here, away from the edges), or gone */
     var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
     if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
-    hz.closed = true;
-    return heartLm(L, true);
+    hz.closed = !press;   /* the object's mark under a finger for a moment: the pointer just stays */
+    return heartLm(L, !press);
   }
   function heartFeed(lm, now) {
     var st = S.step;
@@ -659,7 +671,28 @@
   /* The hand texts with the heart. */
   var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
     'Point at what you want': 'Move the heart to what you want', 'Close and open your hand to choose': 'Close your hand over the heart, then open it' };
-  function handWord(t) { return heartOn() && HEART_WORDS[t] ? HEART_WORDS[t] : t; }
+  var OBJECT_WORDS = { 'Point at the screen with one finger': 'Show the red mark to the camera', 'Show your hand to the camera': 'Show the red mark to the camera',
+    'Point at what you want': 'Move the object to what you want' };
+  function handWord(t) {
+    var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : null;
+    return w && w[t] ? w[t] : t;
+  }
+  /* The press (the object's button): the button under the pointer is chosen at once; one press = one choice. */
+  var PRESS_KEYS = { ' ': 1, 'Enter': 1, 'PageDown': 1, 'PageUp': 1, 'AudioVolumeUp': 1, 'AudioVolumeDown': 1, 'MediaPlayPause': 1, 'MediaTrackNext': 1, 'MediaTrackPrevious': 1 };
+  function pressOK() {
+    var b = hovered, now = performance.now();
+    if (!b || !b.isConnected || !air.seen || now < air.ready) return false;
+    air.chosen = (air.chosen || 0) + 1; air.done = b.getAttribute('data-b');
+    setRing(1); setTimeout(function () { setRing(0); }, 250);
+    dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
+    return true;
+  }
+  window.__bellatrixPress = function () { if (pressMode()) pressOK(); };
+  document.addEventListener('keydown', function (e) {
+    if (!PRESS_KEYS[e.key] || !pressMode() || (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if (!e.repeat) pressOK();
+  }, true);
   Lab._heart = function () { return { on: heartOn(), mode: heartMode(), base: hz.base, closed: hz.closed, last: hz.last }; };
   window.__bellatrixHands = function (d) {
     if (!d || !nh.on) return;
@@ -699,7 +732,7 @@
   }
   function idleStop() {
     if (idle.timer) { clearInterval(idle.timer); idle.timer = 0; }
-    if (idle.on && !S.on && nh.on) { nh.on = false; try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ } }
+    if (idle.on && !S.on && nh.on) { nh.on = false; pressSync(false); try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ } }
     idle.on = false;
     airHide();
   }
@@ -1272,6 +1305,12 @@
     /* Moving to another button starts a new wait; the button just pressed stays quiet until the
        pointer has left it, so one long hold never presses twice. */
     if (key !== air.key) { air.key = key; air.since = now; air.done = null; }
+    /* the object + button (23 Nov): pointing only shows the choice; the press chooses (pressOK) */
+    if (pressMode()) {
+      hover(b); setRing(0);
+      setHandText(nearEdge && !b ? 'Show the red mark to the camera' : !b ? 'Move the object to what you want' : 'Press the button to choose');
+      return;
+    }
     if (confirm) {
       /* Point, then "OK" = close and open the hand: the ring fills only after that, on the button where the hand
          closed. Every choice needs its own OK (holding still never chooses). */
