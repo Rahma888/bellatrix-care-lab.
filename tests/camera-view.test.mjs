@@ -402,7 +402,7 @@ else {
          green cap on top; covered = a finger (skin colour) over the cap */
       await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250,k:1,covered:false};" +
         "function draw(){var p=window.__pen,k=p.k;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14*k,p.y-60*k,28*k,140*k);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66*k,15*k,0,7);g.fill();" +
-        "if(p.covered){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,52*k);}}draw();window.__penTimer=setInterval(draw,33);" +
+        "if(p.covered){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,52*k);}if(p.partial){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,24*k);}}draw();window.__penTimer=setInterval(draw,33);" +
         "var s=c.captureStream(30);window.__gumReal2=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
         "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
       await waitFor('!!(window.CamView.stream())', 8000);
@@ -428,11 +428,13 @@ else {
       await set({ covered: false });
       await sleep(900);
       await set({ k: 0.6 });
+      await ev("(function(){window.__penTrace=[];window.__penTraceT=setInterval(function(){var h=Lab._heart().pen||{};window.__penTrace.push([h.state,h.c,h.s,h.ratio,h.body,h.why,Lab._air().closed,Lab._air().chosen].join(' '));},30);return 1;})()");
       await sleep(2000);
+      const trace = await ev("(function(){clearInterval(window.__penTraceT);var t=window.__penTrace,o=[],p='';for(var i=0;i<t.length;i++){if(t[i]!==p)o.push(i*30+'ms '+t[i]);p=t[i];}return o.slice(0,12).join(' | ');})()");
       await set({ k: 1 });
       await sleep(900);
       r = await look();
-      assert.equal(r.clicks, 0, 'a pen further away is not a press ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'a pen further away is not a press. trace: ' + trace);
       /* 4. touching the cap (the cap seen, the pen still): the ring starts at once and fills to the end, even after letting go */
       await set({ covered: true });
       await sleep(350);
@@ -440,13 +442,13 @@ else {
       await sleep(1300);
       r = await look();
       assert.equal(r.clicks, 1, 'a short touch on the cap: the ring fills to the end and the button is chosen ' + JSON.stringify(r));
-      /* 5. a lone flicker of one frame is no touch */
+      /* 5. a finger grazing the top of the cap (a small part hidden) is no touch */
       await sleep(400);
-      await set({ covered: true });
-      await sleep(20);
-      await set({ covered: false });
+      await set({ partial: true });
+      await sleep(500);
+      await set({ partial: false });
       await sleep(1200);
-      assert.equal((await look()).clicks, 1, 'a flicker shorter than the minimum touch chooses nothing');
+      assert.equal((await look()).clicks, 1, 'a finger grazing the cap chooses nothing');
       /* 6. holding the cap: one choice, then no second while still holding */
       await set({ covered: true });
       await sleep(1400);

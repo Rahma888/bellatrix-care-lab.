@@ -616,7 +616,7 @@
      to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.35, TREND: 0.85, JUMP: 0.2, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+  var PEN = { CLOSE: 0.4, TREND: 0.9, SHARE: 0.7, JUMP: 0.2, OPEN: 0.75, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
     /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
        so the pointer's patience is short with it, and the ring a little quicker */
     CLOSE_PATIENCE: 0, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
@@ -642,16 +642,23 @@
       moved = Math.max(moved, Math.abs(q.x - r0.x) + Math.abs(q.y - r0.y));
     }
     /* the reference: the biggest cap of the last REF_MS (kept as it was while pressed) */
-    if (P.state !== 'pressed') P.hist.push({ t: now, c: c, s: s });
+    /* the reference: cap and pen of the same picture (a smoothed cap with a raw pen size mixed two pictures and made a
+       pen moving away look like a touch); the middle one of the 3 biggest caps of REF_MS, so one jump does not count */
+    if (P.state !== 'pressed') P.hist.push({ t: now, c: cRaw, s: s });
     while (P.hist.length && now - P.hist[0].t > PEN.REF_MS) P.hist.shift();
-    for (i = 0; i < P.hist.length; i++) if (P.hist[i].c >= PEN.CAP_MIN && (!ref || P.hist[i].c > ref.c)) ref = P.hist[i];
+    var top = [];
+    for (i = 0; i < P.hist.length; i++) if (P.hist[i].c >= PEN.CAP_MIN) top.push(P.hist[i]);
+    top.sort(function (a2, b2) { return b2.c - a2.c; });
+    if (top.length) ref = top[Math.min(1, top.length - 1)];
     var capRef = ref ? ref.c : 0, still = moved < PEN.STILL, bodyOk = !ref || s >= PEN.BODY * ref.s;
     var K = P.capPos, inside = p.x > PEN.EDGE && p.x < 1 - PEN.EDGE && p.y > PEN.EDGE && p.y < 1 - PEN.EDGE * 0.8 &&
       (!K || (K.x > PEN.CAP_EDGE && K.x < 1 - PEN.CAP_EDGE && K.y > PEN.CAP_EDGE && K.y < 1 - PEN.CAP_EDGE));
     /* the touch, at once (Rahma: "exactly when I touch the dark green the ring must start"): this frame's cap under
        CLOSE of the reference, when the frame before was already going down (the thumb coming) or was hidden too; a
        lone jump of the camera is no touch */
-    var rawHidden = capRef >= PEN.CAP_REF_MIN && cRaw < PEN.CLOSE * capRef;
+    /* ... and the cap must shrink more than the pen: a pen moving away makes both smaller together (no touch), the
+       thumb hides the cap (its share of the pen drops) */
+    var rawHidden = capRef >= PEN.CAP_REF_MIN && cRaw < PEN.CLOSE * capRef && !!ref && cRaw / s < PEN.SHARE * (ref.c / Math.max(1, ref.s));
     var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef && cRaw >= PEN.SEEN * capRef,   /* clearly seen on this frame too */
       hidden = rawHidden && (P.prevRawHidden || (P.prevRaw !== undefined && P.prevRaw < PEN.TREND * capRef));
     P.prevRaw = cRaw; P.prevRawHidden = rawHidden;
@@ -836,6 +843,29 @@
   function handWord(t) {
     var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : m === 'pen' ? PEN_WORDS : null;
     return w && w[t] ? w[t] : t;
+  }
+  /* 23 Nov (Rahma: "when I touch the green tip it does not start at once, not smooth"): with the highlighter the ring,
+     once started, fills by itself at the screen's own rate until it is full, also in the pictures where the camera
+     loses the pen for a moment (before, it moved only with the camera's pictures and stalled when the pen was lost). */
+  var penRingRaf = 0;
+  function penRingStart() { if (!penRingRaf && window.requestAnimationFrame) penRingRaf = window.requestAnimationFrame(penRingTick); }
+  function penRingTick() {
+    penRingRaf = 0;
+    var A = air.armed, now = performance.now();
+    if (!A || !(markInput() === 'pen' && heartOn())) return;
+    var el = A.el;
+    if (!el || !el.isConnected) { air.armed = null; setRing(0); return; }
+    if (now >= air.ready) {
+      var key = el.getAttribute('data-b'), pc = Math.min(1, (now - A.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : PEN.CONFIRM_MS));
+      setRing(pc);
+      if (pc >= 1) {
+        air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
+        if (air.closed) air.needOpen = true;
+        dispatch(el.getAttribute('data-a'), parseInt(el.getAttribute('data-i'), 10), 'air', el);
+        return;
+      }
+    }
+    penRingRaf = window.requestAnimationFrame(penRingTick);
   }
   /* The press (the object's button): the button under the pointer is chosen at once; one press = one choice. */
   var PRESS_KEYS = { ' ': 1, 'Enter': 1, 'PageDown': 1, 'PageUp': 1, 'AudioVolumeUp': 1, 'AudioVolumeDown': 1, 'MediaPlayPause': 1, 'MediaTrackNext': 1, 'MediaTrackPrevious': 1 };
@@ -1443,7 +1473,7 @@
     if (confirm && air.closed && !wasClosed) {
       air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null;
       /* closed = OK: the ring starts at once on the button where the hand closed (not again before the hand opened) */
-      if (cmode === 'close' && air.squeeze && !air.needOpen) air.armed = { el: air.squeeze, at: now };
+      if (cmode === 'close' && air.squeeze && !air.needOpen) { air.armed = { el: air.squeeze, at: now }; if (penOn) penRingStart(); }
     }
     if (confirm && !air.closed && wasClosed) {
       /* a highlighter press that was cancelled (moved away, pen lost) is not a release (23 Nov) */
