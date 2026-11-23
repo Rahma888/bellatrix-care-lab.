@@ -616,10 +616,10 @@
      to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 1500, MIN_MS: 150, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 40, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
     /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
        so the pointer's patience is short with it, and the ring a little quicker */
-    CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
+    CLOSE_PATIENCE: 0, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
     /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
        on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
     RING_MOVE_PX: 600, LOST_MS: 700,
@@ -652,10 +652,10 @@
     P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
     if (P.state === 'pressed') {
       if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; hz.cancelAt = now; }   /* a big move: no press, and no release either */
-      else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go */
+      else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go (against the cap just before the touch) */
     } else if (shows) {
       if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
-      P.lastClear = now;
+      P.lastClear = now; P.lastShowC = c;
       if (p.cx >= 0) P.capPos = { x: p.cx, y: p.cy };
       P.state = 'free';
     } else if (hidden && P.state === 'free') {
@@ -663,7 +663,7 @@
       P.why = ok ? 'press' : [now - P.lastClear > PEN.GAP_MS ? 'cap-seen-too-long-ago' : '', P.lastClear - P.clearSince < PEN.SEEN_MS ? 'cap-not-seen-long-enough' : '',
         still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', inside ? '' : 'edge'].filter(Boolean).join(',');
       P.state = ok ? 'pressed' : 'blocked';
-      if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = capRef; }
+      if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = Math.min(capRef, P.lastShowC || capRef); }
     }
     return P.state === 'pressed' && now - P.pressAt >= PEN.MIN_MS;
   }
@@ -811,6 +811,7 @@
   var PEN_WORDS = { 'Point at the screen with one finger': 'Show the highlighter to the camera', 'Show your hand to the camera': 'Show the highlighter to the camera',
     'Point at what you want': 'Move the highlighter to what you want', 'Close and open your hand to choose': 'Press the cap with your thumb, then let go',
     'Now open your hand': 'Now let go of the cap', 'Hold still to choose': 'Keep the highlighter on it to choose',
+    'Close your hand to choose': 'Press the cap with your thumb to choose', 'Keep your hand closed': 'Keep pressing', 'Open your hand': 'Let go of the cap',
     'Move your finger, then point again': 'Move the highlighter, then point again' };
   function handWord(t) {
     var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : m === 'pen' ? PEN_WORDS : null;
@@ -1266,7 +1267,9 @@
     var v = null;
     try { v = localStorage.getItem('bellatrix-air-confirm'); } catch (e) { v = null; }
     /* the red heart: close the hand over it, then open; the highlighter: press the cap, then let go (23 Nov) */
-    if (v !== '0' && heartOn()) return 'closeopen';   /* the highlighter too: press the cap, let go (a click) */
+    /* the highlighter (23 Nov, Rahma: "when I touch the dark green the ring must start at once", "and if I let go
+       before it is full it must fill to the end"): touching the cap starts the ring, which then fills to the end */
+    if (v !== '0' && heartOn()) return markInput() === 'pen' ? 'close' : 'closeopen';
     return v === '0' ? null : v === 'closeopen' ? 'closeopen' : 'close';
   }
   /* All four fingers folded (thumb free): the closed hand. */
@@ -1426,7 +1429,8 @@
       /* a highlighter press that was cancelled (moved away, pen lost) is not a release (23 Nov) */
       if (penOn && now - (hz.cancelAt || 0) < 800) air.squeeze = null;
       if (cmode === 'closeopen' && air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now };
-      else air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
+      /* the highlighter (23 Nov, Rahma): touching the cap is the OK; the ring goes on filling after letting go */
+      else if (!(penOn && cmode === 'close' && air.armed)) air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
       air.squeeze = null; air.needOpen = false;
     }
     /* While the hand is closed, and while the ring fills, the pointer stays on that button: closing and opening the
@@ -1473,7 +1477,7 @@
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
-        if (cmode === 'close') air.needOpen = true;   /* the next OK needs the hand opened first */
+        if (cmode === 'close' && air.closed) air.needOpen = true;   /* the next OK needs the hand opened first (already open after a short touch on the pen's cap: nothing to wait for) */
         dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
       }
       return;

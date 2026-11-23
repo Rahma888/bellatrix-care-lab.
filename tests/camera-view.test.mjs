@@ -394,7 +394,7 @@ else {
       await ev("(function(){var b=document.querySelector('[data-b=hearttest2]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__heartTimer);navigator.mediaDevices.getUserMedia=window.__gumReal;return true;})()");   // the fake camera again for the next tests
     });
-    await test('page: highlighter (23 Nov, the middle way, checked on the video of Rahma): a finger over the cap while moving, a cap hidden from the start, a pen moving away or a finger flicking past never choose; press and let go (a click) chooses once', async () => {
+    await test('page: highlighter (23 Nov, the middle way, checked on the video of Rahma): a finger over the cap while moving, a cap hidden from the start, a pen moving away or a finger flicking past never choose; pressing the cap fills the ring at once and chooses once', async () => {
       await send('Page.reload', {}, sid);
       await waitFor("!!window.Lab && !!window.CamView && document.readyState === 'complete'");
       await sleep(800);
@@ -433,28 +433,27 @@ else {
       await sleep(900);
       r = await look();
       assert.equal(r.clicks, 0, 'a pen further away is not a press ' + JSON.stringify(r));
-      /* 4. a real press, like a click: the cap seen, the pen still, the thumb on the cap, then let go: the ring fills */
+      /* 4. touching the cap (the cap seen, the pen still): the ring starts at once and fills to the end, even after letting go */
       await set({ covered: true });
-      await sleep(700);
-      r = await look();
-      assert.equal(r.clicks, 0, 'pressing alone does not choose yet ' + JSON.stringify(r));
+      await sleep(350);
       await set({ covered: false });
-      await sleep(1400);
+      await sleep(1300);
       r = await look();
-      assert.equal(r.clicks, 1, 'press, let go: the ring fills and the button is chosen once ' + JSON.stringify(r));
-      /* 5. a finger flicking past the cap (shorter than MIN_MS) is no press */
-      await set({ covered: true });
-      await sleep(120);
-      await set({ covered: false });
-      await sleep(1400);
-      assert.equal((await look()).clicks, 1, 'a finger flicking past the cap chooses nothing');
-      /* 6. the next click */
+      assert.equal(r.clicks, 1, 'a short touch on the cap: the ring fills to the end and the button is chosen ' + JSON.stringify(r));
+      /* 5. a flicker of one frame or two is no touch */
       await sleep(400);
       await set({ covered: true });
-      await sleep(700);
+      await sleep(40);
       await set({ covered: false });
+      await sleep(1200);
+      assert.equal((await look()).clicks, 1, 'a flicker shorter than the minimum touch chooses nothing');
+      /* 6. holding the cap: one choice, then no second while still holding */
+      await set({ covered: true });
       await sleep(1400);
-      assert.equal((await look()).clicks, 2, 'press and let go again: the next choice');
+      assert.equal((await look()).clicks, 2, 'touch and hold: the next choice');
+      await sleep(900);
+      assert.equal((await look()).clicks, 2, 'still holding: no second choice');
+      await set({ covered: false });
       await ev("(function(){window.__pen.covered=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');localStorage.removeItem('bellatrix-pen-press');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal2;return true;})()");
     });
