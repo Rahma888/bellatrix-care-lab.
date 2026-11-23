@@ -394,6 +394,39 @@ else {
       await ev("(function(){var b=document.querySelector('[data-b=hearttest2]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__heartTimer);navigator.mediaDevices.getUserMedia=window.__gumReal;return true;})()");   // the fake camera again for the next tests
     });
+    await test('page: highlighter (23 Nov, third try): the fluorescent pen moves the pointer; the thumb on its cap until the ring is full chooses once; let go for the next', async () => {
+      await send('Page.reload', {}, sid);
+      await waitFor("!!window.Lab && !!window.CamView && document.readyState === 'complete'");
+      await sleep(800);
+      /* the "webcam": a grey room, a fluorescent yellow-green pen standing in the middle, its dark green cap on top;
+         pressed = a thumb (skin colour) over the cap */
+      await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250,pressed:false};" +
+        "function draw(){var p=window.__pen;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14,p.y-60,28,140);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66,15,0,7);g.fill();" +
+        "if(p.pressed){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34,p.y-100,68,52);}}draw();window.__penTimer=setInterval(draw,33);" +
+        "var s=c.captureStream(30);window.__gumReal2=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
+        "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      await waitFor('!!(window.CamView.stream())', 8000);
+      await sleep(1200);
+      await ev("(function(){var o=document.querySelector('[data-b=pentest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','pentest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:340px;top:760px;width:400px;height:400px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__pn0=Lab._air().chosen;return true;})()");
+      const look = () => ev("(function(){var a=Lab._air(),h=document.querySelector('.airhover');return {seen:a.seen,closed:a.closed,hover:h?h.getAttribute('data-b'):null,clicks:a.chosen-window.__pn0,heart:Lab._heart(),text:document.getElementById('handText').textContent};})()");
+      await sleep(1500);
+      let r = await look();
+      assert.ok(r.heart.on && r.seen && r.hover === 'pentest', 'the pen in the middle points at the button in the middle ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'pointing alone never chooses');
+      await ev('window.__pen.pressed=true;true');   // the thumb on the cap: the ring fills, then the button is chosen
+      await sleep(1700);
+      r = await look();
+      assert.equal(r.clicks, 1, 'pressing the cap until the ring is full chooses once ' + JSON.stringify(r));
+      await sleep(1200);
+      assert.equal((await look()).clicks, 1, 'still pressing: no second choice');
+      await ev('window.__pen.pressed=false;true');
+      await sleep(800);
+      await ev('window.__pen.pressed=true;true');
+      await sleep(1700);
+      assert.equal((await look()).clicks, 2, 'let go, press again: the next choice');
+      await ev("(function(){window.__pen.pressed=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
+        "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal2;return true;})()");
+    });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);
   stop();

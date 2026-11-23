@@ -285,7 +285,7 @@
     var first = String(a.flow || '').split(/(?:\.|:)\s/)[0];
     return ST(first.replace(/\.$/, '') + '.');
   }
-  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air', heart: 'red heart', object: 'object and button' };
+  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air', heart: 'red heart', object: 'object and button', pen: 'highlighter' };
   var LANG_SHORT = { en: 'English', fr: 'Français', de: 'Deutsch' };
   var filter = 'all';
   try { filter = sessionStorage.getItem('labFilter') || 'all'; } catch (e) { filter = 'all'; }
@@ -390,7 +390,8 @@
   /* the choice as the patient screen knows it: the red heart (23 Nov prototype) is pointing in the air ('air') with
      airInput 'heart' */
   function camChoice() { var m = document.querySelector('input[name="camMode"]:checked'); return m ? m.value : 'off'; }
-  function camMode() { var c = camChoice(); return c === 'heart' || c === 'object' ? 'air' : c; }
+  var MARKS = { heart: 1, object: 1, pen: 1 };   /* the prototypes: pointing in the air with a held thing */
+  function camMode() { var c = camChoice(); return MARKS[c] ? 'air' : c; }
   function renderCamNote() {
     var cam = camMode() !== 'off' || (selected().key === 'move' && $('optCamMove').checked);
     $('camNote').hidden = !cam;
@@ -691,7 +692,7 @@
     o.zone = (st.zoneFor && st.zoneFor[act.key]) || act.zone; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
     o.voice = false; o.camMode = camMode(); o.camMove = act.key === 'move' && $('optCamMove').checked;
     /* 23 Nov (Rahma's prototype): point with the red heart instead of the hand (js/core.js, the app's HeartSpot) */
-    o.airInput = camChoice() === 'heart' || camChoice() === 'object' ? camChoice() : '';
+    o.airInput = MARKS[camChoice()] ? camChoice() : '';
     pr.greet = val('fGreet').trim();
     if ($('fSector')) pr.sector = val('fSector').trim().slice(0, 24);   /* 1.17 */
     pr.rate = parseFloat(val('optRate')) || 0.92; pr.volume = (parseInt(val('optVolume'), 10) || 90) / 100;

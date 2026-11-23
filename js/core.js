@@ -528,7 +528,8 @@
      model here (window.__bellatrixHands({pic})); the page's own camera stays off. Without that bridge: as before. */
   var NH_PIC_MS = 200;
   function nhPics() { return !!(window.BellatrixApp && window.BellatrixApp.handsPictures); }
-  function nhWanted(st) { return !nh.failed && !!st && (!st.pose || (Lab.opt.camMode === 'air' && nhPics())) && !st.callVideo && wantCam(st) && nhApi(); }
+  /* 23 Nov: the highlighter ('pen') is followed by the page's own camera (js/heartspot.js), also on the tablet */
+  function nhWanted(st) { return !nh.failed && !!st && (!st.pose || (Lab.opt.camMode === 'air' && nhPics())) && !st.callVideo && wantCam(st) && nhApi() && markInput() !== 'pen'; }
   function nhPictures(on) {
     var ms = on && nhPics() ? NH_PIC_MS : 0;
     if (nh.picMs === ms) return;
@@ -598,16 +599,19 @@
      'heart' / 'hand' on this tablet. With the app's camera it needs BellatrixApp.handsHeart; with the page's own
      camera (a PC webcam: testing before the robot) js/heartspot.js finds the heart here (heartPageFrame). */
   var HEART = { CLOSE: 0.45, OPEN: 0.7, GONE_MS: 1500, UP: 0.08, DOWN: 0.02 };
-  var hz = { base: 0, last: null, seenAt: 0, closed: false };
+  /* the highlighter's cap: pressed under 30 % of its usual size, free again above 60 %; seen from CAP_MIN samples */
+  var PEN = { CLOSE: 0.3, OPEN: 0.6, CAP_MIN: 3, PX: 240 };
+  var hz = { base: 0, last: null, seenAt: 0, closed: false, capBase: 0 };
   /* 23 Nov (Rahma, second try: the heart was too hard to close the hand on): 'object' = a red mark on an object the
      resident holds (e.g. a remote) moves the pointer the same way, and the OK is a PRESS: the remote's button (the app
      forwards it, window.__bellatrixPress) or, on a PC, Space / Enter / Page keys. No close/open in that mode. */
   function markInput() {
     var v = '';
     try { v = localStorage.getItem('bellatrix-air-input') || ''; } catch (e) { v = ''; }
-    if (v === 'heart' || v === 'object') return v;
+    if (v === 'heart' || v === 'object' || v === 'pen') return v;
     if (v === 'hand') return '';
-    return Lab.opt.airInput === 'heart' || Lab.opt.airInput === 'object' ? Lab.opt.airInput : '';
+    var o = Lab.opt.airInput;
+    return o === 'heart' || o === 'object' || o === 'pen' ? o : '';
   }
   function heartMode() { return !!markInput(); }
   function pressMode() { return markInput() === 'object' && heartOn(); }
@@ -619,7 +623,7 @@
   function heartPage() { return !nh.on && !!window.HeartSpot && heartMode(); }
   function heartOn() { return heartMode() && (nh.on ? heartSupported() : !!window.HeartSpot && !!cam.stream); }
   function heartSync() {
-    hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false;
+    hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false; hz.capBase = 0;
     pressSync(markInput() === 'object');
     if (!heartSupported()) return;
     try { window.BellatrixApp.handsHeart(heartMode()); } catch (e) { /* an app without the heart */ }
@@ -634,11 +638,18 @@
     return lm;
   }
   function heartResult(p, now) {
-    var press = markInput() === 'object';   /* the object: OK by pressing, never by closing the hand */
+    var mode = markInput(), press = mode === 'object' || mode === 'pen';   /* never closed by hiding the whole thing */
     if (p && isFinite(p.x) && isFinite(p.y)) {
       var a = +p.a || 0;
       if (!hz.base || now - hz.seenAt > HEART.GONE_MS) hz.base = a;
       var shut = press ? false : hz.closed ? a < HEART.OPEN * hz.base : a < HEART.CLOSE * hz.base;
+      if (mode === 'pen') {
+        /* the highlighter: the thumb on the cap hides it = pressed. The cap's own size, learnt while it shows. */
+        var c = +p.c || 0;
+        if (c >= PEN.CAP_MIN && (!hz.capBase || now - hz.seenAt > HEART.GONE_MS)) hz.capBase = c;
+        shut = !!hz.capBase && (hz.closed ? c < PEN.OPEN * hz.capBase : c < PEN.CLOSE * hz.capBase);
+        if (!shut && c >= PEN.CAP_MIN) hz.capBase += (c - hz.capBase) * (c > hz.capBase ? 0.15 : 0.03);
+      }
       /* the open heart's size: follows a bigger heart quickly (closer), a smaller one slowly (further away) */
       if (!shut) { hz.base += (a - hz.base) * (a > hz.base ? HEART.UP : HEART.DOWN); hz.last = { x: +p.x, y: +p.y, a: a }; }
       hz.closed = shut; hz.seenAt = now;
@@ -656,25 +667,30 @@
     if (st && (nh.on || cam.stream) && airMode(st)) airFrame(lm, now);
   }
   /* The page's own camera: the picture drawn small (HEART_PX on its long side, the app's grid) and searched here. */
-  var HEART_PX = 160, hzPage = { canvas: null, ctx: null, finder: null };
+  var HEART_PX = 160, hzPage = { canvas: null, ctx: null, finder: null, kind: '' };
   function heartPageFrame(now) {
-    if (!hzPage.finder) hzPage.finder = window.HeartSpot.create();
+    var kind = markInput() === 'pen' ? 'pen' : 'red';
+    if (!hzPage.finder || hzPage.kind !== kind) { hzPage.finder = window.HeartSpot.create({ kind: kind }); hzPage.kind = kind; }
     var src = frameSource(video), sw = src.videoWidth || src.width, sh = src.videoHeight || src.height;
     if (!sw || !sh) return;
-    var k = HEART_PX / Math.max(sw, sh), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+    var px = kind === 'pen' ? PEN.PX : HEART_PX;   /* the pen's cap is small: a finer grid */
+    var k = px / Math.max(sw, sh), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
     if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
     if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
     hzPage.ctx.drawImage(src, 0, 0, w, h);
     var p = hzPage.finder.find(hzPage.ctx.getImageData(0, 0, w, h).data, w, h, 1, now);
-    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area } : null, now), now);
+    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples } : null, now), now);
   }
   /* The hand texts with the heart. */
   var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
     'Point at what you want': 'Move the heart to what you want', 'Close and open your hand to choose': 'Close your hand over the heart, then open it' };
   var OBJECT_WORDS = { 'Point at the screen with one finger': 'Show the red mark to the camera', 'Show your hand to the camera': 'Show the red mark to the camera',
     'Point at what you want': 'Move the object to what you want' };
+  var PEN_WORDS = { 'Point at the screen with one finger': 'Show the highlighter to the camera', 'Show your hand to the camera': 'Show the highlighter to the camera',
+    'Point at what you want': 'Move the highlighter to what you want', 'Close your hand to choose': 'Press the cap with your thumb to choose',
+    'Keep your hand closed': 'Keep pressing', 'Open your hand': 'Let go of the cap' };
   function handWord(t) {
-    var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : null;
+    var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : m === 'pen' ? PEN_WORDS : null;
     return w && w[t] ? w[t] : t;
   }
   /* The press (the object's button): the button under the pointer is chosen at once; one press = one choice. */
@@ -1120,7 +1136,8 @@
   function airConfirmMode() {
     var v = null;
     try { v = localStorage.getItem('bellatrix-air-confirm'); } catch (e) { v = null; }
-    if (v !== '0' && heartOn()) return 'closeopen';   /* the red heart: close the hand over it, then open (23 Nov) */
+    /* the red heart: close the hand over it, then open; the highlighter: press the cap until the ring is full (23 Nov) */
+    if (v !== '0' && heartOn()) return markInput() === 'pen' ? 'close' : 'closeopen';
     return v === '0' ? null : v === 'closeopen' ? 'closeopen' : 'close';
   }
   /* All four fingers folded (thumb free): the closed hand. */
@@ -1605,7 +1622,7 @@
     };
   }
   function welcomeOrPractice(act) {
-    return Lab.opt.camMode === 'air' && airConfirm() && airConfirmMode() === 'close' && S.camConsent === true && !act.noPractice ? practiceStep(act) : welcomeStep(act);
+    return Lab.opt.camMode === 'air' && airConfirm() && airConfirmMode() === 'close' && S.camConsent === true && !act.noPractice && !heartMode() ? practiceStep(act) : welcomeStep(act);
   }
   /* The camera needs no question here: the care team gives consent before the session. */
   function afterYes() { moodThenStart(); }

@@ -10,14 +10,29 @@
    - for FOLLOW_MS after a heart, only red near it counts (a heart hidden in a fist is "not seen" instead of jumping
      to something red behind the person).
    find() returns { x, y (0..1 of the picture), area (share of the grid), samples } or null. No picture is kept.
+   23 Nov, third try (Rahma): create({ kind: 'pen' }) follows a fluorescent yellow-green highlighter instead (a
+   colour almost nothing else has: skin, wood, clothes and screens stay out) and also counts its dark green cap
+   around it (capSamples): the thumb pressing the cap hides it, that is the press. The stick may be long and
+   diagonal, so for the pen the biggest patch wins (no roundness test); a patch with the cap next to it is preferred.
    ES5, no dependencies. */
 (function (root) {
   'use strict';
   var SAT_PCT = 47, MIN_SAMPLES = 20, FOLLOW_MS = 1500, GAP = 3;
 
   function isRed(r, g, b) { var m = g > b ? g : b; return r >= 70 && (r - m) * 100 >= SAT_PCT * r; }
+  /* the highlighter's body: bright yellow-green (green high, red close to it, blue far below, well saturated) */
+  function isNeon(r, g, b) {
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return g >= 110 && r * 100 >= 55 * g && r * 100 <= 108 * g && b * 10 <= 6 * g && (mx - mn) * 100 >= 45 * mx;
+  }
+  /* its cap: darker green (green well above red and above blue) */
+  function isCap(r, g, b) {
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    return g >= 50 && g * 100 >= 135 * r && g * 10 >= 11 * b && (mx - mn) * 100 >= 35 * mx && !isNeon(r, g, b);
+  }
 
-  function create() {
+  function create(opt) {
+    var pen = !!(opt && opt.kind === 'pen'), test = pen ? isNeon : isRed;
     var last = { gx: 0, gy: 0, reach: 4, at: -1e15 };
     var mask = null, label = null, queue = null;
 
@@ -30,7 +45,7 @@
       for (gy = 0; gy < gh; gy++) {
         for (gx = 0; gx < gw; gx++) {
           o = ((gy * step) * w + gx * step) * 4; i = gy * gw + gx;
-          mask[i] = isRed(data[o], data[o + 1], data[o + 2]) ? 1 : 0; label[i] = 0;
+          mask[i] = test(data[o], data[o + 1], data[o + 2]) ? 1 : 0; label[i] = 0;
           if (mask[i]) n++;
         }
       }
@@ -56,11 +71,19 @@
         comps.push(cur);
       }
       var following = now - last.at <= FOLLOW_MS, best = null, bestScore = 0, k, bw, bh, shape, fill, score, d;
+      /* the cap samples in a window around a patch (the pen only) */
+      function capNear(c) {
+        var bw2 = c.x1 - c.x0 + 1, bh2 = c.y1 - c.y0 + 1, mxp = Math.round(0.5 * Math.max(bw2, bh2)) + 3;
+        var xa = Math.max(0, c.x0 - mxp), xb = Math.min(gw - 1, c.x1 + mxp), ya = Math.max(0, c.y0 - mxp), yb = Math.min(gh - 1, c.y1 + mxp), n2 = 0, x, y, o2;
+        for (y = ya; y <= yb; y++) for (x = xa; x <= xb; x++) { o2 = ((y * step) * w + x * step) * 4; if (isCap(data[o2], data[o2 + 1], data[o2 + 2])) n2++; }
+        return n2;
+      }
       for (k = 0; k < comps.length; k++) {
         c = comps[k]; bw = c.x1 - c.x0 + 1; bh = c.y1 - c.y0 + 1;
-        shape = Math.sqrt(Math.min(bw, bh) / Math.max(bw, bh));
-        fill = Math.min(1, c.n / (0.5 * bw * bh));
+        shape = pen ? 1 : Math.sqrt(Math.min(bw, bh) / Math.max(bw, bh));
+        fill = pen ? 1 : Math.min(1, c.n / (0.5 * bw * bh));
         score = c.n * shape * fill;
+        if (pen && c.n >= MIN_SAMPLES / 2) { c.cap = capNear(c); if (c.cap >= 2) score *= 2; }
         if (following) {
           d = Math.sqrt(Math.pow(c.sx / c.n - last.gx, 2) + Math.pow(c.sy / c.n - last.gy, 2));
           if (d > 3 * last.reach + 6) continue;
@@ -86,14 +109,15 @@
       return {
         x: Math.min(1, Math.max(0, (sx / cnt * step + step / 2) / w)),
         y: Math.min(1, Math.max(0, (sy / cnt * step + step / 2) / h)),
-        area: cnt / cap, samples: cnt
+        area: cnt / cap, samples: cnt,
+        capSamples: pen ? (best.cap !== undefined ? best.cap : capNear(best)) : 0
       };
     }
     function reset() { last.at = -1e15; }
     return { find: find, reset: reset };
   }
 
-  var HeartSpot = { create: create, isRed: isRed, SAT_PCT: SAT_PCT, MIN_SAMPLES: MIN_SAMPLES };
+  var HeartSpot = { create: create, isRed: isRed, isNeon: isNeon, isCap: isCap, SAT_PCT: SAT_PCT, MIN_SAMPLES: MIN_SAMPLES };
   if (typeof module !== 'undefined' && module.exports) module.exports = HeartSpot;
   if (root) root.HeartSpot = HeartSpot;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

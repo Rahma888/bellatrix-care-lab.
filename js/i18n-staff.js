@@ -88,6 +88,7 @@
     'Count the movements with the camera': 'Compter les mouvements avec la caméra',
     'Red heart (test)': 'Cœur rouge (test)', 'Close and open the hand on the heart': 'Fermer et ouvrir la main sur le cœur', 'red heart': 'cœur rouge',
     'Object + button (test)': 'Objet + bouton (test)', 'Red mark on the object, press to choose': 'Pastille rouge sur l’objet, appuyer pour choisir', 'object and button': 'objet et bouton',
+    'Highlighter (test)': 'Surligneur (test)', 'Press the cap with the thumb to choose': 'Appuyer sur le capuchon avec le pouce', 'highlighter': 'surligneur',
     'Camera only with the patient\'s consent. Nothing is recorded.': 'Caméra seulement avec l’accord du patient. Rien n’est enregistré.',
     'touch': 'au toucher', 'hand signs': 'gestes de la main', 'pointing in the air': 'doigt en l’air',
     /* personalise */
@@ -361,6 +362,7 @@
     'Count the movements with the camera': 'Bewegungen mit der Kamera zählen',
     'Red heart (test)': 'Rotes Herz (Test)', 'Close and open the hand on the heart': 'Hand um das Herz schließen und öffnen', 'red heart': 'rotes Herz',
     'Object + button (test)': 'Objekt + Knopf (Test)', 'Red mark on the object, press to choose': 'Roter Punkt auf dem Objekt, zum Auswählen drücken', 'object and button': 'Objekt und Knopf',
+    'Highlighter (test)': 'Textmarker (Test)', 'Press the cap with the thumb to choose': 'Mit dem Daumen auf die Kappe drücken', 'highlighter': 'Textmarker',
     'Camera only with the patient\'s consent. Nothing is recorded.': 'Kamera nur mit Einwilligung des Patienten. Es wird nichts aufgezeichnet.',
     'touch': 'Berühren', 'hand signs': 'Handzeichen', 'pointing in the air': 'in die Luft zeigen',
     'Personalise': 'Anpassen', 'Personalise for {code}': 'Anpassen für {code}',

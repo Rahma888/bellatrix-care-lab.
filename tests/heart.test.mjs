@@ -83,5 +83,28 @@ const HS = require('../js/heartspot.js');
   test('page copy = app: follow-fist', () => assert.ok(fj && Math.abs(fj.x - j.x) < 0.005 && Math.abs(fj.y - j.y) < 0.005, JSON.stringify({ fj, j })));
   test('page copy: isRed has the same rule (skin no, heart yes)', () => { assert.equal(HS.isRed(222, 172, 140), false); assert.equal(HS.isRed(210, 30, 40), true); assert.equal(HS.isRed(177, 106, 112), false); });
 }
+/* the highlighter (23 Nov, third try): the fluorescent body is followed, its dark green cap counted around it */
+{
+  const W = 320, H = 240, NEON = [215, 240, 70], CAP = [20, 140, 80], SKIN = [222, 172, 140], WALL = [232, 222, 150];
+  const room = () => { const d = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { const g = 80 + ((i * 7919) % 30); d[i * 4] = g; d[i * 4 + 1] = g; d[i * 4 + 2] = g + 4; d[i * 4 + 3] = 255; } return d; };
+  const put = (d, x, y, c) => { if (x < 0 || y < 0 || x >= W || y >= H) return; const o = (y * W + x) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; };
+  const rect = (d, x0, y0, x1, y1, c) => { for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) put(d, x, y, c); };
+  const disc = (d, cx, cy, r, c) => { for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) put(d, x, y, c); };
+  const pen = (thumb) => { const d = room(); rect(d, 150, 100, 166, 180, NEON); disc(d, 158, 96, 8, CAP); rect(d, 120, 140, 200, 200, SKIN); if (thumb) rect(d, 140, 78, 178, 106, SKIN); return d; };
+  const find = (d) => HS.create({ kind: 'pen' }).find(d, W, H, 1, 0);
+  test('highlighter: the fluorescent body is found, with its cap next to it', () => {
+    const r = find(pen(false));
+    assert.ok(r && Math.abs(r.x - 158 / W) < 0.03 && r.capSamples > 30, JSON.stringify(r));
+  });
+  test('highlighter: the thumb on the cap hides it (the press), the body is still followed', () => {
+    const r = find(pen(true));
+    assert.ok(r && r.capSamples === 0, JSON.stringify(r));
+  });
+  test('highlighter: skin, a pale yellow wall and the red heart are not the highlighter', () => {
+    const d = room(); rect(d, 0, 0, 120, 240, WALL); disc(d, 220, 120, 40, SKIN); disc(d, 280, 60, 25, [210, 30, 40]);
+    assert.equal(find(d), null);
+    assert.equal(HS.isNeon(232, 222, 150), false); assert.equal(HS.isNeon(215, 240, 70), true); assert.equal(HS.isCap(20, 140, 80), true); assert.equal(HS.isCap(215, 240, 70), false);
+  });
+}
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
