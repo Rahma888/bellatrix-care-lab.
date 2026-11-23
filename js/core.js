@@ -800,14 +800,25 @@
   function heartPageFrame(now) {
     var kind = markInput() === 'pen' ? 'pen' : 'red';
     if (!hzPage.finder || hzPage.kind !== kind) { hzPage.finder = window.HeartSpot.create({ kind: kind }); hzPage.kind = kind; }
-    var src = frameSource(video), sw = src.videoWidth || src.width, sh = src.videoHeight || src.height;
-    if (!sw || !sh) return;
-    var px = kind === 'pen' ? PEN.PX : HEART_PX;   /* the pen's cap is small: a finer grid */
-    var k = px / Math.max(sw, sh), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+    var vw = video.videoWidth, vh = video.videoHeight, rt = camRot();
+    if (!vw || !vh) return;
+    /* 23 Nov (Rahma: "the detection is not fast enough"): the tablet's camera gives 30 pictures a second but the search
+       took ~31 ms, so every other picture was skipped. The picture is now turned and made small in one draw (no
+       separate turned copy), and the pen's grid is half the camera's long side (320 on the tablet's 640, the PC's
+       1280 keeps PEN.PX), which is plenty for a pen that close. */
+    var turned = rt === 90 || rt === 270, uw = turned ? vh : vw, uh = turned ? vw : vh;
+    var px = kind === 'pen' ? Math.min(PEN.PX, Math.max(240, Math.round(Math.max(uw, uh) / 2))) : HEART_PX;
+    var k = px / Math.max(uw, uh), w = Math.max(1, Math.round(uw * k)), h = Math.max(1, Math.round(uh * k)), dw = Math.round(vw * k), dh = Math.round(vh * k);
     if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
     if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
-    hzPage.ctx.drawImage(src, 0, 0, w, h);
-    var t0 = performance.now(), img = hzPage.ctx.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
+    var x = hzPage.ctx;
+    if (rt === 180) x.setTransform(-1, 0, 0, -1, w, h);
+    else if (rt === 90) x.setTransform(0, 1, -1, 0, w, 0);
+    else if (rt === 270) x.setTransform(0, -1, 1, 0, 0, h);
+    else x.setTransform(1, 0, 0, 1, 0, 0);
+    x.drawImage(video, 0, 0, dw, dh);
+    x.setTransform(1, 0, 0, 1, 0, 0);
+    var t0 = performance.now(), img = x.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
     hzPage.ms = performance.now() - t0;
     heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null, now), now);
     if (kind === 'pen') penDebug(now, p, img, w, h);
@@ -1058,7 +1069,7 @@
     if (!cam.stream) return;
     try { detectStep(); }
     catch (err) { setHandText('Detection error: ' + err.message); log('Detection error: ' + err.message, 'app', 'error'); }
-    cam.timer = setTimeout(detectLoop, 25);
+    cam.timer = setTimeout(detectLoop, heartPage() ? 8 : 25);   /* the held thing (23 Nov): every camera picture, at once */
   }
   /* The front tablet's camera delivers its picture upside down (180 degrees) in the WebView: turn each frame
      before the hand / pose models see it. Other screens: unchanged. 'bellatrix-cam-rot' (0 or 180) overrides. */
