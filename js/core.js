@@ -623,7 +623,7 @@
     /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
        on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
     RING_MOVE_PX: 600,
-    /* the simple way (default): stay on a button this long to choose it */
+    /* only with 'bellatrix-pen-press' '0': stay on a button this long to choose it */
     DWELL_MS: 1200 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
   function penPress(p, now) {
@@ -1249,9 +1249,9 @@
     CONFIRM_STOP_MS: 1500 };
   /* 'bellatrix-air-confirm' '0' = the old way (holding still is enough); anything else = close the hand to choose. */
   function airConfirm() {
-    /* 23 Nov (Rahma, after the tablet test, "simpler, like in this video"): with the highlighter, pointing at a button
-       and staying on it chooses it (PEN.DWELL_MS); no press on the cap. 'bellatrix-pen-press' '1' brings the press back. */
-    if (markInput() === 'pen' && heartOn()) { try { return localStorage.getItem('bellatrix-pen-press') === '1'; } catch (e) { return false; } }
+    /* 23 Nov (Rahma): with the highlighter the OK is the click on the cap (press, let go), never just staying on a
+       button ("even when I do not click it takes it as OK"). 'bellatrix-pen-press' '0' = choose by staying (PEN.DWELL_MS). */
+    if (markInput() === 'pen' && heartOn()) { try { return localStorage.getItem('bellatrix-pen-press') !== '0'; } catch (e) { return true; } }
     try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; }
   }
   /* 16 Nov afternoon (Rahma): open hand = select (the pointer follows), closed hand = OK: the ring fills while the hand
