@@ -616,7 +616,7 @@
      to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 40, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+  var PEN = { CLOSE: 0.35, TREND: 0.85, JUMP: 0.2, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
     /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
        so the pointer's patience is short with it, and the ring a little quicker */
     CLOSE_PATIENCE: 0, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
@@ -631,6 +631,7 @@
     if (!P || now - hz.seenAt > HEART.GONE_MS) P = hz.pen = { state: 'free', clearSince: 0, lastClear: 0, track: [], hist: [], at: null, pressAt: 0, capRef: 0, cs: [] };
     /* the cap count, smoothed: the median of the last SMOOTH frames */
     P.cs.push(c); if (P.cs.length > PEN.SMOOTH) P.cs.shift();
+    var cRaw = c;   /* this frame's own count: the touch is seen on it, without the smoothing's delay */
     c = P.cs.slice().sort(function (a2, b2) { return a2 - b2; })[P.cs.length >> 1];
     P.track.push({ t: now, x: +p.x, y: +p.y });
     while (P.track.length && now - P.track[0].t > PEN.STILL_MS) P.track.shift();
@@ -647,7 +648,13 @@
     var capRef = ref ? ref.c : 0, still = moved < PEN.STILL, bodyOk = !ref || s >= PEN.BODY * ref.s;
     var K = P.capPos, inside = p.x > PEN.EDGE && p.x < 1 - PEN.EDGE && p.y > PEN.EDGE && p.y < 1 - PEN.EDGE * 0.8 &&
       (!K || (K.x > PEN.CAP_EDGE && K.x < 1 - PEN.CAP_EDGE && K.y > PEN.CAP_EDGE && K.y < 1 - PEN.CAP_EDGE));
-    var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef, hidden = capRef >= PEN.CAP_REF_MIN && c < PEN.CLOSE * capRef;
+    /* the touch, at once (Rahma: "exactly when I touch the dark green the ring must start"): this frame's cap under
+       CLOSE of the reference, when the frame before was already going down (the thumb coming) or was hidden too; a
+       lone jump of the camera is no touch */
+    var rawHidden = capRef >= PEN.CAP_REF_MIN && cRaw < PEN.CLOSE * capRef;
+    var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef && cRaw >= PEN.SEEN * capRef,   /* clearly seen on this frame too */
+      hidden = rawHidden && (P.prevRawHidden || (P.prevRaw !== undefined && P.prevRaw < PEN.TREND * capRef));
+    P.prevRaw = cRaw; P.prevRawHidden = rawHidden;
     P.small = capRef < PEN.CAP_REF_MIN;
     P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
     if (P.state === 'pressed') {
@@ -655,13 +662,15 @@
       else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go (against the cap just before the touch) */
     } else if (shows) {
       if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
-      P.lastClear = now; P.lastShowC = c;
+      P.lastClear = now; P.lastShowC = c; P.clearPos = { x: +p.x, y: +p.y };
       if (p.cx >= 0) P.capPos = { x: p.cx, y: p.cy };
       P.state = 'free';
     } else if (hidden && P.state === 'free') {
-      var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && inside;
+      /* the pen must still be about where its cap was last seen (a pen that vanished and came back elsewhere is no touch) */
+      var near = !P.clearPos || Math.abs(p.x - P.clearPos.x) + Math.abs(p.y - P.clearPos.y) < PEN.JUMP;
+      var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && inside && near;
       P.why = ok ? 'press' : [now - P.lastClear > PEN.GAP_MS ? 'cap-seen-too-long-ago' : '', P.lastClear - P.clearSince < PEN.SEEN_MS ? 'cap-not-seen-long-enough' : '',
-        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', inside ? '' : 'edge'].filter(Boolean).join(',');
+        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', inside ? '' : 'edge', near ? '' : 'jumped'].filter(Boolean).join(',');
       P.state = ok ? 'pressed' : 'blocked';
       if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = Math.min(capRef, P.lastShowC || capRef); }
     }

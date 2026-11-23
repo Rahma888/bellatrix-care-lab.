@@ -440,10 +440,10 @@ else {
       await sleep(1300);
       r = await look();
       assert.equal(r.clicks, 1, 'a short touch on the cap: the ring fills to the end and the button is chosen ' + JSON.stringify(r));
-      /* 5. a flicker of one frame or two is no touch */
+      /* 5. a lone flicker of one frame is no touch */
       await sleep(400);
       await set({ covered: true });
-      await sleep(40);
+      await sleep(20);
       await set({ covered: false });
       await sleep(1200);
       assert.equal((await look()).clicks, 1, 'a flicker shorter than the minimum touch chooses nothing');
