@@ -608,11 +608,13 @@
        its time to come),
      - the pen was fairly still just before (moved less than STILL of the picture over STILL_MS, leaving out the
        last 150 ms: the thumb arriving shifts the pen's middle), and is not mostly gone (BODY of its size then),
-     - the pen is not near the edge of the picture (EDGE): there the cap may just be out of the picture,
-     - the cap is hidden (under CLOSE of that size) for at least MIN_MS (a finger flicking past is no press).
+     - the pen is not near the edge of the picture (EDGE), nor was the cap when last seen (CAP_EDGE): there the
+       cap may just have left the picture,
+     - the cap is hidden (under CLOSE of that size) for at least MIN_MS (a finger flicking past is no press),
+     - and the cap is big enough to be measured at all (CAP_REF_MIN samples; else "bring the pen closer").
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.25, BODY: 0.25, REF_MS: 1500, MIN_MS: 250, EDGE: 0.15, CAP_MIN: 3, PX: 240 };
+  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.25, BODY: 0.25, REF_MS: 1500, MIN_MS: 250, EDGE: 0.15, CAP_EDGE: 0.1, CAP_MIN: 3, CAP_REF_MIN: 8, PX: 360 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null };
   function penPress(p, now) {
     var P = hz.pen, s = Math.max(1, +p.s || 0), c = +p.c || 0, moved = 0, ref = null, r0 = null, i, q;
@@ -630,18 +632,23 @@
     while (P.hist.length && now - P.hist[0].t > PEN.REF_MS) P.hist.shift();
     for (i = 0; i < P.hist.length; i++) if (P.hist[i].c >= PEN.CAP_MIN && (!ref || P.hist[i].c > ref.c)) ref = P.hist[i];
     var capRef = ref ? ref.c : 0, still = moved < PEN.STILL, bodyOk = !ref || s >= PEN.BODY * ref.s;
-    var inside = p.x > PEN.EDGE && p.x < 1 - PEN.EDGE && p.y > PEN.EDGE && p.y < 1 - PEN.EDGE * 0.8;
-    var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef, hidden = capRef > 0 && c < PEN.CLOSE * capRef;
+    var K = P.capPos, inside = p.x > PEN.EDGE && p.x < 1 - PEN.EDGE && p.y > PEN.EDGE && p.y < 1 - PEN.EDGE * 0.8 &&
+      (!K || (K.x > PEN.CAP_EDGE && K.x < 1 - PEN.CAP_EDGE && K.y > PEN.CAP_EDGE && K.y < 1 - PEN.CAP_EDGE));
+    var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef, hidden = capRef >= PEN.CAP_REF_MIN && c < PEN.CLOSE * capRef;
+    P.small = capRef < PEN.CAP_REF_MIN;
     P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
     if (P.state === 'pressed') {
-      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) P.state = 'blocked';                /* a big move: no press */
+      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; }   /* a big move: no press */
       else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go */
     } else if (shows) {
       if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
       P.lastClear = now;
+      if (p.cx >= 0) P.capPos = { x: p.cx, y: p.cy };
       P.state = 'free';
     } else if (hidden && P.state === 'free') {
       var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && inside;
+      P.why = ok ? 'press' : [now - P.lastClear > PEN.GAP_MS ? 'cap-seen-too-long-ago' : '', P.lastClear - P.clearSince < PEN.SEEN_MS ? 'cap-not-seen-long-enough' : '',
+        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', inside ? '' : 'edge'].filter(Boolean).join(',');
       P.state = ok ? 'pressed' : 'blocked';
       if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = capRef; }
     }
@@ -705,6 +712,57 @@
     if (!S.on) { if (idle.on && nh.on) airFrame(lm, now); return; }
     if (st && (nh.on || cam.stream) && airMode(st)) airFrame(lm, now);
   }
+  /* PC testing only (localhost, 23 Nov): the highlighter's numbers in a small box on the screen and sent to the test
+     server (POST /__pen-log), so the tuning uses Rahma's real webcam. Numbers and a coarse 40 x 30 colour map
+     (# body, o cap), never a picture; nothing on the robot. */
+  var penDbg = { rows: [], sent: 0, mapAt: 0, el: null };
+  function penLocal() { return typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && typeof fetch === 'function'; }
+  function penMap(d, w, h) {
+    var out = [], gx, gy, x, y, o, HS = window.HeartSpot;
+    for (gy = 0; gy < 30; gy++) {
+      var row = '';
+      for (gx = 0; gx < 40; gx++) {
+        x = Math.min(w - 1, Math.floor((gx + 0.5) * w / 40)); y = Math.min(h - 1, Math.floor((gy + 0.5) * h / 30)); o = (y * w + x) * 4;
+        row += HS.isNeon(d[o], d[o + 1], d[o + 2]) ? '#' : HS.isCap(d[o], d[o + 1], d[o + 2]) ? 'o' : '.';
+      }
+      out.push(row);
+    }
+    return out.join('/');
+  }
+  /* the commonest saturated colours (steps of 16) around the pen: what the webcam really makes of it */
+  function penColours(d, w, h, cx, cy) {
+    var R = Math.round(Math.max(w, h) * 0.06), n = {}, x, y, o, r, g, b, mx, mn, k, out = [];
+    for (y = Math.max(0, Math.round(cy - R)); y < Math.min(h, cy + R); y++) for (x = Math.max(0, Math.round(cx - R)); x < Math.min(w, cx + R); x++) {
+      o = (y * w + x) * 4; r = d[o]; g = d[o + 1]; b = d[o + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b);
+      if (mx < 40 || (mx - mn) < 0.15 * mx) continue;
+      k = (r >> 4 << 4) + ',' + (g >> 4 << 4) + ',' + (b >> 4 << 4); n[k] = (n[k] || 0) + 1;
+    }
+    for (k in n) out.push([k, n[k]]);
+    out.sort(function (a, b2) { return b2[1] - a[1]; });
+    return out.slice(0, 8).map(function (q) { return q[0] + 'x' + q[1]; }).join(' ');
+  }
+  function penDebug(now, p, d, w, h) {
+    if (!penLocal()) return;
+    var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: p ? +p.x.toFixed(3) : null, y: p ? +p.y.toFixed(3) : null, s: p ? p.samples : 0, c: p ? p.capSamples : 0,
+      ref: P.ratio || 0, state: P.state || '', why: P.why || '', moved: P.moved ? +P.moved.toFixed(3) : 0, closed: !!air.closed, armed: !!air.armed,
+      hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small };
+    if (p && now - (penDbg.colAt || 0) > 500) { penDbg.colAt = now; row.colours = penColours(d, w, h, p.x * w, p.y * h); }
+    if (now - penDbg.mapAt > 500) { penDbg.mapAt = now; row.map = penMap(d, w, h); row.w = w; row.h = h; }
+    penDbg.rows.push(row);
+    if (now - penDbg.sent > 1000 && penDbg.rows.length) {
+      penDbg.sent = now;
+      try { fetch('/__pen-log', { method: 'POST', body: JSON.stringify(penDbg.rows), keepalive: true }).catch(function () {}); } catch (e) { /* testing only */ }
+      penDbg.rows = [];
+    }
+    if (!penDbg.el) {
+      penDbg.el = document.createElement('div');
+      penDbg.el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;background:rgba(0,0,0,.75);color:#fff;font:14px/1.35 monospace;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:pre';
+      document.body.appendChild(penDbg.el);
+    }
+    penDbg.el.textContent = 'TEST surligneur\n' + (p ? 'vu  x' + row.x + ' y' + row.y + '  corps ' + row.s : 'PAS VU') + '\ncapuchon ' + row.c + ' (repère ' + row.ref + ')' +
+      (row.small && p ? '  -> rapprochez le surligneur' : '') +
+      '\nétat ' + row.state + (row.why ? '  (' + row.why + ')' : '') + '\nfermé ' + row.closed + '  anneau ' + row.armed + '  choix ' + row.chosen;
+  }
   /* The page's own camera: the picture drawn small (HEART_PX on its long side, the app's grid) and searched here. */
   var HEART_PX = 160, hzPage = { canvas: null, ctx: null, finder: null, kind: '' };
   function heartPageFrame(now) {
@@ -717,8 +775,9 @@
     if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
     if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
     hzPage.ctx.drawImage(src, 0, 0, w, h);
-    var p = hzPage.finder.find(hzPage.ctx.getImageData(0, 0, w, h).data, w, h, 1, now);
-    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples } : null, now), now);
+    var img = hzPage.ctx.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
+    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null, now), now);
+    if (kind === 'pen') penDebug(now, p, img, w, h);
   }
   /* The hand texts with the heart. */
   var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',

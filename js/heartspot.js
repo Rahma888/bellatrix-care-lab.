@@ -17,18 +17,20 @@
    ES5, no dependencies. */
 (function (root) {
   'use strict';
-  var SAT_PCT = 47, MIN_SAMPLES = 20, FOLLOW_MS = 1500, GAP = 3;
+  var SAT_PCT = 47, MIN_SAMPLES = 20, FOLLOW_MS = 1500, GAP = 3, PEN_MAX_SHARE = 0.08;
 
   function isRed(r, g, b) { var m = g > b ? g : b; return r >= 70 && (r - m) * 100 >= SAT_PCT * r; }
-  /* the highlighter's body: bright yellow-green (green high, red close to it, blue far below, well saturated) */
+  /* the highlighter's body: yellow-green. 23 Nov, after Rahma's PC webcam (it shows the fluo much paler than a phone):
+     green at least as strong as red (skin, wood and pale yellow walls have more red than green), blue well below,
+     saturation from 30 %. */
   function isNeon(r, g, b) {
     var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    return g >= 110 && r * 100 >= 55 * g && r * 100 <= 108 * g && b * 10 <= 6 * g && (mx - mn) * 100 >= 45 * mx;
+    return g >= 90 && r * 100 >= 50 * g && r * 100 <= 102 * g && b * 100 <= 72 * g && (mx - mn) * 100 >= 30 * mx;
   }
   /* its cap: darker green (green well above red and above blue) */
   function isCap(r, g, b) {
     var mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-    return g >= 50 && g * 100 >= 135 * r && g * 10 >= 11 * b && (mx - mn) * 100 >= 35 * mx && !isNeon(r, g, b);
+    return g >= 40 && g * 100 >= 125 * r && g * 100 >= 105 * b && (mx - mn) * 100 >= 25 * mx && !isNeon(r, g, b);
   }
 
   function create(opt) {
@@ -74,12 +76,14 @@
       /* the cap samples in a window around a patch (the pen only) */
       function capNear(c) {
         var bw2 = c.x1 - c.x0 + 1, bh2 = c.y1 - c.y0 + 1, mxp = Math.round(0.5 * Math.max(bw2, bh2)) + 3;
-        var xa = Math.max(0, c.x0 - mxp), xb = Math.min(gw - 1, c.x1 + mxp), ya = Math.max(0, c.y0 - mxp), yb = Math.min(gh - 1, c.y1 + mxp), n2 = 0, x, y, o2;
-        for (y = ya; y <= yb; y++) for (x = xa; x <= xb; x++) { o2 = ((y * step) * w + x * step) * 4; if (isCap(data[o2], data[o2 + 1], data[o2 + 2])) n2++; }
+        var xa = Math.max(0, c.x0 - mxp), xb = Math.min(gw - 1, c.x1 + mxp), ya = Math.max(0, c.y0 - mxp), yb = Math.min(gh - 1, c.y1 + mxp), n2 = 0, x, y, o2, cx = 0, cy = 0;
+        for (y = ya; y <= yb; y++) for (x = xa; x <= xb; x++) { o2 = ((y * step) * w + x * step) * 4; if (isCap(data[o2], data[o2 + 1], data[o2 + 2])) { n2++; cx += x; cy += y; } }
+        c.capX = n2 ? (cx / n2 * step + step / 2) / w : -1; c.capY = n2 ? (cy / n2 * step + step / 2) / h : -1;
         return n2;
       }
       for (k = 0; k < comps.length; k++) {
         c = comps[k]; bw = c.x1 - c.x0 + 1; bh = c.y1 - c.y0 + 1;
+        if (pen && c.n > PEN_MAX_SHARE * cap) continue;   /* a wall or a big object of that colour is not the pen */
         shape = pen ? 1 : Math.sqrt(Math.min(bw, bh) / Math.max(bw, bh));
         fill = pen ? 1 : Math.min(1, c.n / (0.5 * bw * bh));
         score = c.n * shape * fill;
@@ -110,7 +114,8 @@
         x: Math.min(1, Math.max(0, (sx / cnt * step + step / 2) / w)),
         y: Math.min(1, Math.max(0, (sy / cnt * step + step / 2) / h)),
         area: cnt / cap, samples: cnt,
-        capSamples: pen ? (best.cap !== undefined ? best.cap : capNear(best)) : 0
+        capSamples: pen ? (best.cap !== undefined ? best.cap : capNear(best)) : 0,
+        capX: pen ? best.capX : -1, capY: pen ? best.capY : -1   /* where the cap is (0..1), -1 when not seen */
       };
     }
     function reset() { last.at = -1e15; }
