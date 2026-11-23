@@ -567,7 +567,8 @@
     try { r = String(window.BellatrixApp.handsStart()); } catch (e) { r = 'error:' + (e && e.message ? e.message : e); }
     if (r !== 'ok') { nhFail(r); return false; }
     nh.on = true; nh.onAt = Date.now(); nh.n = 0;
-    log('Camera on in the app for the hands (not recorded)', 'app', 'camera');
+    heartSync();
+    log('Camera on in the app for the ' + (heartOn() ? 'red heart' : 'hands') + ' (not recorded)', 'app', 'camera');
     setHandText('Starting the camera…');
     return true;
   }
@@ -586,11 +587,76 @@
     if (was && S.rec) S.rec.camMs += Date.now() - nh.onAt;
     log('Hand tracking in the app off (' + why + '): detection on the page instead', 'app', 'camera');
   }
+  /* 23 Nov (Rahma's prototype): pointing with a small red heart (a soft ball the resident holds) instead of the
+     hand. The app finds the red in every camera picture (android hands/HeartSpot, no model) and sends
+     {t, w, h, heart: {x, y, a, n} | null}. The heart becomes a hand for the same pointer (palm centre = the heart's
+     centre), so the cursor, the magnet, the ring and the games' frames work as before. "OK" = close the hand over
+     the heart (it mostly disappears) and open it again (it comes back): the 'closeopen' OK. While closed, the
+     pointer stays where the heart was open. A heart gone at the edge of the picture, or for HEART.GONE_MS, is lost.
+     On: Lab.opt.airInput === 'heart' (the head's "Point with the red heart"), or localStorage 'bellatrix-air-input'
+     'heart' / 'hand' on this tablet. Needs an app with BellatrixApp.handsHeart; else the hand as before. */
+  var HEART = { CLOSE: 0.45, OPEN: 0.7, GONE_MS: 1500, UP: 0.08, DOWN: 0.02 };
+  var hz = { base: 0, last: null, seenAt: 0, closed: false };
+  function heartMode() {
+    var v = '';
+    try { v = localStorage.getItem('bellatrix-air-input') || ''; } catch (e) { v = ''; }
+    if (v === 'heart') return true;
+    if (v === 'hand') return false;
+    return Lab.opt.airInput === 'heart';
+  }
+  function heartSupported() { return !!(window.BellatrixApp && window.BellatrixApp.handsHeart); }
+  function heartOn() { return nh.on && heartSupported() && heartMode(); }
+  function heartSync() {
+    hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false;
+    if (!heartSupported()) return;
+    try { window.BellatrixApp.handsHeart(heartMode()); } catch (e) { /* an app without the heart */ }
+  }
+  /* The heart as 21 hand points: the palm centre (0, 5, 9, 13, 17) on the heart, the palm length its size. */
+  function heartLm(p, closed) {
+    var r = Math.max(0.02, Math.sqrt(Math.max(0, p.a) / Math.PI) * 1.2), lm = [], i;
+    for (i = 0; i < 21; i++) lm.push({ x: p.x, y: p.y, z: 0 });
+    lm[0] = { x: p.x, y: p.y + r, z: 0 }; lm[9] = { x: p.x, y: p.y - r, z: 0 };
+    lm[5] = { x: p.x - r, y: p.y, z: 0 }; lm[17] = { x: p.x + r, y: p.y, z: 0 };
+    lm.heartClosed = closed;
+    return lm;
+  }
+  function heartResult(p, now) {
+    if (p && isFinite(p.x) && isFinite(p.y)) {
+      var a = +p.a || 0;
+      if (!hz.base || now - hz.seenAt > HEART.GONE_MS) hz.base = a;
+      var shut = hz.closed ? a < HEART.OPEN * hz.base : a < HEART.CLOSE * hz.base;
+      /* the open heart's size: follows a bigger heart quickly (closer), a smaller one slowly (further away) */
+      if (!shut) { hz.base += (a - hz.base) * (a > hz.base ? HEART.UP : HEART.DOWN); hz.last = { x: +p.x, y: +p.y, a: a }; }
+      hz.closed = shut; hz.seenAt = now;
+      return hz.last ? heartLm(hz.last, shut) : null;
+    }
+    /* not seen: hidden in the fist (it was just here, away from the edges), or gone */
+    var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
+    if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
+    hz.closed = true;
+    return heartLm(L, true);
+  }
+  function heartFeed(lm, now) {
+    var st = S.step;
+    if (!S.on) { if (idle.on && nh.on) airFrame(lm, now); return; }
+    if (st && nh.on && airMode(st)) airFrame(lm, now);
+  }
+  /* The hand texts with the heart. */
+  var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
+    'Point at what you want': 'Move the heart to what you want', 'Close and open your hand to choose': 'Close your hand over the heart, then open it' };
+  function handWord(t) { return heartOn() && HEART_WORDS[t] ? HEART_WORDS[t] : t; }
+  Lab._heart = function () { return { on: heartOn(), mode: heartMode(), base: hz.base, closed: hz.closed, last: hz.last }; };
   window.__bellatrixHands = function (d) {
     if (!d || !nh.on) return;
     if (d.pic) { nhPicture(d); return; }
     if (d.error) { nhFail(d.error); syncCam(); if (S.step) render(); return; }
     if (d.w > 0 && d.h > 0) { nh.w = d.w; nh.h = d.h; }
+    if (d.heart !== undefined) {
+      nh.n++;
+      var hnow = performance.now();
+      try { heartFeed(heartResult(d.heart, hnow), hnow); } catch (err) { log('Detection error: ' + err.message, 'app', 'error'); }
+      return;
+    }
     var lm = null, i, p;
     if (d.lm && d.lm.length >= 21) {
       lm = [];
@@ -613,6 +679,7 @@
     try { nhConfig(); r = String(window.BellatrixApp.handsStart()); } catch (e) { r = 'error'; }
     if (r !== 'ok') return false;
     nh.on = true; nh.onAt = Date.now(); nh.n = 0;
+    heartSync();
     return true;
   }
   function idleStop() {
@@ -787,7 +854,7 @@
     if (!showHand) $('holdBar').hidden = true;
     if (!airMode(st)) $('airCursor').hidden = true;
   }
-  function setHandText(t) { $('handText').textContent = Lab.t(t); $('chipHand').hidden = false; }
+  function setHandText(t) { $('handText').textContent = Lab.t(handWord(t)); $('chipHand').hidden = false; }
   function detectLoop() {
     clearTimeout(cam.timer);
     if (!cam.stream) return;
@@ -1003,6 +1070,7 @@
   function airConfirmMode() {
     var v = null;
     try { v = localStorage.getItem('bellatrix-air-confirm'); } catch (e) { v = null; }
+    if (v !== '0' && heartOn()) return 'closeopen';   /* the red heart: close the hand over it, then open (23 Nov) */
     return v === '0' ? null : v === 'closeopen' ? 'closeopen' : 'close';
   }
   /* All four fingers folded (thumb free): the closed hand. */
@@ -1146,7 +1214,7 @@
     if (CV) pr = airScreen(pr, r);
     if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; air.needOpen = false; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
-    var confirm = airConfirm(), shut = confirm && handClosed(lm), wasClosed = !!air.closed;
+    var confirm = airConfirm(), shut = confirm && (lm.heartClosed !== undefined ? !!lm.heartClosed : handClosed(lm)), wasClosed = !!air.closed;
     if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
     else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; }
     /* The "OK" (16 Nov, Rahma): close the hand on a button, then open it again; only then the ring starts to fill.

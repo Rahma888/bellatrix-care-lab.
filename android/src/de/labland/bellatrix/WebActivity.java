@@ -376,6 +376,12 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
             try { Hands.get(a).pictures(ms); } catch (Throwable t) { Log.w(TAG, "handsPictures: " + t); }
         }
 
+        /** 23 Nov (prototype): follow the red heart (true) or the hand (false). */
+        @JavascriptInterface
+        public void handsHeart(boolean on) {
+            try { Hands.get(a).heart(on); } catch (Throwable t) { Log.w(TAG, "handsHeart: " + t); }
+        }
+
         /** Settings for the next handsStart: {"camera":"id","backend":"cpu|gpu","rot":0|90|180|270}. */
         @JavascriptInterface
         public void handsConfig(String json) {

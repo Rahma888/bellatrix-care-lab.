@@ -86,6 +86,7 @@
     'Hand signs': 'Gestes de la main', 'Open hand, fist, fingers': 'Main ouverte, poing, doigts',
     'Point in the air': 'Montrer du doigt', 'Hold a finger on a button': 'Garder le doigt sur un bouton',
     'Count the movements with the camera': 'Compter les mouvements avec la caméra',
+    'Point with the red heart (test)': 'Pointer avec le cœur rouge (test)',
     'Camera only with the patient\'s consent. Nothing is recorded.': 'Caméra seulement avec l’accord du patient. Rien n’est enregistré.',
     'touch': 'au toucher', 'hand signs': 'gestes de la main', 'pointing in the air': 'doigt en l’air',
     /* personalise */
@@ -357,6 +358,7 @@
     'Hand signs': 'Handzeichen', 'Open hand, fist, fingers': 'Offene Hand, Faust, Finger',
     'Point in the air': 'In die Luft zeigen', 'Hold a finger on a button': 'Finger auf eine Taste halten',
     'Count the movements with the camera': 'Bewegungen mit der Kamera zählen',
+    'Point with the red heart (test)': 'Mit dem roten Herz zeigen (Test)',
     'Camera only with the patient\'s consent. Nothing is recorded.': 'Kamera nur mit Einwilligung des Patienten. Es wird nichts aufgezeichnet.',
     'touch': 'Berühren', 'hand signs': 'Handzeichen', 'pointing in the air': 'in die Luft zeigen',
     'Personalise': 'Anpassen', 'Personalise for {code}': 'Anpassen für {code}',

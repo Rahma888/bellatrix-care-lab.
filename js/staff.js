@@ -165,6 +165,7 @@
     $('fParticipant').value = st.participant || 'P1';
     var mode = document.querySelector('input[name="camMode"][value="' + (st.camMode || 'off') + '"]');
     if (mode) mode.checked = true;
+    if ($('optHeart')) $('optHeart').checked = st.airInput === 'heart';   /* 23 Nov: the red heart prototype */
     $('optCamMove').checked = true;   /* the camera counts the movements automatically */
     buildTiles();
     renderFilter();
@@ -389,6 +390,7 @@
   function renderCamNote() {
     var cam = camMode() !== 'off' || (selected().key === 'move' && $('optCamMove').checked);
     $('camNote').hidden = !cam;
+    if ($('heartRow')) $('heartRow').hidden = camMode() !== 'air';
   }
   function renderSummary() {
     var a = selected(), pr = patient().prefs;
@@ -685,6 +687,8 @@
     o.staff = st.staff || ''; o.participant = code;
     o.zone = (st.zoneFor && st.zoneFor[act.key]) || act.zone; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
     o.voice = false; o.camMode = camMode(); o.camMove = act.key === 'move' && $('optCamMove').checked;
+    /* 23 Nov (Rahma's prototype): point with the red heart instead of the hand (js/core.js, the app's HeartSpot) */
+    o.airInput = o.camMode === 'air' && $('optHeart') && $('optHeart').checked ? 'heart' : '';
     pr.greet = val('fGreet').trim();
     if ($('fSector')) pr.sector = val('fSector').trim().slice(0, 24);   /* 1.17 */
     pr.rate = parseFloat(val('optRate')) || 0.92; pr.volume = (parseInt(val('optVolume'), 10) || 90) / 100;
@@ -693,6 +697,7 @@
     o.profile = pr.profile || ''; o.greet = pr.greet; o.rate = pr.rate; o.volume = pr.volume; o.textSize = pr.textSize; o.subtitles = pr.subtitles;
     o.lang = pr.lang; o.mood = pr.mood;
     o.life = JSON.parse(JSON.stringify(readLife(pr)));
+    st.airInput = $('optHeart') && $('optHeart').checked ? 'heart' : '';
     st.participant = code; st.voice = false; st.camMode = o.camMode; st.camMove = $('optCamMove').checked; st.activity = act.key;
     save();
     if ($('startSummary')) { renderSummary(); renderCamNote(); }
@@ -1545,6 +1550,7 @@
     });
     $('optLang').addEventListener('change', function () { renderContent(); });
     document.querySelectorAll('input[name="camMode"]').forEach(function (r) { r.addEventListener('change', readSetup); });
+    if ($('optHeart')) $('optHeart').addEventListener('change', readSetup);
     /* A new patient code first shows that patient's own settings, then saves. */
     $('fParticipant').addEventListener('change', function () { renderPatient(); readSetup(); });
     $('cReset').addEventListener('click', resetActivity);

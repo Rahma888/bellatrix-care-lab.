@@ -254,6 +254,34 @@ else {
       // a session that starts takes the camera over; then the stub goes again
       await ev("(function(){Lab.start('hello',{preview:true,ready:true});try{Lab.endSession('test');}catch(e){}delete window.BellatrixApp;return true;})()");
     });
+    await test('page: red heart prototype (23 Nov): the app follows the heart, the pointer goes with it, closing the hand over it and opening chooses once; a heart gone at the edge is lost, not closed', async () => {
+      await ev("(function(){window.__hz={start:0,heart:[]};window.BellatrixApp={handsStart:function(){__hz.start++;return 'ok';},handsStop:function(){},handsConfig:function(){},handsHeart:function(on){__hz.heart.push(on);}};" +
+        "localStorage.setItem('bellatrix-air-input','heart');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      const on = await waitFor('window.__hz.start>=1', 4000);
+      await sleep(1000);   // the new screen settles (AIR.SETTLE_MS)
+      await ev("(function(){var o=document.querySelector('[data-b=hearttest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','hearttest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__hz0=Lab._air().chosen;return true;})()");
+      /* n heart messages 33 ms apart: at (x, y) with area a, or none (null: hidden or gone) */
+      const heart = (x, y, a, n) => ev("(function(){var k=0;return new Promise(function(res){(function f(){window.__bellatrixHands({t:Date.now(),w:480,h:640,heart:" + (a ? "{x:" + x + ",y:" + y + ",a:" + a + ",n:300}" : 'null') + "});" +
+        "if(++k<" + n + ")setTimeout(f,33);else{var a=Lab._air(),h=Lab._heart(),hv=document.querySelector('.airhover');res({key:a.key,hover:hv?hv.getAttribute('data-b'):null,closed:a.closed,clicks:a.chosen-window.__hz0,heart:h});}})();});})()");
+      let r = await heart(0.5, 0.5, 0.016, 40);
+      assert.ok(on && (await ev('window.__hz.heart')).indexOf(true) >= 0, 'the app was told to follow the heart ' + JSON.stringify(await ev('window.__hz')));
+      assert.ok(r.heart.on, 'heart mode on ' + JSON.stringify(r));
+      assert.equal(r.hover, 'hearttest', 'the heart in the middle of the picture points at the button in the middle ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'an open heart held still never chooses ' + JSON.stringify(r));
+      r = await heart(0.5, 0.5, 0.004, 12);   // most of it hidden in the fist
+      assert.equal(r.closed, true, 'a heart mostly hidden = closed hand ' + JSON.stringify(r));
+      r = await heart(0, 0, 0, 6);            // then not seen at all: still closed (it was just here)
+      assert.equal(r.closed, true, 'a heart hidden completely in the fist stays closed ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'closing alone does not choose');
+      r = await heart(0.5, 0.5, 0.016, 45);   // open again: the ring fills on the button, then it is chosen
+      assert.equal(r.clicks, 1, 'close then open over the button chooses once ' + JSON.stringify(r));
+      r = await heart(0.5, 0.5, 0.016, 30);
+      assert.equal(r.clicks, 1, 'holding the open heart still does not choose again');
+      r = await heart(0.97, 0.5, 0.016, 10);
+      r = await heart(0, 0, 0, 8);
+      assert.equal(r.heart.closed, false, 'a heart that left at the edge of the picture is lost, not closed ' + JSON.stringify(r));
+      await ev("(function(){var b=document.querySelector('[data-b=hearttest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}delete window.BellatrixApp;return true;})()");
+    });
     await test('page: Seated Move Along in the app (16 Nov): the movement pages keep the app camera for the hands and ask it for pictures; the page camera stays off', async () => {
       const r = await ev("(async function(){function w(ms){return new Promise(function(r){setTimeout(r,ms)})}" +
         "window.__nh={start:0,stop:0,pics:[]};window.BellatrixApp={handsStart:function(){__nh.start++;return 'ok';},handsStop:function(){__nh.stop++;},handsConfig:function(){},handsPictures:function(ms){__nh.pics.push(ms);}};" +
