@@ -612,13 +612,21 @@
        cap may just have left the picture,
      - the cap is hidden (under CLOSE of that size) for at least MIN_MS (a finger flicking past is no press),
      - and the cap is big enough to be measured at all (CAP_REF_MIN samples; else "bring the pen closer").
+     The cap count is the median of the last SMOOTH frames (Rahma's webcam: a small cap jumped 1..8 from one frame
+     to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.25, BODY: 0.25, REF_MS: 1500, MIN_MS: 250, EDGE: 0.15, CAP_EDGE: 0.1, CAP_MIN: 3, CAP_REF_MIN: 8, PX: 360 };
-  var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null };
+  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.25, BODY: 0.25, REF_MS: 1500, MIN_MS: 150, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+    /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
+       so the pointer's patience is short with it, and the ring a little quicker */
+    CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700 };
+  var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
   function penPress(p, now) {
     var P = hz.pen, s = Math.max(1, +p.s || 0), c = +p.c || 0, moved = 0, ref = null, r0 = null, i, q;
-    if (!P || now - hz.seenAt > HEART.GONE_MS) P = hz.pen = { state: 'free', clearSince: 0, lastClear: 0, track: [], hist: [], at: null, pressAt: 0, capRef: 0 };
+    if (!P || now - hz.seenAt > HEART.GONE_MS) P = hz.pen = { state: 'free', clearSince: 0, lastClear: 0, track: [], hist: [], at: null, pressAt: 0, capRef: 0, cs: [] };
+    /* the cap count, smoothed: the median of the last SMOOTH frames */
+    P.cs.push(c); if (P.cs.length > PEN.SMOOTH) P.cs.shift();
+    c = P.cs.slice().sort(function (a2, b2) { return a2 - b2; })[P.cs.length >> 1];
     P.track.push({ t: now, x: +p.x, y: +p.y });
     while (P.track.length && now - P.track[0].t > PEN.STILL_MS) P.track.shift();
     for (i = 0; i < P.track.length; i++) {
@@ -638,7 +646,7 @@
     P.small = capRef < PEN.CAP_REF_MIN;
     P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
     if (P.state === 'pressed') {
-      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; }   /* a big move: no press */
+      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; hz.cancelAt = now; }   /* a big move: no press, and no release either */
       else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go */
     } else if (shows) {
       if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
@@ -702,6 +710,7 @@
       return hz.last ? heartLm(hz.last, shut) : null;
     }
     /* not seen: hidden in the fist (it was just here, away from the edges), or gone */
+    if (mode === 'pen' && hz.pen && hz.pen.state === 'pressed') { hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now; }   /* lost while pressed: no release */
     var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
     if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
     hz.closed = !press;   /* the object's mark under a finger for a moment: the pointer just stays */
@@ -745,7 +754,7 @@
     if (!penLocal()) return;
     var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: p ? +p.x.toFixed(3) : null, y: p ? +p.y.toFixed(3) : null, s: p ? p.samples : 0, c: p ? p.capSamples : 0,
       ref: P.ratio || 0, state: P.state || '', why: P.why || '', moved: P.moved ? +P.moved.toFixed(3) : 0, closed: !!air.closed, armed: !!air.armed,
-      hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small };
+      hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small, ms: +(hzPage.ms || 0).toFixed(1), cs: P.c };
     if (p && now - (penDbg.colAt || 0) > 500) { penDbg.colAt = now; row.colours = penColours(d, w, h, p.x * w, p.y * h); }
     if (now - penDbg.mapAt > 500) { penDbg.mapAt = now; row.map = penMap(d, w, h); row.w = w; row.h = h; }
     penDbg.rows.push(row);
@@ -759,7 +768,7 @@
       penDbg.el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;background:rgba(0,0,0,.75);color:#fff;font:14px/1.35 monospace;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:pre';
       document.body.appendChild(penDbg.el);
     }
-    penDbg.el.textContent = 'TEST surligneur\n' + (p ? 'vu  x' + row.x + ' y' + row.y + '  corps ' + row.s : 'PAS VU') + '\ncapuchon ' + row.c + ' (repère ' + row.ref + ')' +
+    penDbg.el.textContent = 'TEST surligneur  (' + row.ms + ' ms)\n' + (p ? 'vu  x' + row.x + ' y' + row.y + '  corps ' + row.s : 'PAS VU') + '\ncapuchon ' + row.c + ' lissé ' + row.cs + ' (repère ' + row.ref + ')' +
       (row.small && p ? '  -> rapprochez le surligneur' : '') +
       '\nétat ' + row.state + (row.why ? '  (' + row.why + ')' : '') + '\nfermé ' + row.closed + '  anneau ' + row.armed + '  choix ' + row.chosen;
   }
@@ -775,7 +784,8 @@
     if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
     if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
     hzPage.ctx.drawImage(src, 0, 0, w, h);
-    var img = hzPage.ctx.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
+    var t0 = performance.now(), img = hzPage.ctx.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
+    hzPage.ms = performance.now() - t0;
     heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null, now), now);
     if (kind === 'pen') penDebug(now, p, img, w, h);
   }
@@ -1381,8 +1391,9 @@
     if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; air.needOpen = false; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
     var confirm = airConfirm(), shut = confirm && (lm.heartClosed !== undefined ? !!lm.heartClosed : handClosed(lm)), wasClosed = !!air.closed;
-    if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
-    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; }
+    var penOn = markInput() === 'pen' && heartOn(), cms = penOn ? PEN.CLOSE_PATIENCE : AIR.CLOSE_MS, oms = penOn ? PEN.OPEN_PATIENCE : AIR.OPEN_MS;
+    if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= cms) air.closed = true; }
+    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= oms) air.closed = false; }
     /* The "OK" (16 Nov, Rahma): close the hand on a button, then open it again; only then the ring starts to fill.
        Closing on a button remembers it (squeeze); opening again arms it; a new close starts a new OK. */
     var cmode = confirm ? airConfirmMode() : null;
@@ -1392,6 +1403,8 @@
       if (cmode === 'close' && air.squeeze && !air.needOpen) air.armed = { el: air.squeeze, at: now };
     }
     if (confirm && !air.closed && wasClosed) {
+      /* a highlighter press that was cancelled (moved away, pen lost) is not a release (23 Nov) */
+      if (penOn && now - (hz.cancelAt || 0) < 800) air.squeeze = null;
       if (cmode === 'closeopen' && air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now };
       else air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
       air.squeeze = null; air.needOpen = false;
@@ -1436,7 +1449,7 @@
         ? (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Keep your hand closed' : air.needOpen ? 'Open your hand' : 'Close your hand to choose')
         : (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Hold still to choose' : air.closed ? 'Now open your hand' : 'Close and open your hand to choose'));
       if (!b || !air.armed || now < air.ready) { setRing(0); air.since = now; return; }
-      var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
+      var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : penOn ? PEN.CONFIRM_MS : AIR.CONFIRM_MS));
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
