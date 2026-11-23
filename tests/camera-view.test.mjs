@@ -404,7 +404,7 @@ else {
         "function draw(){var p=window.__pen,k=p.k;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14*k,p.y-60*k,28*k,140*k);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66*k,15*k,0,7);g.fill();" +
         "if(p.covered){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,52*k);}}draw();window.__penTimer=setInterval(draw,33);" +
         "var s=c.captureStream(30);window.__gumReal2=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
-        "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+        "localStorage.setItem('bellatrix-air-input','pen');localStorage.setItem('bellatrix-pen-press','1');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
       await waitFor('!!(window.CamView.stream())', 8000);
       await sleep(1200);
       await ev("(function(){var o=document.querySelector('[data-b=pentest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','pentest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:290px;top:710px;width:500px;height:500px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__pn0=Lab._air().chosen;return true;})()");
@@ -455,8 +455,38 @@ else {
       await set({ covered: false });
       await sleep(1400);
       assert.equal((await look()).clicks, 2, 'press and let go again: the next choice');
-      await ev("(function(){window.__pen.covered=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
+      await ev("(function(){window.__pen.covered=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');localStorage.removeItem('bellatrix-pen-press');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal2;return true;})()");
+    });
+    await test('page: highlighter, the simple way (23 Nov, the default): the pen on a button for a moment chooses it, once; move away and back for the next; pressing the cap is not needed', async () => {
+      await send('Page.reload', {}, sid);
+      await waitFor("!!window.Lab && !!window.CamView && document.readyState === 'complete'");
+      await sleep(800);
+      await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250};" +
+        "function draw(){var p=window.__pen;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14,p.y-60,28,140);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66,15,0,7);g.fill();}" +
+        "draw();window.__penTimer=setInterval(draw,33);var s=c.captureStream(30);window.__gumReal3=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
+        "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      await waitFor('!!(window.CamView.stream())', 8000);
+      await sleep(1200);
+      await ev("(function(){var o=document.querySelector('[data-b=dwelltest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','dwelltest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:290px;top:710px;width:500px;height:500px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__dw0=Lab._air().chosen;return true;})()");
+      const look = () => ev("(function(){var a=Lab._air(),h=document.querySelector('.airhover');return {hover:h?h.getAttribute('data-b'):null,clicks:a.chosen-window.__dw0,text:document.getElementById('handText').textContent};})()");
+      await sleep(2400);
+      let r = await look();
+      assert.equal(r.hover, 'dwelltest', 'the pen points at the button ' + JSON.stringify(r));
+      assert.equal(r.clicks, 1, 'staying on the button chose it, without any press ' + JSON.stringify(r));
+      await sleep(1600);
+      assert.equal((await look()).clicks, 1, 'staying longer does not choose again');
+      /* away (no button there) and back, moving like a hand (not jumping: the finder follows the pen) */
+      const glide = (x1, y1) => ev("new Promise(function(res){var p=window.__pen,x0=p.x,y0=p.y,k=0;var iv=setInterval(function(){k++;p.x=x0+(" + x1 + "-x0)*k/15;p.y=y0+(" + y1 + "-y0)*k/15;if(k>=15){clearInterval(iv);res(true);}},40);})");
+      await glide(110, 150);
+      await sleep(1000);
+      const away = JSON.stringify(Object.assign(await look(), { air: await ev('Lab._air()') }));
+      await glide(320, 250);
+      await sleep(2400);
+      r = await look();
+      assert.equal(r.clicks, 2, 'away and back: chosen again ' + JSON.stringify(Object.assign(r, { air: await ev('Lab._air()') })) + ' / away: ' + away);
+      await ev("(function(){var b=document.querySelector('[data-b=dwelltest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
+        "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal3;return true;})()");
     });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);

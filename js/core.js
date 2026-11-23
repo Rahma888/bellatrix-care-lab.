@@ -622,7 +622,9 @@
     CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
     /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
        on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
-    RING_MOVE_PX: 600 };
+    RING_MOVE_PX: 600,
+    /* the simple way (default): stay on a button this long to choose it */
+    DWELL_MS: 1200 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
   function penPress(p, now) {
     var P = hz.pen, s = Math.max(1, +p.s || 0), c = +p.c || 0, moved = 0, ref = null, r0 = null, i, q;
@@ -803,7 +805,8 @@
     'Point at what you want': 'Move the object to what you want' };
   var PEN_WORDS = { 'Point at the screen with one finger': 'Show the highlighter to the camera', 'Show your hand to the camera': 'Show the highlighter to the camera',
     'Point at what you want': 'Move the highlighter to what you want', 'Close and open your hand to choose': 'Press the cap with your thumb, then let go',
-    'Now open your hand': 'Now let go of the cap' };
+    'Now open your hand': 'Now let go of the cap', 'Hold still to choose': 'Keep the highlighter on it to choose',
+    'Move your finger, then point again': 'Move the highlighter, then point again' };
   function handWord(t) {
     var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : m === 'pen' ? PEN_WORDS : null;
     return w && w[t] ? w[t] : t;
@@ -1245,7 +1248,12 @@
     /* Stop needs a longer closed hand, as before (Stop is the one button that must not be pressed by accident): */
     CONFIRM_STOP_MS: 1500 };
   /* 'bellatrix-air-confirm' '0' = the old way (holding still is enough); anything else = close the hand to choose. */
-  function airConfirm() { try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; } }
+  function airConfirm() {
+    /* 23 Nov (Rahma, after the tablet test, "simpler, like in this video"): with the highlighter, pointing at a button
+       and staying on it chooses it (PEN.DWELL_MS); no press on the cap. 'bellatrix-pen-press' '1' brings the press back. */
+    if (markInput() === 'pen' && heartOn()) { try { return localStorage.getItem('bellatrix-pen-press') === '1'; } catch (e) { return false; } }
+    try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; }
+  }
   /* 16 Nov afternoon (Rahma): open hand = select (the pointer follows), closed hand = OK: the ring fills while the hand
      stays closed on the button, then it is chosen; open again before the next OK. 'bellatrix-air-confirm':
      'closeopen' = the morning's close-then-open OK, '0' = hold still as at first. */
@@ -1471,7 +1479,7 @@
     setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.guard ? 'Move your finger, then point again' : 'Hold still to choose');
     /* While waiting, the hold only starts counting once the pointer is free again. */
     if (!b || key === air.done || waiting) { setRing(0); if (waiting) air.since = now; return; }
-    var p = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.STOP_MS : AIR.DWELL_MS));
+    var p = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.STOP_MS : markInput() === 'pen' && heartOn() ? PEN.DWELL_MS : AIR.DWELL_MS));
     setRing(p);
     if (p >= 1) {
       air.done = key; air.guard = { x: air.x, y: air.y }; setRing(0); air.chosen = (air.chosen || 0) + 1;
