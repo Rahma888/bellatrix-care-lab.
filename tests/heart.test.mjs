@@ -57,5 +57,31 @@ test('following: a heart half hidden in a fist stays the heart, not the bigger r
   assert.ok(near(res['follow-fist'], 305 / 480, 205 / 640, 0.05), JSON.stringify(res['follow-fist']));
   assert.ok(near(res['no-follow-fist'], 90 / 480, 510 / 640, 0.03), 'without the last frame the box would win: ' + JSON.stringify(res['no-follow-fist']));
 });
+/* js/heartspot.js (the page's copy, for a PC webcam) gives the same answers on the same drawn pictures. */
+const require = (await import('node:module')).createRequire(import.meta.url);
+const HS = require('../js/heartspot.js');
+{
+  const W = 480, H = 640, RED = [210, 30, 40], DARK = [120, 20, 25], SKIN = [222, 172, 140], BROWN = [150, 92, 60], PINK = [235, 150, 160];
+  const room = () => { const d = new Uint8ClampedArray(W * H * 4); for (let i = 0; i < W * H; i++) { const g = 90 + ((i * 7919) % 40); d[i * 4] = g; d[i * 4 + 1] = g; d[i * 4 + 2] = g + 5; d[i * 4 + 3] = 255; } return d; };
+  const put = (d, x, y, c) => { const o = (y * W + x) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; };
+  const disc = (d, cx, cy, r, c) => { for (let y = Math.max(0, cy - r); y < Math.min(H, cy + r); y++) for (let x = Math.max(0, cx - r); x < Math.min(W, cx + r); x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) put(d, x, y, c); };
+  const one = (d) => HS.create().find(d, W, H, 4, 0);
+  const same = (name, js) => test('page copy = app: ' + name, () => {
+    const j = res[name];
+    if (!j.found) { assert.equal(js, null, JSON.stringify(js)); return; }
+    assert.ok(js && Math.abs(js.x - j.x) < 0.005 && Math.abs(js.y - j.y) < 0.005 && Math.abs(js.area - j.area) < 0.0005, JSON.stringify({ js, java: j }));
+  });
+  let d = room(); disc(d, 120, 300, 70, SKIN); disc(d, 300, 200, 40, RED); same('heart', one(d));
+  d = room(); disc(d, 300, 200, 40, RED); disc(d, 30, 600, 9, RED); same('heart-and-red-spot', one(d));
+  d = room(); disc(d, 240, 320, 90, SKIN); disc(d, 360, 500, 50, BROWN); disc(d, 100, 100, 40, PINK); same('no-heart', one(d));
+  d = room(); disc(d, 300, 200, 40, RED); for (let y = 176; y < 240; y++) for (let x = 260; x < 340; x++) put(d, x, y, SKIN); same('heart-in-fist', one(d));
+  d = room(); disc(d, 300, 200, 40, RED); disc(d, 300, 200, 20, DARK); same('heart-shaded', one(d));
+  d = room(); disc(d, 300, 200, 40, RED); for (let y = 150; y < 250; y++) for (let x = 0; x < W; x++) if ((x >= 280 && x < 290) || (x >= 310 && x < 320)) put(d, x, y, SKIN); same('heart-split', one(d));
+  const f = HS.create(); d = room(); disc(d, 300, 200, 40, RED); f.find(d, W, H, 4, 1000);
+  d = room(); disc(d, 305, 205, 40, RED); for (let y = 191; y < 260; y++) for (let x = 250; x < 360; x++) put(d, x, y, SKIN); for (let y = 480; y < 540; y++) for (let x = 60; x < 120; x++) put(d, x, y, RED);
+  const fj = f.find(d, W, H, 4, 1033), j = res['follow-fist'];
+  test('page copy = app: follow-fist', () => assert.ok(fj && Math.abs(fj.x - j.x) < 0.005 && Math.abs(fj.y - j.y) < 0.005, JSON.stringify({ fj, j })));
+  test('page copy: isRed has the same rule (skin no, heart yes)', () => { assert.equal(HS.isRed(222, 172, 140), false); assert.equal(HS.isRed(210, 30, 40), true); assert.equal(HS.isRed(177, 106, 112), false); });
+}
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

@@ -147,7 +147,7 @@ else {
     });
     await sleep(600);
     const rep = await ev('JSON.stringify(CamView.report())');
-    console.log('     fake camera settings: ' + rep + ' · ' + await ev("(function(){var t=CamView.stream().getVideoTracks()[0].getSettings();return t.width+'x'+t.height;})()"));
+    console.log('     fake camera settings: ' + rep + ' · ' + await ev("(function(){var s=CamView.stream();if(!s)return 'camera being opened again';var t=s.getVideoTracks()[0].getSettings();return t.width+'x'+t.height;})()"));
     await key('c');
     await test('page: key C opens the panel with the camera box (blurred fill + contain picture, mirrored)', async () => {
       const r = await ev("(function(){var p=document.getElementById('camPanel');if(!p||p.hidden)return null;var f=p.querySelector('video.camfill'),i=p.querySelector('video.camimg'),cf=getComputedStyle(f),ci=getComputedStyle(i);return {fit:[cf.objectFit,ci.objectFit],fill:cf.filter,img:ci.filter,tf:i.style.transform,src:!!i.srcObject&&i.srcObject===f.srcObject,w:i.videoWidth,title:p.querySelector('h3').textContent,labels:[].map.call(p.querySelectorAll('.campanel-row span'),function(s){return s.textContent;})};})()");
@@ -329,6 +329,41 @@ else {
       assert.equal(d.still, 0, 'resting with a little tremor counts nothing');
       assert.equal(d.two, 2, 'two pushes forward and back count two');
       assert.equal(d.moved, 3, 'hands left forward for long: one more count, then a new resting place (no endless count) ' + r);
+    });
+    /* last: it replaces the page's camera with a drawn one for a while */
+    await test('page: red heart on the page camera (a PC webcam, 23 Nov): a red disc in the picture moves the pointer; shrinking it (closed hand) and showing it again chooses once', async () => {
+      /* a fresh page (no camera left open by the tests before), then the "webcam": a canvas with a grey room and a
+         red disc, drawn 30 times a second */
+      await send('Page.reload', {}, sid);
+      await waitFor("!!window.Lab && !!window.CamView && document.readyState === 'complete'");
+      await sleep(800);
+      await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__heartCam={x:320,y:240,r:50};" +
+        "function draw(){g.fillStyle='#6e6e73';g.fillRect(0,0,640,480);var h=window.__heartCam;if(h.r>0){g.fillStyle='rgb(210,30,40)';g.beginPath();g.arc(h.x,h.y,h.r,0,7);g.fill();}}draw();window.__heartTimer=setInterval(draw,33);" +
+        "var s=c.captureStream(30);window.__gumReal=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
+        "localStorage.setItem('bellatrix-air-input','heart');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
+      const camOn = await waitFor('!!(window.CamView.stream())', 8000);
+      await sleep(1200);
+      await ev("(function(){var o=document.querySelector('[data-b=hearttest2]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','hearttest2');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:390px;top:860px;width:300px;height:200px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__hz2=Lab._air().chosen;return true;})()");
+      const look = () => ev("(function(){var a=Lab._air(),h=document.querySelector('.airhover');var v=document.getElementById('cam'),S=Lab._t.state,tr=CamView.stream()&&CamView.stream().getVideoTracks()[0];return {seen:a.seen,closed:a.closed,hover:h?h.getAttribute('data-b'):null,clicks:a.chosen-window.__hz2,heart:Lab._heart(),step:S.step&&S.step.id,air:Lab._t.airMode(S.step),on:S.on,v:[v.readyState,v.videoWidth,v.videoHeight,v.paused],track:tr?tr.label+' '+tr.readyState:null};})()");
+      await sleep(1500);
+      let r = await look();
+      assert.ok(camOn && r.heart.on && r.seen, 'the page follows the red disc ' + JSON.stringify(r));
+      assert.equal(r.hover, 'hearttest2', 'the disc in the middle points at the button in the middle ' + JSON.stringify(r));
+      assert.equal(await ev('!!(Lab._t && Lab._t.state && true)'), true);
+      await ev('window.__heartCam.r=15;true');   // the hand closes over the heart
+      await sleep(700);
+      r = await look();
+      assert.equal(r.closed, true, 'a much smaller disc = closed hand ' + JSON.stringify(r));
+      await ev('window.__heartCam.r=50;true');   // open again: the ring fills, then the button is chosen
+      await sleep(1600);
+      r = await look();
+      assert.equal(r.clicks, 1, 'close then open chooses once ' + JSON.stringify(r));
+      await ev('window.__heartCam.x=80;true');   // the heart moves to the side: the pointer leaves the button
+      await sleep(1200);
+      r = await look();
+      assert.notEqual(r.hover, 'hearttest2', 'moving the heart moves the pointer away ' + JSON.stringify(r));
+      await ev("(function(){var b=document.querySelector('[data-b=hearttest2]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
+        "clearInterval(window.__heartTimer);navigator.mediaDevices.getUserMedia=window.__gumReal;return true;})()");   // the fake camera again for the next tests
     });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
   clearTimeout(watchdog);

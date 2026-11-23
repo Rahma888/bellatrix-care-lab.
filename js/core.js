@@ -594,7 +594,8 @@
      the heart (it mostly disappears) and open it again (it comes back): the 'closeopen' OK. While closed, the
      pointer stays where the heart was open. A heart gone at the edge of the picture, or for HEART.GONE_MS, is lost.
      On: Lab.opt.airInput === 'heart' (the head's "Point with the red heart"), or localStorage 'bellatrix-air-input'
-     'heart' / 'hand' on this tablet. Needs an app with BellatrixApp.handsHeart; else the hand as before. */
+     'heart' / 'hand' on this tablet. With the app's camera it needs BellatrixApp.handsHeart; with the page's own
+     camera (a PC webcam: testing before the robot) js/heartspot.js finds the heart here (heartPageFrame). */
   var HEART = { CLOSE: 0.45, OPEN: 0.7, GONE_MS: 1500, UP: 0.08, DOWN: 0.02 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false };
   function heartMode() {
@@ -605,7 +606,8 @@
     return Lab.opt.airInput === 'heart';
   }
   function heartSupported() { return !!(window.BellatrixApp && window.BellatrixApp.handsHeart); }
-  function heartOn() { return nh.on && heartSupported() && heartMode(); }
+  function heartPage() { return !nh.on && !!window.HeartSpot && heartMode(); }
+  function heartOn() { return heartMode() && (nh.on ? heartSupported() : !!window.HeartSpot && !!cam.stream); }
   function heartSync() {
     hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false;
     if (!heartSupported()) return;
@@ -639,7 +641,20 @@
   function heartFeed(lm, now) {
     var st = S.step;
     if (!S.on) { if (idle.on && nh.on) airFrame(lm, now); return; }
-    if (st && nh.on && airMode(st)) airFrame(lm, now);
+    if (st && (nh.on || cam.stream) && airMode(st)) airFrame(lm, now);
+  }
+  /* The page's own camera: the picture drawn small (HEART_PX on its long side, the app's grid) and searched here. */
+  var HEART_PX = 160, hzPage = { canvas: null, ctx: null, finder: null };
+  function heartPageFrame(now) {
+    if (!hzPage.finder) hzPage.finder = window.HeartSpot.create();
+    var src = frameSource(video), sw = src.videoWidth || src.width, sh = src.videoHeight || src.height;
+    if (!sw || !sh) return;
+    var k = HEART_PX / Math.max(sw, sh), w = Math.max(1, Math.round(sw * k)), h = Math.max(1, Math.round(sh * k));
+    if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
+    if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
+    hzPage.ctx.drawImage(src, 0, 0, w, h);
+    var p = hzPage.finder.find(hzPage.ctx.getImageData(0, 0, w, h).data, w, h, 1, now);
+    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area } : null, now), now);
   }
   /* The hand texts with the heart. */
   var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
@@ -941,6 +956,8 @@
     var st = S.step;
     if (!st || video.readyState < 2 || video.currentTime === cam.lastT) return;
     var now = performance.now(), res;
+    /* 23 Nov: the red heart on the page's own camera (a PC webcam): no hand model at all */
+    if (!st.pose && airMode(st) && heartPage()) { cam.lastT = video.currentTime; heartPageFrame(now); return; }
     if (!st.pose && (airMode(st) || handsHints(st) || (S.help && Lab.opt.camMode === 'signs' && S.camConsent)) && !hw.failed) {
       hwStart();
       if (!hw.ready) { if (!hw.failed) { setHandText('Loading hand detection…'); return; } }
