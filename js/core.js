@@ -616,10 +616,13 @@
      to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.25, BODY: 0.25, REF_MS: 1500, MIN_MS: 150, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+  var PEN = { CLOSE: 0.3, OPEN: 0.55, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 1500, MIN_MS: 150, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
     /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
        so the pointer's patience is short with it, and the ring a little quicker */
-    CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700 };
+    CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
+    /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
+       on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
+    RING_MOVE_PX: 600 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
   function penPress(p, now) {
     var P = hz.pen, s = Math.max(1, +p.s || 0), c = +p.c || 0, moved = 0, ref = null, r0 = null, i, q;
@@ -726,6 +729,9 @@
      (# body, o cap), never a picture; nothing on the robot. */
   var penDbg = { rows: [], sent: 0, mapAt: 0, el: null };
   function penLocal() { return typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && typeof fetch === 'function'; }
+  /* on the tablet only when switched on for a test (localStorage 'bellatrix-pen-debug' '1'): the box, and the rows kept
+     here (window.__penLog, the last 3000) for reading over the debugger; nothing is sent anywhere */
+  function penDebugOn() { if (penLocal()) return true; try { return localStorage.getItem('bellatrix-pen-debug') === '1'; } catch (e) { return false; } }
   function penMap(d, w, h) {
     var out = [], gx, gy, x, y, o, HS = window.HeartSpot;
     for (gy = 0; gy < 30; gy++) {
@@ -751,14 +757,15 @@
     return out.slice(0, 8).map(function (q) { return q[0] + 'x' + q[1]; }).join(' ');
   }
   function penDebug(now, p, d, w, h) {
-    if (!penLocal()) return;
+    if (!penDebugOn()) return;
     var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: p ? +p.x.toFixed(3) : null, y: p ? +p.y.toFixed(3) : null, s: p ? p.samples : 0, c: p ? p.capSamples : 0,
       ref: P.ratio || 0, state: P.state || '', why: P.why || '', moved: P.moved ? +P.moved.toFixed(3) : 0, closed: !!air.closed, armed: !!air.armed,
       hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small, ms: +(hzPage.ms || 0).toFixed(1), cs: P.c };
     if (p && now - (penDbg.colAt || 0) > 500) { penDbg.colAt = now; row.colours = penColours(d, w, h, p.x * w, p.y * h); }
     if (now - penDbg.mapAt > 500) { penDbg.mapAt = now; row.map = penMap(d, w, h); row.w = w; row.h = h; }
-    penDbg.rows.push(row);
-    if (now - penDbg.sent > 1000 && penDbg.rows.length) {
+    if (!penLocal()) { var L = window.__penLog || (window.__penLog = []); L.push(row); if (L.length > 3000) L.splice(0, L.length - 3000); }
+    else penDbg.rows.push(row);
+    if (penLocal() && now - penDbg.sent > 1000 && penDbg.rows.length) {
       penDbg.sent = now;
       try { fetch('/__pen-log', { method: 'POST', body: JSON.stringify(penDbg.rows), keepalive: true }).catch(function () {}); } catch (e) { /* testing only */ }
       penDbg.rows = [];
@@ -1413,7 +1420,7 @@
        hand moves the palm, and the choice must not slide to a neighbour (nor scroll the page). A big move of the
        hand away (2 x RELEASE_PX) cancels the OK. */
     var nx0 = pr.u * stageW(), ny0 = pr.v * stageH(), dts = Math.max(30, now - (air.last || now)) / 1000;
-    if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > 2 * AIR.RELEASE_PX) air.armed = null;
+    if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > (penOn ? PEN.RING_MOVE_PX : 2 * AIR.RELEASE_PX)) air.armed = null;
     var lockOn = confirm && ((air.closed && air.squeeze) || air.armed) && air.hold && air.hold.isConnected;
     if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
