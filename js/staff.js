@@ -163,9 +163,9 @@
   function renderSetup() {
     var st = store.settings;
     $('fParticipant').value = st.participant || 'P1';
-    var mode = document.querySelector('input[name="camMode"][value="' + (st.camMode || 'off') + '"]');
+    /* 23 Nov: the red heart prototype is a fourth choice; it is pointing in the air with the heart */
+    var mode = document.querySelector('input[name="camMode"][value="' + (st.camMode === 'air' && st.airInput === 'heart' ? 'heart' : st.camMode || 'off') + '"]');
     if (mode) mode.checked = true;
-    if ($('optHeart')) $('optHeart').checked = st.airInput === 'heart';   /* 23 Nov: the red heart prototype */
     $('optCamMove').checked = true;   /* the camera counts the movements automatically */
     buildTiles();
     renderFilter();
@@ -284,7 +284,7 @@
     var first = String(a.flow || '').split(/(?:\.|:)\s/)[0];
     return ST(first.replace(/\.$/, '') + '.');
   }
-  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air' };
+  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air', heart: 'red heart' };
   var LANG_SHORT = { en: 'English', fr: 'Français', de: 'Deutsch' };
   var filter = 'all';
   try { filter = sessionStorage.getItem('labFilter') || 'all'; } catch (e) { filter = 'all'; }
@@ -386,15 +386,17 @@
     if (i >= 0) list.splice(i, 1); else list.push(key);
     save(); renderDetail(); renderTiles();
   }
-  function camMode() { var m = document.querySelector('input[name="camMode"]:checked'); return m ? m.value : 'off'; }
+  /* the choice as the patient screen knows it: the red heart (23 Nov prototype) is pointing in the air ('air') with
+     airInput 'heart' */
+  function camChoice() { var m = document.querySelector('input[name="camMode"]:checked'); return m ? m.value : 'off'; }
+  function camMode() { var c = camChoice(); return c === 'heart' ? 'air' : c; }
   function renderCamNote() {
     var cam = camMode() !== 'off' || (selected().key === 'move' && $('optCamMove').checked);
     $('camNote').hidden = !cam;
-    if ($('heartRow')) $('heartRow').hidden = camMode() !== 'air';
   }
   function renderSummary() {
     var a = selected(), pr = patient().prefs;
-    $('startSummary').innerHTML = '<b>' + esc(patientCode()) + '</b> · ' + esc(actName(a)) + ' · ' + esc(LANG_SHORT[I18N.valid(pr.lang)]) + ' · ' + esc(ST(CAM_NAME[camMode()]));
+    $('startSummary').innerHTML = '<b>' + esc(patientCode()) + '</b> · ' + esc(actName(a)) + ' · ' + esc(LANG_SHORT[I18N.valid(pr.lang)]) + ' · ' + esc(ST(CAM_NAME[camChoice()]));
   }
   function renderPatientCard() {
     var code = patientCode();
@@ -688,7 +690,7 @@
     o.zone = (st.zoneFor && st.zoneFor[act.key]) || act.zone; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
     o.voice = false; o.camMode = camMode(); o.camMove = act.key === 'move' && $('optCamMove').checked;
     /* 23 Nov (Rahma's prototype): point with the red heart instead of the hand (js/core.js, the app's HeartSpot) */
-    o.airInput = o.camMode === 'air' && $('optHeart') && $('optHeart').checked ? 'heart' : '';
+    o.airInput = camChoice() === 'heart' ? 'heart' : '';
     pr.greet = val('fGreet').trim();
     if ($('fSector')) pr.sector = val('fSector').trim().slice(0, 24);   /* 1.17 */
     pr.rate = parseFloat(val('optRate')) || 0.92; pr.volume = (parseInt(val('optVolume'), 10) || 90) / 100;
@@ -697,7 +699,7 @@
     o.profile = pr.profile || ''; o.greet = pr.greet; o.rate = pr.rate; o.volume = pr.volume; o.textSize = pr.textSize; o.subtitles = pr.subtitles;
     o.lang = pr.lang; o.mood = pr.mood;
     o.life = JSON.parse(JSON.stringify(readLife(pr)));
-    st.airInput = $('optHeart') && $('optHeart').checked ? 'heart' : '';
+    st.airInput = o.airInput;
     st.participant = code; st.voice = false; st.camMode = o.camMode; st.camMove = $('optCamMove').checked; st.activity = act.key;
     save();
     if ($('startSummary')) { renderSummary(); renderCamNote(); }
@@ -1550,7 +1552,6 @@
     });
     $('optLang').addEventListener('change', function () { renderContent(); });
     document.querySelectorAll('input[name="camMode"]').forEach(function (r) { r.addEventListener('change', readSetup); });
-    if ($('optHeart')) $('optHeart').addEventListener('change', readSetup);
     /* A new patient code first shows that patient's own settings, then saves. */
     $('fParticipant').addEventListener('change', function () { renderPatient(); readSetup(); });
     $('cReset').addEventListener('click', resetActivity);
