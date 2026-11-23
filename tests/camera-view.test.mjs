@@ -394,37 +394,56 @@ else {
       await ev("(function(){var b=document.querySelector('[data-b=hearttest2]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__heartTimer);navigator.mediaDevices.getUserMedia=window.__gumReal;return true;})()");   // the fake camera again for the next tests
     });
-    await test('page: highlighter (23 Nov, third try): the fluorescent pen moves the pointer; the thumb on its cap until the ring is full chooses once; let go for the next', async () => {
+    await test('page: highlighter (23 Nov, made strict): a finger over the cap while moving, a cap hidden from the start or a pen moving away never choose; a real press (cap seen, pen still, cap hidden) fills the ring and chooses once', async () => {
       await send('Page.reload', {}, sid);
       await waitFor("!!window.Lab && !!window.CamView && document.readyState === 'complete'");
       await sleep(800);
-      /* the "webcam": a grey room, a fluorescent yellow-green pen standing in the middle, its dark green cap on top;
-         pressed = a thumb (skin colour) over the cap */
-      await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250,pressed:false};" +
-        "function draw(){var p=window.__pen;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14,p.y-60,28,140);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66,15,0,7);g.fill();" +
-        "if(p.pressed){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34,p.y-100,68,52);}}draw();window.__penTimer=setInterval(draw,33);" +
+      /* the "webcam": a grey room, a fluorescent yellow-green pen in the middle (k: its size, x: its place), its dark
+         green cap on top; covered = a finger (skin colour) over the cap */
+      await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250,k:1,covered:false};" +
+        "function draw(){var p=window.__pen,k=p.k;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14*k,p.y-60*k,28*k,140*k);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66*k,15*k,0,7);g.fill();" +
+        "if(p.covered){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,52*k);}}draw();window.__penTimer=setInterval(draw,33);" +
         "var s=c.captureStream(30);window.__gumReal2=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
         "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
       await waitFor('!!(window.CamView.stream())', 8000);
       await sleep(1200);
-      await ev("(function(){var o=document.querySelector('[data-b=pentest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','pentest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:340px;top:760px;width:400px;height:400px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__pn0=Lab._air().chosen;return true;})()");
-      const look = () => ev("(function(){var a=Lab._air(),h=document.querySelector('.airhover');return {seen:a.seen,closed:a.closed,hover:h?h.getAttribute('data-b'):null,clicks:a.chosen-window.__pn0,heart:Lab._heart(),text:document.getElementById('handText').textContent};})()");
+      await ev("(function(){var o=document.querySelector('[data-b=pentest]');if(o)o.remove();var b=document.createElement('button');b.setAttribute('data-b','pentest');b.setAttribute('data-a','none');b.style.cssText='position:absolute;left:290px;top:710px;width:500px;height:500px;z-index:50';b.textContent='OK';document.getElementById('stage').appendChild(b);window.__pn0=Lab._air().chosen;return true;})()");
+      const look = () => ev("(function(){var a=Lab._air(),h=document.querySelector('.airhover');return {seen:a.seen,closed:a.closed,hover:h?h.getAttribute('data-b'):null,clicks:a.chosen-window.__pn0,heart:Lab._heart()};})()");
+      const set = (o) => ev('Object.assign(window.__pen,' + JSON.stringify(o) + ');true');
       await sleep(1500);
       let r = await look();
       assert.ok(r.heart.on && r.seen && r.hover === 'pentest', 'the pen in the middle points at the button in the middle ' + JSON.stringify(r));
       assert.equal(r.clicks, 0, 'pointing alone never chooses');
-      await ev('window.__pen.pressed=true;true');   // the thumb on the cap: the ring fills, then the button is chosen
-      await sleep(1700);
+      /* 1. a finger over the cap while the pen moves: no press */
+      await ev("(function(){var t=0;window.__wig=setInterval(function(){t++;window.__pen.x=320+(t%2?18:-18);},90);window.__pen.covered=true;return true;})()");
+      await sleep(2000);
+      await ev('clearInterval(window.__wig);window.__pen.x=320;true');
+      /* 2. then still, but the cap was not seen before: no press either */
+      await sleep(2000);
       r = await look();
-      assert.equal(r.clicks, 1, 'pressing the cap until the ring is full chooses once ' + JSON.stringify(r));
+      assert.equal(r.clicks, 0, 'a finger over the cap while moving, then kept there, chooses nothing ' + JSON.stringify(r));
+      /* 3. the pen moves away (smaller, cap and all): no press */
+      await set({ covered: false });
+      await sleep(900);
+      await set({ k: 0.6 });
+      await sleep(2000);
+      await set({ k: 1 });
+      await sleep(900);
+      r = await look();
+      assert.equal(r.clicks, 0, 'a pen further away is not a press ' + JSON.stringify(r));
+      /* 4. a real press: the cap seen, the pen still, then the thumb on the cap until the ring is full */
+      await set({ covered: true });
+      await sleep(2000);
+      r = await look();
+      assert.equal(r.clicks, 1, 'cap seen, pen still, cap pressed: chosen once ' + JSON.stringify(r));
       await sleep(1200);
       assert.equal((await look()).clicks, 1, 'still pressing: no second choice');
-      await ev('window.__pen.pressed=false;true');
-      await sleep(800);
-      await ev('window.__pen.pressed=true;true');
-      await sleep(1700);
+      await set({ covered: false });
+      await sleep(900);
+      await set({ covered: true });
+      await sleep(2000);
       assert.equal((await look()).clicks, 2, 'let go, press again: the next choice');
-      await ev("(function(){window.__pen.pressed=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
+      await ev("(function(){window.__pen.covered=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal2;return true;})()");
     });
   } catch (e) { fail++; console.log('FAIL page run: ' + (e && e.message || e)); }
