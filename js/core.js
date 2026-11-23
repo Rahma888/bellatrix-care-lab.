@@ -622,7 +622,7 @@
     CLOSE_PATIENCE: 60, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
     /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
        on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
-    RING_MOVE_PX: 600,
+    RING_MOVE_PX: 600, LOST_MS: 700,
     /* only with 'bellatrix-pen-press' '0': stay on a button this long to choose it */
     DWELL_MS: 1200 };
   var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
@@ -715,7 +715,12 @@
       return hz.last ? heartLm(hz.last, shut) : null;
     }
     /* not seen: hidden in the fist (it was just here, away from the edges), or gone */
-    if (mode === 'pen' && hz.pen && hz.pen.state === 'pressed') { hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now; }   /* lost while pressed: no release */
+    /* the pen out of sight while pressed: the pressing hand often hides it for a moment (Rahma's tablet test: every press
+       was cancelled so); up to LOST_MS it stays pressed, longer it is cancelled (no release, no ring) */
+    if (mode === 'pen' && hz.pen && hz.pen.state === 'pressed') {
+      if (now - hz.seenAt <= PEN.LOST_MS && hz.last) return heartLm(hz.last, now - hz.pen.pressAt >= PEN.MIN_MS);
+      hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now;
+    }
     var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
     if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
     hz.closed = !press;   /* the object's mark under a finger for a moment: the pointer just stays */

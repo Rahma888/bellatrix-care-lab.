@@ -17,7 +17,7 @@
    ES5, no dependencies. */
 (function (root) {
   'use strict';
-  var SAT_PCT = 47, MIN_SAMPLES = 20, FOLLOW_MS = 1500, GAP = 3, PEN_MAX_SHARE = 0.08;
+  var SAT_PCT = 47, MIN_SAMPLES = 20, FOLLOW_MS = 1500, GAP = 3, PEN_MAX_SHARE = 0.08, PEN_MIN_FOLLOW = 8;
 
   function isRed(r, g, b) { var m = g > b ? g : b; return r >= 70 && (r - m) * 100 >= SAT_PCT * r; }
   /* the highlighter's body: yellow-green. 23 Nov, after Rahma's PC webcam (it shows the fluo much paler than a phone):
@@ -51,7 +51,9 @@
           if (mask[i]) n++;
         }
       }
-      if (n < MIN_SAMPLES) return null;
+      /* the pen already followed may be mostly hidden by the hand that presses: a smaller piece near it still counts */
+      var minN = pen && now - last.at <= FOLLOW_MS ? PEN_MIN_FOLLOW : MIN_SAMPLES;
+      if (n < minN) return null;
       var comps = [], c, head, tail, q, qx, qy, dx, dy, nx, ny, j, cur;
       for (i = 0; i < cap; i++) {
         if (!mask[i] || label[i]) continue;
@@ -107,7 +109,7 @@
           mx0 = Math.min(mx0, c.x0); mx1 = Math.max(mx1, c.x1); my0 = Math.min(my0, c.y0); my1 = Math.max(my1, c.y1);
         }
       }
-      if (cnt < MIN_SAMPLES) return null;
+      if (cnt < minN) return null;
       last.gx = sx / cnt; last.gy = sy / cnt; last.at = now;
       last.reach = Math.max(4, 1.5 * Math.sqrt(cnt / Math.PI) + 2);
       return {
