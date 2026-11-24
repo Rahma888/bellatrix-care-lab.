@@ -492,7 +492,7 @@
       '<h2>' + esc(T('Which day?')) + '</h2><div class="pc2-days" role="radiogroup">' + days.map(function (x, j) {
         var v = dayValue(x), on = v === S.planDay;
         return '<button type="button" role="radio" aria-checked="' + on + '" class="pc2-day' + (on ? ' on' : '') + '" data-pc="pday" data-v="' + v + '">' +
-          '<small>' + esc(j === 0 ? T('Today') : dayName(x, { weekday: 'short' })) + '</small><b>' + x.getDate() + '</b></button>';
+          '<small>' + esc(dayName(x, { weekday: 'short' })) + '</small><b>' + x.getDate() + '</b></button>';
       }).join('') + '</div>' +
       '<h2>' + esc(T('At what time?')) + '</h2><div class="pc2-chips" role="radiogroup">' + PLAN_TIMES.map(function (t) {
         var on = t === S.planTime;
