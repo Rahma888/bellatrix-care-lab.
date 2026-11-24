@@ -65,6 +65,9 @@ const MONTHS = [1, 3, 12];
 const THEMES = ['family', 'travel', 'childhood', 'work', 'animals', 'celebrations', 'town'];   // the life album themes
 const LEVELS = ['all', 'messages_album', 'none'];
 const STATUSES = ['active', 'suspended', 'removed', 'pending', 'refused'];   // pending / refused: a relative's own request for access (1.16)
+/* A PC test server without a robot (Rahma, 24 Nov): PORTAL_AUTO_ACCEPT=1 accepts new family accounts at once. Never on
+   a robot: the robot head's app never sets it, so there the care team always validates. */
+function autoAccept() { return process.env.PORTAL_AUTO_ACCEPT === '1'; }
 const CALL_LINK = /^https?:\/\/[A-Za-z0-9.\-:\[\]]{1,200}(\/[A-Za-z0-9._~\-\/]*)?\/famille\.html#t=[A-Za-z0-9_-]{16,64}$/;
 const PRICE_CENTS = 1099;              // fallback demo price a month; the real one is in js/premium-config.js
 const PRODUCTS = ['play', 'books'];
@@ -496,13 +499,14 @@ export function createPortal(opts = {}) {
       const person = { id: rnd(12), email, name, lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
       d.people[person.id] = person;
       const a = newLink(d, person.id, inv.rid, 'invite', body.relation);
-      /* Every NEW family account waits for the care team's one tap, also with an invitation (Rahma, 14 Nov). */
-      a.status = 'pending';
+      /* Every NEW family account waits for the care team's one tap, also with an invitation (Rahma, 14 Nov).
+         Only a PC test server without a robot (PORTAL_AUTO_ACCEPT=1, Rahma 24 Nov) accepts it at once. */
+      a.status = autoAccept() ? 'active' : 'pending';
       inv.usedAt = iso(now()); inv.usedBy = a.id;
       const token = newSession(d, person.id);
       save();
-      log('a family account was created with an invitation (resident ' + d.residents[inv.rid].code + '): waiting for the care team');
-      return [200, { token, me: me({ person, links: [a], link: a, access: 'access-pending', account: null, resident: null }) }];
+      log('a family account was created with an invitation (resident ' + d.residents[inv.rid].code + '): ' + (a.status === 'active' ? 'accepted at once (PC test)' : 'waiting for the care team'));
+      return [200, { token, me: me(a.status === 'active' ? { person, links: [a], link: a, access: 'ok', account: a, resident: d.residents[a.rid] } : { person, links: [a], link: a, access: 'access-pending', account: null, resident: null }) }];
     }
     /* A relative asks for access on their own: first name, last name, relationship, phone, e-mail, consent, and
        the resident's code and name as the access test (BF-03). Always validated by the care team (one tap). */
@@ -519,11 +523,11 @@ export function createPortal(opts = {}) {
       const person = { id: rnd(12), email, name: first, last, phone: str(body.phone, 30), lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
       d.people[person.id] = person;
       const a = newLink(d, person.id, res.rid, 'request', body.relation);
-      a.status = 'pending';
+      a.status = autoAccept() ? 'active' : 'pending';   /* PC test server only (PORTAL_AUTO_ACCEPT=1) */
       const token = newSession(d, person.id);
       save();
-      log('a relative asks for access to ' + res.code + ': see Care Team > To handle');
-      return [200, { token, me: me({ person, links: [a], link: a, access: 'access-pending', account: null, resident: null }) }];
+      log('a relative asks for access to ' + res.code + ': ' + (a.status === 'active' ? 'accepted at once (PC test)' : 'see Care Team > To handle'));
+      return [200, { token, me: me(a.status === 'active' ? { person, links: [a], link: a, access: 'ok', account: a, resident: d.residents[a.rid] } : { person, links: [a], link: a, access: 'access-pending', account: null, resident: null }) }];
     }
     if (p === 'login/start' && post) {
       if (limited(req, 'login', 12)) return [429, { error: 'slow-down' }];
