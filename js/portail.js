@@ -325,6 +325,12 @@
       'No connection to Bellatrix right now. Please try again in a moment.': 'Gerade keine Verbindung zu Bellatrix. Bitte versuchen Sie es gleich noch einmal.'
     });
   })();
+  /* Family app 2.0, start screens (Rahma's review of 24 Nov): new texts */
+  (function () {
+    function add(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    add('fr', { 'You have an invitation': 'Vous avez une invitation', 'Type the code from the care team, or scan the QR code on the robot.': 'Entrez le code reçu de l’équipe soignante, ou scannez le QR code du robot.', 'Type the code you received from the care team.': 'Entrez le code reçu de l’équipe soignante.', 'Scan the QR code': 'Scanner le QR code', 'You are invited to the family of {name}': 'Vous êtes invité·e dans la famille de {name}', 'Enter your code': 'Entrez votre code', 'Validate': 'Valider', 'The camera could not be opened.': 'La caméra n’a pas pu s’ouvrir.', 'Point the camera at the QR code on the robot.': 'Dirigez la caméra vers le QR code du robot.', 'This QR code is not a Bellatrix invitation.': 'Ce QR code n’est pas une invitation Bellatrix.', 'Code, 6 digits': 'Code à 6 chiffres', 'Please type the 6 digits of the code.': 'Tapez les 6 chiffres du code.', 'Please type the 8 characters of the code.': 'Tapez les 8 caractères du code.' });
+    add('de', { 'You have an invitation': 'Sie haben eine Einladung', 'Type the code from the care team, or scan the QR code on the robot.': 'Geben Sie den Code vom Pflegeteam ein oder scannen Sie den QR-Code am Roboter.', 'Type the code you received from the care team.': 'Geben Sie den Code ein, den Sie vom Pflegeteam erhalten haben.', 'Scan the QR code': 'QR-Code scannen', 'You are invited to the family of {name}': 'Sie sind in die Familie von {name} eingeladen', 'Enter your code': 'Geben Sie Ihren Code ein', 'Validate': 'Bestätigen', 'The camera could not be opened.': 'Die Kamera konnte nicht geöffnet werden.', 'Point the camera at the QR code on the robot.': 'Richten Sie die Kamera auf den QR-Code am Roboter.', 'This QR code is not a Bellatrix invitation.': 'Dieser QR-Code ist keine Bellatrix-Einladung.', 'Code, 6 digits': '6-stelliger Code', 'Please type the 6 digits of the code.': 'Bitte geben Sie die 6 Ziffern des Codes ein.', 'Please type the 8 characters of the code.': 'Bitte geben Sie die 8 Zeichen des Codes ein.' });
+  })();
 
   var $ = function (id) { return document.getElementById(id); };
   var app = $('app');
@@ -427,7 +433,7 @@
     S.offline = down;
     var b = document.getElementById('netBanner');
     if (!b && down) { b = document.createElement('div'); b.id = 'netBanner'; b.className = 'net-banner'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
-    if (b) { b.textContent = T('No connection to Bellatrix. The app tries again by itself.'); b.classList.toggle('on', down); }
+    if (b) { var nt = T('No connection to Bellatrix. The app tries again by itself.'); if (V2_START) b.innerHTML = START_ICON.wifioff + '<span>' + esc(nt) + '</span>'; else b.textContent = nt; b.classList.toggle('on', down); }
     if (down) retrySoon();
   }
   var retryTimer = 0;
@@ -537,6 +543,8 @@
     var h = '';
     if (S.screen === 'loading') h = head(false) + '<main class="main center"><p class="muted">' + esc(T('One moment…')) + '</p></main>';
     /* 15 Nov: the robot's public address changes when its app restarts; an installed app keeps the old one. */
+    else if (S.screen === 'unreachable' && V2_START) { h = unreachableV2(); retrySoon(); }
+    else if (S.screen === 'invcode') h = invCodeScreen();
     else if (S.screen === 'unreachable') { h = head(false) + '<main class="main center"><section class="card"><h2>' + esc(T('Bellatrix cannot be reached right now.')) + '</h2><p class="muted">' + esc(T('The robot may be switched off or restarting. The app tries again by itself: you stay signed in.')) + '</p><button type="button" class="btn primary" data-do="retry-start">' + esc(T('Try again')) + '</button><p class="fine">' + esc(T('If it stays like this, the robot may have a new address: scan the QR code on the robot again.')) + '</p></section></main>'; retrySoon(); }
     else if (S.screen === 'invite') h = inviteScreen();
     else if (S.screen === 'signin') h = signinScreen();
@@ -548,7 +556,113 @@
     app.innerHTML = h;
     after();
   }
-  function welcomeScreen() {
+  /* ---------- Family app 2.0: start screens (Rahma's review of 24 Nov) ----------
+     Accueil: the new version, centred in the middle for a calm look. Code sign-in: 6 boxes. Invitation: a
+     screen of its own (code in boxes, the QR code read by the camera where the phone can) and a card with the
+     resident's initial. No connection: a calm screen and a wifi-off sign. V2_START = false brings back the
+     screens as they were (welcomeScreenOld and the old branches are kept). */
+  var V2_START = true;
+  var START_ICON = (function () {
+    var svg = function (w, d) { return '<svg viewBox="0 0 24 24" width="' + w + '" height="' + w + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; };
+    return {
+      heart: svg(34, '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M12 15.4l-2.7-2.6a1.7 1.7 0 0 1 2.4-2.4l.3.3.3-.3a1.7 1.7 0 0 1 2.4 2.4z"/>'),
+      mail: svg(34, '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>'),
+      key: svg(34, '<circle cx="8" cy="15" r="4"/><path d="M10.8 12.2L19 4M16 7l3 3M14 9l2 2"/>'),
+      qr: svg(22, '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>'),
+      wifioff: svg(20, '<path d="M3 3l18 18"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-3-2.1"/><path d="M2 8.8a15 15 0 0 1 4.2-2.6"/><path d="M22 8.8A15 15 0 0 0 11 4.6"/><path d="M12 20h.01"/>'),
+      wifioffBig: svg(34, '<path d="M3 3l18 18"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.8"/><path d="M19 12.9a10 10 0 0 0-3-2.1"/><path d="M2 8.8a15 15 0 0 1 4.2-2.6"/><path d="M22 8.8A15 15 0 0 0 11 4.6"/><path d="M12 20h.01"/>')
+    };
+  })();
+  function welcomeScreen() { return V2_START ? welcomeScreenV2() : welcomeScreenOld(); }
+  function welcomeScreenV2() {
+    return head(false) + '<main class="main v2-start"><div class="v2-wrap">' +
+      '<span class="v2-ico">' + START_ICON.heart + '</span>' +
+      '<h1>' + esc(T('Stay close, even from far away')) + '</h1>' +
+      '<p class="v2-lead">' + esc(T('Send a photo, a voice message or a few words. Bellatrix shows them to your loved one.')) + '</p>' +
+      '<div class="v2-actions"><button type="button" class="btn primary" data-do="to-signin">' + esc(T('Sign in')) + '</button>' +
+      '<button type="button" class="btn" data-do="to-request">' + esc(T('Create an account')) + '</button>' +
+      '<button type="button" class="link" data-do="to-invcode">' + esc(T('I have an invitation code')) + '</button></div></div></main>';
+  }
+  /* a code typed in one field drawn as boxes (paste works; the field keeps the strict input check) */
+  function otp(id, n, extra) {
+    var boxes = '';
+    for (var i = 0; i < n; i++) boxes += (n === 8 && i === 4 ? '<b class="otp-dash">\u2013</b>' : '') + '<span></span>';
+    return '<div class="otp" data-n="' + n + '"><input id="' + id + '" ' + extra + '><div class="otp-boxes" aria-hidden="true">' + boxes + '</div></div>';
+  }
+  function paintOtp(w) {
+    var inp = w.querySelector('input'), n = +w.getAttribute('data-n') || 6;
+    var ch = String(inp ? inp.value : '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, n).split(''), focus = w.classList.contains('focus');
+    [].forEach.call(w.querySelectorAll('.otp-boxes span'), function (sp, i) {
+      sp.textContent = ch[i] || ''; sp.classList.toggle('full', !!ch[i]); sp.classList.toggle('cur', focus && i === Math.min(ch.length, n - 1));
+    });
+  }
+  document.addEventListener('input', function (e) {
+    var t = e.target, w = t && t.closest && t.closest('.otp'); if (!w) return;
+    if (t.id === 'invCode') { var a = t.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); t.value = a.length > 4 ? a.slice(0, 4) + '-' + a.slice(4) : a; }
+    paintOtp(w);
+  });
+  document.addEventListener('focusin', function (e) { var w = e.target && e.target.closest && e.target.closest('.otp'); if (w) { w.classList.add('focus'); paintOtp(w); } });
+  document.addEventListener('focusout', function (e) { var w = e.target && e.target.closest && e.target.closest('.otp'); if (w) { w.classList.remove('focus'); paintOtp(w); } });
+  function canScan() { return !!(window.BarcodeDetector && navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+  function invCodeScreen() {
+    var scan = canScan();
+    return head(false) + '<main class="main v2-start"><div class="v2-wrap">' +
+      '<span class="v2-ico">' + START_ICON.mail + '</span><h1>' + esc(T('You have an invitation')) + '</h1>' +
+      '<p class="v2-lead">' + esc(T(scan ? 'Type the code from the care team, or scan the QR code on the robot.' : 'Type the code you received from the care team.')) + '</p>' +
+      '<div class="field otp-field"><span>' + esc(T('Invitation code')) + '</span>' +
+      otp('invCode', 8, 'autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="9" aria-label="' + esc(T('Invitation code')) + '"') + '</div>' +
+      (scan ? '<button type="button" class="btn v2-scan" data-do="scan-qr">' + START_ICON.qr + '<span>' + esc(T('Scan the QR code')) + '</span></button>' : '') +
+      '<button type="button" class="btn primary" data-do="invite">' + esc(T('Continue')) + '</button>' +
+      '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></div></main>';
+  }
+  /* the QR code on the robot, read by the phone's camera (only where the browser can: BarcodeDetector) */
+  var qrScan = null;
+  function scanQr() {
+    if (!canScan() || qrScan) return;
+    var det; try { det = new window.BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { toast(T('The camera could not be opened.')); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function (stream) {
+      var box = document.createElement('div'); box.className = 'qr-scan'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', T('Scan the QR code'));
+      box.innerHTML = '<video playsinline muted autoplay></video><div class="qr-frame" aria-hidden="true"></div><p>' + esc(T('Point the camera at the QR code on the robot.')) + '</p><button type="button" class="btn">' + esc(T('Close')) + '</button>';
+      document.body.appendChild(box);
+      var v = box.querySelector('video'); v.srcObject = stream; try { v.play().catch(function () { /* muted video */ }); } catch (e) { /* old browser */ }
+      var stop = function () { if (!qrScan) return; clearInterval(qrScan.t); stream.getTracks().forEach(function (t) { t.stop(); }); if (box.parentNode) box.parentNode.removeChild(box); qrScan = null; };
+      qrScan = { stop: stop, t: setInterval(function () {
+        if (!qrScan || v.readyState < 2) return;
+        det.detect(v).then(function (codes) {
+          if (!qrScan || !codes || !codes.length) return;
+          var raw = String(codes[0].rawValue || '').trim(), m = /[#&?]i=([A-Za-z0-9-]{8,12})/.exec(raw) || /^([A-Za-z0-9]{4}-?[A-Za-z0-9]{4})$/.exec(raw);
+          stop();
+          if (!m) { toast(T('This QR code is not a Bellatrix invitation.')); return; }
+          var code = m[1].toUpperCase(), inp = $('invCode');
+          if (inp) { inp.value = code; var w = inp.closest('.otp'); if (w) paintOtp(w); }
+          checkInvite(code);
+        }, function () { /* the next picture */ });
+      }, 300) };
+      box.querySelector('button').addEventListener('click', stop);
+    }, function () { toast(T('The camera could not be opened.')); });
+  }
+  /* the code from the care team: 6 boxes */
+  function codeStepV2() {
+    return head(false) + '<main class="main v2-start"><div class="v2-wrap">' +
+      (S.invite ? '<p class="note">' + esc(T('You already have an account. Sign in: {name} will be added to it.', { name: S.invite.label })) + '</p>' : '') +
+      '<span class="v2-ico">' + START_ICON.key + '</span><h1>' + esc(T('Enter your code')) + '</h1>' +
+      '<p class="v2-lead">' + esc(T('The care team gives you a 6-digit code (by phone or on paper). No email is sent during the pilot.')) + '</p>' +
+      '<p class="v2-mail">' + esc(S.email) + '</p>' +
+      '<div class="field otp-field">' + otp('sinCode', 6, 'inputmode="numeric" autocomplete="one-time-code" maxlength="6" aria-label="' + esc(T('Code, 6 digits')) + '"') + '</div>' +
+      '<button type="button" class="btn primary" data-do="verify"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Validate')) + '</button>' +
+      '<button type="button" class="link" data-do="other-email">' + esc(T('Use another email address')) + '</button>' +
+      '<button type="button" class="link" data-do="to-password">' + esc(T('Sign in with my password')) + '</button>' +
+      '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></div></main>';
+  }
+  function unreachableV2() {
+    return head(false) + '<main class="main v2-start"><div class="v2-wrap">' +
+      '<span class="v2-ico v2-ico-warn">' + START_ICON.wifioffBig + '</span>' +
+      '<h1>' + esc(T('Bellatrix cannot be reached right now.')) + '</h1>' +
+      '<p class="v2-lead">' + esc(T('The robot may be switched off or restarting. The app tries again by itself: you stay signed in.')) + '</p>' +
+      '<button type="button" class="btn primary" data-do="retry-start">' + esc(T('Try again')) + '</button>' +
+      '<p class="fine">' + esc(T('If it stays like this, the robot may have a new address: scan the QR code on the robot again.')) + '</p></div></main>';
+  }
+  function welcomeScreenOld() {
     return head(false) + '<main class="main welcome">' +
       '<section class="hero"><h1>' + esc(T('Stay close, even from far away')) + '</h1>' +
       '<p>' + esc(T('Send a photo, a voice message or a few words. Bellatrix shows them to your loved one.')) + '</p></section>' +
@@ -563,7 +677,8 @@
     var st = S.regStep || 1, G = S.reg || (S.reg = {});
     var steps = stepHead(st, 2, st === 1 ? 'About you' : 'Password and agreement');
     return head(false) + '<main class="main"><section class="card signup">' +
-      '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>' + steps +
+      (V2_START ? '<div class="inv-card"><span class="inv-av" aria-hidden="true">' + esc(String(who() || '?').charAt(0).toUpperCase()) + '</span><h1>' + esc(T('You are invited to the family of {name}', { name: who() })) + '</h1></div>'
+        : '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>') + steps +
       (st === 1
         ? '<label class="field"><span>' + esc(T('Your first name')) + '</span><input id="regName" autocomplete="given-name" maxlength="40" value="' + esc(G.name || '') + '" placeholder="' + esc(T('e.g. Sophie')) + '"></label>' +
           '<label class="field"><span>' + esc(T('Who are you for {name}? (optional)', { name: who() })) + '</span><input id="regRel" maxlength="40" value="' + esc(G.rel || '') + '" placeholder="' + esc(T('e.g. granddaughter')) + '"></label>' +
@@ -661,6 +776,7 @@
   }
   function signinScreen() {
     var step2 = !!S.email;
+    if (V2_START && S.signinCode && step2) return codeStepV2();
     var top = head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Sign in')) + '</h1>' +
       (S.invite ? '<p class="note">' + esc(T('You already have an account. Sign in: {name} will be added to it.', { name: S.invite.label })) + '</p>' : '');
     /* 24 Nov (Rahma: a password to get in more easily): e-mail and password first; the care team's code stays the other way */
@@ -1471,7 +1587,12 @@
     }
     if (what === 'to-welcome') { S.screen = 'welcome'; S.invite = null; put(INVKEY, ''); render(); return; }
     if (what === 'other-email') { S.email = ''; render(); return; }
-    if (what === 'invite') { checkInvite(val('invCode')); return; }
+    if (what === 'to-invcode') { S.screen = 'invcode'; render(); var ic = $('invCode'); if (ic) try { ic.focus(); } catch (e) { /* hidden */ } return; }
+    if (what === 'scan-qr') { scanQr(); return; }
+    if (what === 'invite') {
+      if (V2_START && $('invCode') && val('invCode').replace(/[^A-Za-z0-9]/g, '').length !== 8) { bad('invCode', T('Please type the 8 characters of the code.')); return; }
+      checkInvite(val('invCode')); return;
+    }
     if (what === 'reg-next') {
       if (!nameOk(val('regName'))) { bad('regName', T('Letters only, please (2 to 40).')); return; }
       if (val('regRel').trim() && !nameOk(val('regRel'))) { bad('regRel', T('Letters only, please (2 to 40).')); return; }
@@ -1495,6 +1616,7 @@
       return;
     }
     if (what === 'ask-code') { var email = val('sinEmail'); if (!emailOk(email)) { bad('sinEmail', T('Please check the email address (e.g. name@example.com).')); return; } busy(true); fam('POST', 'login/start', { email: email }).then(function () { S.busy = false; S.email = email; render(); }, function (e) { busy(false); toast(errText(e)); }); return; }
+    if (what === 'verify' && V2_START && !/^\d{6}$/.test(val('sinCode'))) { bad('sinCode', T('Please type the 6 digits of the code.')); return; }
     if (what === 'verify') { busy(true); fam('POST', 'login/verify', { email: S.email, code: val('sinCode') }).then(signedIn, function (e) { busy(false); toast(errText(e)); }); return; }
     if (what === 'consent') {
       if (!$('firstConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
