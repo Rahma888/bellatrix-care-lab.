@@ -5,9 +5,9 @@
 'use strict';
 /* The files without their ?v= version: an app update needs no change here (offline, the version is
    ignored when looking in the cache; online, the network always comes first). */
-var CACHE = 'bellatrix-portail-7';
+var CACHE = 'bellatrix-portail-8';
 var SHELL = ['portail.html', 'portail.webmanifest', 'css/portail.css', 'js/i18n.js', 'js/i18n-messages.js', 'js/portail.js',
-  'js/portail-feed.js', 'js/portail-calls.js', 'css/portail-calls.css', 'img/suavia-cross.svg', 'img/suavia-cross-white.svg', 'icons/portail-192.png', 'icons/portail-512.png', 'icons/apple-touch-icon.png', 'css/brand.css', 'css/portail-feed.css', 'fonts/RobotoCondensed-Regular.ttf', 'fonts/RobotoCondensed-Medium.ttf', 'fonts/RobotoCondensed-Bold.ttf'];
+  'js/portail-feed.js', 'js/portail-calls.js', 'css/portail-calls.css', 'img/suavia-cross.svg', 'img/suavia-cross-white.svg', 'icons/portail-192.png', 'icons/portail-512.png', 'icons/apple-touch-icon.png', 'css/brand.css', 'css/portail-v2-start.css', 'css/portail-v2-messages.css', 'css/portail-v2-album.css', 'css/portail-v2-me.css', 'css/portail-v2-shop.css', 'css/portail-feed.css', 'fonts/RobotoCondensed-Regular.ttf', 'fonts/RobotoCondensed-Medium.ttf', 'fonts/RobotoCondensed-Bold.ttf'];
 
 self.addEventListener('install', function (e) {
   /* A cache that cannot be filled (full storage, private mode) must not stop the app: it then works online only. */
