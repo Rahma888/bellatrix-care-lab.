@@ -325,6 +325,12 @@
       'No connection to Bellatrix right now. Please try again in a moment.': 'Gerade keine Verbindung zu Bellatrix. Bitte versuchen Sie es gleich noch einmal.'
     });
   })();
+  /* Album 2.0 texts (24 Nov, Rahma: the album as the phone's gallery) */
+  (function () {
+    function addAlbum(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    addAlbum('fr', { 'All': 'Tout', '1 photo': '1 photo', '{n} photos': '{n} photos', 'Nothing in the album yet.': 'Rien dans l’album pour l’instant.', 'Close the photo': 'Fermer la photo', 'Previous photo': 'Photo précédente', 'Next photo': 'Photo suivante', 'More actions': 'Plus d’actions', 'Change the photo': 'Changer de photo', 'Caption': 'Légende', 'A question for {name} (optional)': 'Une question pour {name} (facultatif)' });
+    addAlbum('de', { 'All': 'Alle', '1 photo': '1 Foto', '{n} photos': '{n} Fotos', 'Nothing in the album yet.': 'Noch nichts im Album.', 'Close the photo': 'Foto schließen', 'Previous photo': 'Vorheriges Foto', 'Next photo': 'Nächstes Foto', 'More actions': 'Weitere Aktionen', 'Change the photo': 'Foto ändern', 'Caption': 'Bildunterschrift', 'A question for {name} (optional)': 'Eine Frage für {name} (optional)' });
+  })();
 
   var $ = function (id) { return document.getElementById(id); };
   var app = $('app');
@@ -965,8 +971,119 @@
     });
   }
 
-  /* ---------- Album (BF-15, 16) ---------- */
-  function albumTab() {
+  /* ---------- Album 2.0 (24 Nov, Rahma: "je la veux comme la galerie dans le téléphone") ----------
+     As the phone's gallery: square photos, 3 per row, grouped by month; theme chips on top; a round + to add one.
+     A touch opens the photo full screen on black: swipe (or the arrow keys) for the next one, × closes, ⋯ hides or
+     deletes it. Adding a photo is a page of its own: the photo on top, caption, date, theme, question.
+     The old album stays as it was: V2_ALBUM = false brings it back. */
+  var V2_ALBUM = true;
+  var AG_ICON = {
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    more: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+  };
+  function albumList() { return ((S.me && S.me.messages) || []).filter(function (m) { return m.kind === 'album'; }).slice().sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); }); }
+  function agShown() { var l = albumList(); return S.agTheme ? l.filter(function (m) { return m.theme === S.agTheme; }) : l; }
+  function agLocale() { return { fr: 'fr-FR', de: 'de-DE' }[S.lang] || 'en-GB'; }
+  function agMonth(iso) {
+    var d = new Date(iso); if (isNaN(d.getTime())) return '';
+    try { var t = d.toLocaleDateString(agLocale(), { month: 'long', year: 'numeric' }); return t.charAt(0).toUpperCase() + t.slice(1); } catch (e) { return String(iso).slice(0, 7); }
+  }
+  /* the photo's own date (YYYY-MM-DD; older photos keep their free text) */
+  function agDay(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return String(v || '');
+    try { return new Date(+m[1], +m[2] - 1, +m[3], 12).toLocaleDateString(agLocale(), { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return v; }
+  }
+  function albumTab() { return V2_ALBUM ? albumTabV2() : albumTabOld(); }
+  function albumTabV2() {
+    if (S.aOpen || S.aPhoto || S.aSent || S.busy) return albumFormV2();
+    var all = albumList(), list = agShown(), last = '';
+    if (S.agTheme && !list.length) { S.agTheme = ''; list = all; }
+    var h = '<section class="ag"><div class="ag-head"><h1>' + esc(T('Album')) + '</h1><span class="ag-count">' + esc(T(all.length === 1 ? '1 photo' : '{n} photos', { n: all.length })) + '</span></div>';
+    var used = THEMES.filter(function (t) { return all.some(function (m) { return m.theme === t[0]; }); });
+    if (used.length > 1) h += '<div class="ag-chips" role="radiogroup">' + [['', 'All']].concat(used).map(function (t) {
+      var on = (S.agTheme || '') === t[0];
+      return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-do="ag-filter" data-v="' + t[0] + '">' + esc(T(t[1])) + '</button>';
+    }).join('') + '</div>';
+    if (!list.length) h += '<p class="muted ag-empty">' + esc(T('Nothing in the album yet.')) + '</p>';
+    list.forEach(function (m) {
+      var mo = agMonth(m.at);
+      if (mo !== last) { if (last) h += '</div>'; h += '<h2 class="ag-month">' + esc(mo) + '</h2><div class="ag-grid">'; last = mo; }
+      h += '<button type="button" class="ag-cell' + (m.hidden ? ' hid' : '') + '" data-do="ag-open" data-id="' + esc(m.id) + '" aria-label="' + esc(m.text || T('Photo')) + '">' + thumb(m, ICON.album) +
+        (m.hidden ? '<span class="ag-hid">' + esc(T('Hidden')) + '</span>' : '') + '</button>';
+    });
+    if (last) h += '</div>';
+    h += '<button type="button" class="ag-fab" data-do="album-open" aria-label="' + esc(T('Add a photo')) + '">' + AG_ICON.plus + '</button></section>';
+    return h + agViewer();
+  }
+  /* one photo full screen */
+  function agViewer() {
+    if (!S.agView) return '';
+    var list = agShown(), i = -1, k;
+    for (k = 0; k < list.length; k++) if (list[k].id === S.agView) i = k;
+    if (i < 0) { S.agView = null; S.agMenu = false; return ''; }
+    var m = list[i], when = m.date ? agDay(m.date) : dateText(m.at), ts = tickState(m);
+    var seen = ts === 'read' ? T('Seen by {name}', { name: who() }) : T(ts === 'delivered' ? 'On Bellatrix' : 'Sent');
+    return '<div class="ag-view" id="agView" role="dialog" aria-modal="true" aria-label="' + esc(m.text || T('Photo')) + '">' +
+      '<div class="ag-vtop"><button type="button" class="ag-vbtn" data-do="ag-close" aria-label="' + esc(T('Close the photo')) + '">' + AG_ICON.close + '</button>' +
+      '<span class="ag-vn">' + (i + 1) + ' / ' + list.length + '</span>' +
+      '<button type="button" class="ag-vbtn" data-do="ag-menu" aria-haspopup="true" aria-expanded="' + !!S.agMenu + '" aria-label="' + esc(T('More actions')) + '">' + AG_ICON.more + '</button></div>' +
+      (S.agMenu ? '<div class="ag-menu" role="menu"><button type="button" role="menuitem" data-do="' + (m.hidden ? 'album-show' : 'album-hide') + '" data-id="' + esc(m.id) + '">' + esc(T(m.hidden ? 'Show again' : 'Hide')) + '</button>' +
+        '<button type="button" role="menuitem" class="danger" data-do="album-del" data-id="' + esc(m.id) + '">' + esc(T('Delete')) + '</button></div>' : '') +
+      '<div class="ag-stage">' + (i > 0 ? '<button type="button" class="ag-nav prev" data-do="ag-prev" aria-label="' + esc(T('Previous photo')) + '">' + AG_ICON.prev + '</button>' : '') +
+      '<span class="ag-photo" data-thumb="' + esc(m.id) + '">' + (S.thumbs[m.id] ? '<img src="' + S.thumbs[m.id] + '" alt="">' : '') + '</span>' +
+      (i < list.length - 1 ? '<button type="button" class="ag-nav next" data-do="ag-next" aria-label="' + esc(T('Next photo')) + '">' + AG_ICON.next + '</button>' : '') + '</div>' +
+      '<div class="ag-info">' + (m.text ? '<p class="ag-cap">' + esc(m.text) + '</p>' : '') +
+      '<p class="ag-meta">' + esc(when) + ' · ' + esc(themeName(m.theme)) + (m.hidden ? ' · ' + esc(T('Hidden')) : '') + '</p>' +
+      (m.question ? '<p class="ag-q">' + esc(m.question) + '</p>' : '') +
+      (m.hidden ? '' : '<p class="ag-seen">' + statusChip(m) + '<span>' + esc(seen) + '</span></p>') + '</div></div>';
+  }
+  function agStep(d) {
+    var list = agShown(), i;
+    for (i = 0; i < list.length; i++) if (list[i].id === S.agView) break;
+    var j = i + d; if (i >= list.length || j < 0 || j >= list.length) return;
+    S.agView = list[j].id; S.agMenu = false; render();
+  }
+  /* the arrow keys and Escape; a swipe on the photo */
+  document.addEventListener('keydown', function (e) {
+    if (!S.agView || S.tab !== 'album') return;
+    if (e.key === 'ArrowLeft') agStep(-1); else if (e.key === 'ArrowRight') agStep(1);
+    else if (e.key === 'Escape') { S.agView = null; S.agMenu = false; render(); }
+  });
+  var agTouch = null;
+  document.addEventListener('touchstart', function (e) {
+    if (!S.agView || !e.target || !e.target.closest || !e.target.closest('.ag-stage')) { agTouch = null; return; }
+    var t = e.touches[0]; agTouch = { x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (!agTouch) return;
+    var t = e.changedTouches[0], dx = t.clientX - agTouch.x, dy = t.clientY - agTouch.y; agTouch = null;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) agStep(dx < 0 ? 1 : -1);
+  }, { passive: true });
+  /* adding a photo: a page of its own */
+  function albumFormV2() {
+    var lim = (S.me && S.me.limits) || { caption: 90, question: 160 };
+    var h = '<section class="ag-form"><div class="ag-ftop"><button type="button" class="ag-back" data-do="album-close" aria-label="' + esc(T('Back')) + '">' + AG_ICON.prev + '</button><h1>' + esc(T('Add to the album')) + '</h1></div>';
+    if (S.aSent) return h + '<div class="sent"><span class="big">' + HEART + '</span><p><b>' + esc(T('Thank you! The photo goes into the album of {name}.', { name: who() })) + '</b></p>' +
+      '<button type="button" class="btn primary" data-do="album-new">' + esc(T('Continue')) + '</button></div></section>';
+    return h + '<input type="file" id="pickAlbum" data-for="album" accept="image/*" hidden>' +
+      (S.aPhoto ? '<figure class="ag-prev"><img src="' + S.aPhoto.url + '" alt=""></figure><button type="button" class="link ag-change" data-do="pick-album">' + esc(T('Change the photo')) + '</button>'
+        : '<button type="button" class="ag-drop" data-do="pick-album">' + ICON.photo + '<span>' + esc(T('Choose a photo')) + '</span></button>') +
+      '<label class="field"><span>' + esc(T('Caption')) + '</span><input id="aCaption" maxlength="' + lim.caption + '" placeholder="' + esc(T('e.g. Paul’s wedding')) + '"></label>' +
+      '<label class="field"><span>' + esc(T('Date (optional)')) + '</span><input id="aDate" type="date" min="1900-01-01" max="' + todayIso() + '"></label>' +
+      '<div class="field"><span>' + esc(T('Theme')) + '</span><div class="ag-chips wrap" role="radiogroup">' + THEMES.map(function (t) {
+        var on = S.aTheme === t[0];
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-theme="' + t[0] + '">' + esc(T(t[1])) + '</button>';
+      }).join('') + '</div></div>' +
+      '<label class="field"><span>' + esc(T('A question for {name} (optional)', { name: who() })) + '</span><input id="aQuestion" maxlength="' + lim.question + '" placeholder="' + esc(T('e.g. Do you remember the music that day?')) + '"></label>' +
+      '<p class="fine">' + esc(T('Only photos you have the right to share.')) + '</p>' +
+      '<button type="button" class="btn primary" data-do="album-send"' + (S.busy ? ' disabled' : '') + '>' + esc(S.busy ? T('Sending…') : T('Add to the album')) + '</button></section>';
+  }
+
+  /* ---------- Album (BF-15, 16): the version before 24 Nov (V2_ALBUM = false) ---------- */
+  function albumTabOld() {
     var lim = (S.me && S.me.limits) || { caption: 90, question: 160, date: 30 };
     var open = S.aOpen || S.aPhoto || S.aSent || S.busy;
     var h = '<section class="thread albumhead"><h1>' + esc(T('Album')) + '</h1>' +
@@ -1534,6 +1651,13 @@
     }
     if (what === 'pick-album') { var fa = $('pickAlbum'); if (fa) fa.click(); return; }
     if (what === 'album-new') { S.aSent = false; S.aPhoto = null; S.aOpen = false; render(); return; }
+    /* album 2.0: the theme chips, the full-screen photo and its menu */
+    if (what === 'ag-filter') { S.agTheme = el.getAttribute('data-v') || ''; render(); return; }
+    if (what === 'ag-open') { S.agView = id; S.agMenu = false; render(); return; }
+    if (what === 'ag-close') { S.agView = null; S.agMenu = false; render(); return; }
+    if (what === 'ag-prev' || what === 'ag-next') { agStep(what === 'ag-next' ? 1 : -1); return; }
+    if (what === 'ag-menu') { S.agMenu = !S.agMenu; render(); return; }
+    if (what === 'album-hide' || what === 'album-show' || what === 'album-del') S.agMenu = false;
     if (what === 'album-open') { S.aOpen = true; render(); var fo = $('pickAlbum'); if (fo) fo.click(); return; }
     if (what === 'album-close') { S.aOpen = false; S.aPhoto = null; render(); return; }
     if (what === 'album-send') { sendAlbum(); return; }

@@ -1,1 +1,61 @@
 /* Family app 2.0 (Rahma, review of 24 Nov): album screens. Uses the tokens of css/portail.css and css/brand.css. */
+
+/* ---------- Album 2.0 (24 Nov): the phone's gallery ---------- */
+.ag { display: flex; flex-direction: column; gap: 10px; padding-bottom: 96px; }
+.ag-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ag-head h1 { margin: 0; }
+.ag-count { color: var(--muted); font-size: 15px; }
+.ag-chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0; scrollbar-width: none; }
+.ag-chips::-webkit-scrollbar { display: none; }
+.ag-chips.wrap { flex-wrap: wrap; overflow: visible; }
+.ag-chips .tchip { flex: none; border-radius: 999px; border-width: 1.5px; }
+.ag-month { font-size: 16px; font-weight: 700; margin: 10px 0 0; color: var(--ink); text-transform: none; letter-spacing: normal; }
+.ag-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
+.ag-cell { position: relative; aspect-ratio: 1 / 1; border: 0; padding: 0; margin: 0; background: var(--surface-2); overflow: hidden; cursor: pointer; display: block; border-radius: 0; min-height: 0; }
+.ag-cell .thumb { width: 100%; height: 100%; border-radius: 0; margin: 0; }
+.ag-cell .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.ag-cell.hid img { opacity: .45; }
+.ag-cell:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.ag-hid { position: absolute; left: 4px; bottom: 4px; background: rgba(0, 0, 0, .62); color: #fff; font-size: 12px; padding: 1px 6px; border-radius: 4px; }
+.ag-empty { margin: 8px 0; }
+.ag-fab { position: fixed; right: max(18px, calc(50% - 262px)); bottom: calc(82px + env(safe-area-inset-bottom)); z-index: 5; width: 62px; height: 62px; border-radius: 50%; border: 0; background: var(--accent); color: var(--on-accent); box-shadow: 0 4px 14px rgba(0, 0, 0, .25); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.ag-fab svg { width: 30px; height: 30px; }
+.ag-fab:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* one photo full screen */
+.ag-view { position: fixed; inset: 0; z-index: 50; background: #000; color: #fff; display: flex; flex-direction: column; }
+html:has(.ag-view) { overflow: hidden; }
+.ag-vtop { display: flex; align-items: center; justify-content: space-between; padding: calc(6px + env(safe-area-inset-top)) 6px 6px; }
+.ag-vbtn { width: 50px; height: 50px; border: 0; background: none; color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; padding: 0; }
+.ag-vbtn svg { width: 28px; height: 28px; }
+.ag-vbtn:focus-visible, .ag-nav:focus-visible { outline: 3px solid #9FD3F5; outline-offset: 1px; }
+.ag-vn { font-size: 16px; color: #D5DDE5; }
+.ag-menu { position: absolute; right: 12px; top: calc(58px + env(safe-area-inset-top)); z-index: 2; background: #fff; color: #14212E; border-radius: 12px; overflow: hidden; min-width: 190px; box-shadow: 0 8px 24px rgba(0, 0, 0, .4); display: flex; flex-direction: column; }
+.ag-menu button { border: 0; background: none; text-align: left; padding: 15px 18px; font-size: 17px; color: inherit; cursor: pointer; font-family: inherit; }
+.ag-menu button + button { border-top: 1px solid #E3E7EC; }
+.ag-menu .danger { color: #B3261E; }
+.ag-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; touch-action: pan-y; }
+.ag-photo { display: flex; width: 100%; height: 100%; align-items: center; justify-content: center; }
+.ag-photo img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.ag-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .18); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1; padding: 0; }
+.ag-nav.prev { left: 8px; }
+.ag-nav.next { right: 8px; }
+.ag-nav svg { width: 26px; height: 26px; }
+.ag-info { padding: 12px 18px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 4px; }
+.ag-cap { font-size: 19px; font-weight: 700; margin: 0; }
+.ag-meta { color: #C9D3DC; font-size: 15px; margin: 0; }
+.ag-q { font-style: italic; color: #E6ECF2; margin: 4px 0 0; }
+.ag-seen { display: flex; gap: 6px; align-items: center; color: #C9D3DC; font-size: 14px; margin: 2px 0 0; }
+/* adding a photo */
+.ag-form { display: flex; flex-direction: column; gap: 14px; padding-bottom: 90px; }
+.ag-ftop { display: flex; align-items: center; gap: 6px; }
+.ag-ftop h1 { margin: 0; font-size: 28px; }
+.ag-back { width: 44px; height: 44px; border: 0; background: none; color: var(--accent); display: flex; align-items: center; justify-content: center; margin-left: -10px; cursor: pointer; border-radius: 50%; padding: 0; }
+.ag-back svg { width: 26px; height: 26px; }
+.ag-prev { margin: 0; border-radius: 16px; overflow: hidden; background: var(--surface-2); }
+.ag-prev img { width: 100%; max-height: 260px; object-fit: cover; display: block; }
+.ag-change { align-self: flex-start; }
+.ag-drop { min-height: 170px; border: 2px dashed var(--line); border-radius: 16px; background: var(--soft); color: var(--accent); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; font-size: 18px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.ag-drop svg { width: 40px; height: 40px; }
+.ag-form .field > span { text-transform: none; letter-spacing: normal; font-size: 16px; font-weight: 500; color: var(--ink); }
+.ag-form .field input { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; background-color: var(--surface); min-height: 54px; font-size: 18px; width: 100%; }
+.ag-form .field input:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 3px var(--soft); }
