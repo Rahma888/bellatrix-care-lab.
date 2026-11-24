@@ -1,1 +1,45 @@
 /* Family app 2.0 (Rahma, review of 24 Nov): me screens. Uses the tokens of css/portail.css and css/brand.css. */
+/* « Moi »: profile head, short lists of rows, one page per subject */
+.me-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 18px 0 6px; text-align: center; }
+.me-av { width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex: none; }
+.me-av.sm { width: 40px; height: 40px; font-size: 17px; }
+.me-name { font-size: 22px; line-height: 1.2; color: var(--ink); }
+.me-mail { color: var(--muted); font-size: 15px; word-break: break-all; }
+.me-cap { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 14px 0 6px; font-weight: 700; }
+.me-list { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 0 14px; display: flex; flex-direction: column; }
+.me-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; font-size: 18px; text-align: left; cursor: pointer; }
+.me-row:last-child { border-bottom: 0; }
+.me-row.static { cursor: default; }
+.me-row .ic { width: 26px; height: 26px; color: var(--accent); flex: none; display: flex; align-items: center; justify-content: center; }
+.me-row .ic svg { width: 24px; height: 24px; }
+.me-row .t { flex: 1; min-width: 0; }
+.me-row .t small { display: block; color: var(--muted); font-size: 14px; line-height: 1.3; margin-top: 2px; }
+.me-row .chev { color: var(--muted); font-size: 24px; line-height: 1; }
+.me-row[data-lang] .chev, .me-row[data-do="me-choose"] .chev { display: none; }
+.me-row:focus-visible, .me-back:focus-visible, .me-switch:focus-visible, .me-out:focus-visible, .me-note:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.me-val { color: var(--muted); font-size: 16px; }
+.me-cur { color: var(--good); font-weight: 700; font-size: 20px; }
+.me-badge { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: var(--soft); color: var(--muted); font-weight: 700; white-space: nowrap; }
+.me-badge.ok { background: var(--okbg, var(--soft)); color: var(--good); }
+.me-badge.wait { background: #FBF0D9; color: #7A5200; }
+:root[data-theme="dark"] .me-badge.wait { background: #3A2E12; color: #F3C96B; }
+.me-note { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 0; border-radius: 14px; background: var(--soft); color: var(--ink); padding: 14px 16px; font: inherit; text-align: left; cursor: pointer; }
+.me-note span { color: var(--accent); font-weight: 700; white-space: nowrap; }
+.me-out { display: block; margin: 18px auto 8px; border: 0; background: none; color: var(--danger); font: inherit; font-size: 18px; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 10px 16px; }
+.me-top { display: flex; align-items: center; gap: 8px; margin: 4px 0 6px; }
+.me-top h1 { margin: 0; font-size: 28px; line-height: 1.1; }
+.me-back { width: 44px; height: 44px; border-radius: 12px; border: 0; background: var(--soft); color: var(--accent); display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
+.me-back svg { width: 24px; height: 24px; }
+.me2 .me-card { border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--surface); margin-top: 10px; }
+.me2 .me-card h2 { margin: 0; font-size: 20px; }
+.me2 > .btn, .me2 > .confirm { margin-top: 10px; }
+.me-danger { border-color: var(--danger) !important; color: var(--danger) !important; }
+.me-switch { width: 54px; height: 32px; border-radius: 999px; background: var(--line); position: relative; flex: none; border: 0; cursor: pointer; padding: 0; }
+.me-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: left .2s; }
+.me-switch.on { background: var(--accent); }
+.me-switch.on::after { left: 25px; }
+.me-pick { display: flex; gap: 8px; }
+.me-pick .tchip { border-radius: 999px; font-size: 17px; padding: 10px 20px; }
+.me-steps { list-style: none; counter-reset: st; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.me-steps li { counter-increment: st; display: flex; gap: 12px; align-items: flex-start; font-size: 17px; line-height: 1.4; }
+.me-steps li::before { content: counter(st); flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; font-weight: 700; }

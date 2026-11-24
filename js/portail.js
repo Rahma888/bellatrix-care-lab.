@@ -326,6 +326,9 @@
       'This is not shared for {name}.': 'Das wird für {name} nicht geteilt.',
       'No connection to Bellatrix right now. Please try again in a moment.': 'Gerade keine Verbindung zu Bellatrix. Bitte versuchen Sie es gleich noch einmal.'
     });
+    /* family app 2.0, « Moi » (Rahma's review, 24 Nov) */
+    addNew('fr', { 'Notifications on this phone': 'Notifications sur ce téléphone', 'Notifications blocked. Allow them in the browser settings.': 'Notifications bloquées. Autorisez-les dans les réglages du navigateur.', 'Add to the Home Screen to receive notifications.': 'Ajouter à l’écran d’accueil pour recevoir les notifications.', 'Test sent.': 'Test envoyé.', 'On': 'Activées', 'Off': 'Désactivées', 'For {name}': 'Pour {name}', 'Give Premium': 'Offrir Premium', 'My loved ones': 'Mes proches', 'To create': 'À créer', 'Installed': 'Installée', 'Blocked': 'Bloquées', 'Not possible': 'Impossible', 'Home Screen first': 'D’abord l’écran d’accueil', 'A proposal from the care team is waiting.': 'Une proposition de l’équipe vous attend.', 'See': 'Voir', 'Calls, seen messages and news from the care team arrive here.': 'Les appels, les messages vus et les nouvelles de l’équipe arrivent ici.', 'Send a test notification': 'Envoyer une notification de test', 'See my notifications': 'Voir mes notifications', 'What is kept': 'Ce qui est gardé', 'What you see of {name}': 'Ce que vous voyez de {name}', 'Pending': 'En attente', 'Add a loved one': 'Ajouter un proche', 'Which phone?': 'Quel téléphone ?', 'Delete my account': 'Supprimer mon compte', 'Chosen': 'Choisi' });
+    addNew('de', { 'Notifications on this phone': 'Benachrichtigungen auf diesem Telefon', 'Notifications blocked. Allow them in the browser settings.': 'Benachrichtigungen blockiert. Erlauben Sie sie in den Browser-Einstellungen.', 'Add to the Home Screen to receive notifications.': 'Zum Home-Bildschirm hinzufügen, um Benachrichtigungen zu erhalten.', 'Test sent.': 'Test gesendet.', 'On': 'An', 'Off': 'Aus', 'For {name}': 'Für {name}', 'Give Premium': 'Premium schenken', 'My loved ones': 'Meine Angehörigen', 'To create': 'Noch keins', 'Installed': 'Installiert', 'Blocked': 'Blockiert', 'Not possible': 'Nicht möglich', 'Home Screen first': 'Zuerst Home-Bildschirm', 'A proposal from the care team is waiting.': 'Ein Vorschlag des Teams wartet auf Sie.', 'See': 'Ansehen', 'Calls, seen messages and news from the care team arrive here.': 'Anrufe, gesehene Nachrichten und Neuigkeiten des Teams kommen hier an.', 'Send a test notification': 'Test-Benachrichtigung senden', 'See my notifications': 'Meine Benachrichtigungen ansehen', 'What is kept': 'Was gespeichert wird', 'What you see of {name}': 'Was Sie von {name} sehen', 'Pending': 'Wartet', 'Add a loved one': 'Angehörigen hinzufügen', 'Which phone?': 'Welches Telefon?', 'Delete my account': 'Mein Konto löschen', 'Chosen': 'Gewählt' });
   })();
   /* Family app 2.0, start screens (Rahma's review of 24 Nov): new texts */
   (function () {
@@ -491,10 +494,13 @@
     crown: '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M22 68 L17 32 L36 48 L50 24 L64 48 L83 32 L78 68 Z" fill="currentColor"/><rect x="22" y="68" width="56" height="11" rx="4" fill="currentColor"/></svg>'
   };
   var HEART = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 84 C18 62 10 44 19 31 C28 19 43 22 50 34 C57 22 72 19 81 31 C90 44 82 62 50 84 Z" fill="currentColor"/></svg>';
+  /* Family app 2.0 (Rahma's review, 24 Nov): « Plus » becomes « Moi » with one page per subject. false = the old « Plus ». */
+  var V2_ME = true;
   var TABS = [
     { id: 'messages', core: true, label: 'Messages', icon: ICON.msg, render: messagesTab, visible: function (c) { return c.features.messages; } },
     { id: 'album', core: true, label: 'Album', icon: ICON.album, render: albumTab, visible: function (c) { return c.features.album; } },
-    { id: 'premium', core: true, label: { fr: 'Plus', de: 'Mehr', en: 'More' }, icon: ICON.more, render: premiumTab, visible: function (c) { return c.features.premium; }, last: true }
+    { id: 'premium', core: true, label: V2_ME ? { fr: 'Moi', de: 'Ich', en: 'Me' } : { fr: 'Plus', de: 'Mehr', en: 'More' }, icon: V2_ME ? ICON.me : ICON.more,
+      render: function () { return V2_ME ? meTab() : premiumTab(); }, visible: function (c) { return V2_ME || c.features.premium; }, last: true }
   ];
   function addTab(t) {
     if (!t || !t.id || typeof t.render !== 'function') return false;
@@ -820,6 +826,7 @@
 
   /* ---------- home ---------- */
   function homeScreen() {
+    if (V2_ME && /^me-/.test(S.sheet || '')) return head(true) + '<main class="main me2">' + mePage(S.sheet.slice(3)) + '</main>';
     if (S.sheet === 'account') return head(true) + '<main class="main">' + accountPage() + '</main>';
     if (S.sheet === 'install') return head(true) + '<main class="main">' + installPage() + '</main>';
     var m = S.me;
@@ -1485,6 +1492,7 @@
           ' · ' + esc(T('{n} month(s)', { n: x.months })) + ' · ' + esc(money(x.cents, x.currency)) + '</p></div></li>';
       }).join('') + '</ul></section>';
     }
+    if (S.meOffers) return h;
     h += installCard();
     h += '<button type="button" class="rowlink" data-do="notif-open"><span>' + esc(T('Notifications')) + '</span><i aria-hidden="true">›</i></button>';
     h += '<button type="button" class="rowlink" data-do="account"><span>' + esc(T('My account')) + '</span><i aria-hidden="true">›</i></button>';
@@ -1564,6 +1572,138 @@
         : '<button type="button" class="btn" data-do="ask-revoke">' + esc(T('Withdraw my consent and delete my account')) + '</button>') +
       '</section><button type="button" class="btn ghost" data-do="logout">' + esc(T('Sign out')) + '</button>';
   }
+  /* ---------- « Moi » (family app 2.0, Rahma's review of 24 Nov: new version for every part) ----------
+     A profile head, then two short lists: « Mon compte » (password, notifications, install, language, my loved
+     ones) and « Pour {name} » (give Premium, my data); each row opens its own page with a back arrow
+     (S.sheet = 'me-<page>'). The old « Plus » is premiumTab / accountPage / installPage (V2_ME = false). */
+  var MEI = (function () {
+    var w = function (p) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; };
+    return { lock: w('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+      bell: w('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'),
+      mobile: w('<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>'),
+      globe: w('<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/>'),
+      users: w('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>'),
+      shield: w('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+      back: w('<path d="M15 18l-6-6 6-6"/>') };
+  })();
+  var LANG_NAMES = { fr: 'Français', de: 'Deutsch', en: 'English' };
+  function meRow(icon, label, right, act, data) {
+    return '<button type="button" class="me-row" data-do="' + act + '"' + (data || '') + '><span class="ic">' + icon + '</span><span class="t">' + label + '</span>' +
+      (right || '') + '<span class="chev" aria-hidden="true">›</span></button>';
+  }
+  function meBadge(text, kind) { return '<span class="me-badge' + (kind ? ' ' + kind : '') + '">' + esc(text) + '</span>'; }
+  function pushNow() { try { return window.PortailCalls && PortailCalls.pushState ? PortailCalls.pushState() : 'none'; } catch (e) { return 'none'; } }
+  function pushBadge() {
+    var s = pushNow();
+    if (s === 'on') return meBadge(T('On'), 'ok');
+    if (s === 'ask' || s === 'off' || s === 'failed') return meBadge(T('Off'));
+    if (s === 'denied') return meBadge(T('Blocked'), 'wait');
+    if (s === 'ios') return meBadge(T('Home Screen first'), 'wait');
+    return meBadge(T('Not possible'));
+  }
+  function meTab() {
+    if (S.pay || S.gift || S.inListen) return premiumTab();
+    var p = S.me.person || {}, c = ctx(), has = !!p.hasPassword, n = (S.me.residents || []).length;
+    var h = '<section class="me-head"><span class="me-av" aria-hidden="true">' + esc(String(p.name || '?').slice(0, 2).toUpperCase()) + '</span>' +
+      '<b class="me-name">' + esc(p.name || '') + (p.last ? ' ' + esc(p.last) : '') + '</b><span class="me-mail">' + esc(p.email || '') + '</span></section>';
+    if (c.features.premium && waitingRequests().length) h += '<button type="button" class="me-note" data-do="me-open" data-p="premium"><b>' + esc(T('A proposal from the care team is waiting.')) + '</b><span>' + esc(T('See')) + ' ›</span></button>';
+    h += '<p class="me-cap">' + esc(T('My account')) + '</p><div class="me-list">' +
+      meRow(MEI.lock, esc(T('Password')), has ? '' : meBadge(T('To create'), 'wait'), 'me-open', ' data-p="password"') +
+      meRow(MEI.bell, esc(T('Notifications')), pushBadge(), 'me-open', ' data-p="notif"') +
+      meRow(MEI.mobile, esc(T('Install the app')), standalone() ? meBadge(T('Installed'), 'ok') : '', 'install-open') +
+      meRow(MEI.globe, esc(T('Language')), '<span class="me-val">' + esc(LANG_NAMES[S.lang] || S.lang) + '</span>', 'me-open', ' data-p="lang"') +
+      meRow(MEI.users, esc(T('My loved ones')), '<span class="me-val">' + n + '</span>', 'me-open', ' data-p="people"') + '</div>';
+    h += '<p class="me-cap">' + esc(T('For {name}', { name: who() })) + '</p><div class="me-list">' +
+      (c.features.premium ? meRow(ICON.gift, esc(T('Give Premium')), '', 'me-open', ' data-p="premium"') : '') +
+      meRow(MEI.shield, esc(T('My data')), '', 'me-open', ' data-p="data"') + '</div>';
+    return h + '<button type="button" class="me-out" data-do="logout">' + esc(T('Sign out')) + '</button>';
+  }
+  function meBack(title) {
+    return '<div class="me-top"><button type="button" class="me-back" data-do="me-back" aria-label="' + esc(T('Back')) + '">' + MEI.back + '</button><h1>' + esc(title) + '</h1></div>';
+  }
+  function mePage(page) {
+    var p = S.me.person || {}, r = S.me.resident;
+    if (page === 'premium') { S.meOffers = true; var o = premiumTab(); S.meOffers = false; return (S.pay || S.gift || S.inListen ? '' : meBack(T('Give Premium'))) + o; }
+    if (page === 'password') {
+      var has = !!p.hasPassword;
+      return meBack(T('Password')) + '<section class="card signup me-card"><p class="muted">' + esc(T('With a password you sign in with your email address, without asking the care team for a code.')) + '</p>' +
+        '<form onsubmit="return false" autocomplete="on"><input type="email" autocomplete="username" value="' + esc(p.email || '') + '" hidden>' +
+        (has ? '<label class="field"><span>' + esc(T('Current password')) + '</span><div class="ibox pw"><input id="pwCur" type="password" autocomplete="current-password" maxlength="128">' +
+          '<button type="button" class="eye" data-do="eye" data-for="pwCur" aria-label="' + esc(T('Show the password')) + '" aria-pressed="false">' + EYE + '</button></div></label>' : '') +
+        pwFields('pwNew', 'pwNew2') + '</form>' +
+        '<button type="button" class="btn primary" data-do="set-password"' + (S.busy ? ' disabled' : '') + '>' + esc(T(has ? 'Change my password' : 'Create a password')) + '</button></section>';
+    }
+    if (page === 'notif') {
+      var s = pushNow(), on = s === 'on', can = on || s === 'ask' || s === 'off' || s === 'failed';
+      return meBack(T('Notifications')) + '<div class="me-list">' +
+        '<div class="me-row static"><span class="ic">' + MEI.bell + '</span><span class="t">' + esc(T('Notifications on this phone')) + '<small>' + esc(T('Calls, seen messages and news from the care team arrive here.')) + '</small></span>' +
+        (can ? '<button type="button" class="me-switch' + (on ? ' on' : '') + '" role="switch" aria-checked="' + on + '" data-do="me-push" aria-label="' + esc(T('Notifications on this phone')) + '"></button>' : pushBadge()) + '</div>' +
+        (on ? meRow(MEI.bell, esc(T('Send a test notification')), '', 'me-test') : '') +
+        meRow(MEI.bell, esc(T('See my notifications')), '', 'me-bell') + '</div>' +
+        (s === 'denied' ? '<p class="fine">' + esc(T('Notifications blocked. Allow them in the browser settings.')) + '</p>' : '') +
+        (s === 'ios' ? '<p class="fine">' + esc(T('Add to the Home Screen to receive notifications.')) + '</p>' : '');
+    }
+    if (page === 'lang') {
+      return meBack(T('Language')) + '<div class="me-list">' + ['fr', 'de', 'en'].map(function (l) {
+        var on = l === S.lang;
+        return '<button type="button" class="me-row" role="radio" aria-checked="' + on + '" data-lang="' + l + '" lang="' + l + '"><span class="t">' + LANG_NAMES[l] + '</span>' + (on ? meBadge(T('Chosen'), 'ok') : '') + '</button>';
+      }).join('') + '</div>';
+    }
+    if (page === 'people') {
+      return meBack(T('My loved ones')) + '<div class="me-list">' + (S.me.residents || []).map(function (x) {
+        var cur = x.rid === S.rid, st = x.status === 'active' ? meBadge(T('Active'), 'ok') : x.status === 'pending' ? meBadge(T('Pending'), 'wait') : meBadge(T('Suspended'));
+        return '<button type="button" class="me-row" data-do="me-choose" data-rid="' + esc(x.rid) + '" aria-current="' + cur + '"><span class="me-av sm" aria-hidden="true">' + esc(String(x.label || '?').charAt(0).toUpperCase()) + '</span>' +
+          '<span class="t">' + esc(x.label) + (x.relation ? '<small>' + esc(x.relation) + '</small>' : '') + '</span>' + st + (cur ? '<span class="me-cur" aria-label="' + esc(T('Chosen')) + '">✓</span>' : '') + '</button>';
+      }).join('') + '</div>' +
+        '<section class="card signup me-card"><h2>' + esc(T('Add a loved one')) + '</h2><p class="fine">' + esc(T('With the invitation code the care team gives you.')) + '</p>' +
+        '<label class="field"><span>' + esc(T('Invitation code')) + '</span><div class="ibox"><input id="linkCode" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH" maxlength="12"></div></label>' +
+        '<button type="button" class="btn primary" data-do="link">' + esc(T('Add')) + '</button></section>';
+    }
+    if (page === 'data') {
+      var lvl = r && r.consent;
+      return meBack(T('My data')) +
+        '<section class="card me-card"><h2>' + esc(T('What is kept')) + '</h2><p class="fine">' + esc(T('Kept: your first name, your email address, your language and what you send.')) + ' ' + esc(T('Messages and photos are deleted 30 days after they were read, or earlier if you ask.')) + '</p></section>' +
+        (r ? '<section class="card me-card"><h2>' + esc(T('What you see of {name}', { name: who() })) + '</h2><p><b>' + esc(T(lvl === 'all' ? 'Everything: messages, album, calls and activity' : 'Messages, calls and album')) + '</b></p>' +
+          '<p class="fine">' + esc(T('The care team records the consent of {name} or of their representative.', { name: who() })) + '</p></section>' : '') +
+        '<p class="fine">' + esc(T('Consent given on')) + ' ' + esc(dateText(p.consentAt)) + '</p>' +
+        (S.confirmData ? '<div class="confirm"><p><b>' + esc(T('Delete all the messages and photos you sent? This cannot be undone.')) + '</b></p>' +
+          '<button type="button" class="btn danger" data-do="data-delete">' + esc(T('Yes, delete them')) + '</button><button type="button" class="link" data-do="keep">' + esc(T('No, keep them')) + '</button></div>'
+          : '<button type="button" class="btn" data-do="ask-data">' + esc(T('Delete all my messages and photos')) + '</button>') +
+        (S.confirmDelete ? '<div class="confirm"><p><b>' + esc(T('Withdraw your consent? Your account and all your messages will be deleted. This cannot be undone.')) + '</b></p>' +
+          '<button type="button" class="btn danger" data-do="revoke">' + esc(T('Yes, delete my account')) + '</button><button type="button" class="link" data-do="keep">' + esc(T('No, keep it')) + '</button></div>'
+          : '<button type="button" class="btn me-danger" data-do="ask-revoke">' + esc(T('Delete my account')) + '</button>');
+    }
+    S.sheet = ''; return meTab();
+  }
+  /* Installer l'app (p24): iPhone or Android, three numbered steps; the browser's own button when it offers one */
+  function installPageV2() {
+    var w = installWhere(), pick = S.installPick || (w === 'android' ? 'android' : w === 'ios' ? 'ios' : (isAndroid() ? 'android' : 'ios'));
+    var h = '<div class="me-top"><button type="button" class="me-back" data-do="install-close" aria-label="' + esc(T('Back')) + '">' + MEI.back + '</button><h1>' + esc(T('Install the app')) + '</h1></div>';
+    if (w === 'installed') return h + '<section class="card me-card"><p>' + esc(T('The app is installed on this phone.')) + '</p></section>';
+    if (S.installEvt) h += '<button type="button" class="btn primary" data-do="install">' + esc(T('Install')) + '</button>';
+    if (w === 'inapp') {
+      h += '<section class="card me-card"><p>' + esc(T('You opened the link inside Messenger or another app. It cannot install Bellatrix.')) + '</p>' +
+        '<ol class="me-steps"><li>' + esc(T('Tap ⋯ or ⋮, then "Open in browser" (Chrome or Safari).')) + '</li><li>' + esc(T('There, tap More › Install the app.')) + '</li></ol>' +
+        '<div class="copyrow"><input id="appAddr" readonly value="' + esc(appAddress()) + '" aria-label="' + esc(T('Copy the address')) + '"><button type="button" class="btn" data-do="install-copy">' + esc(T('Copy the address')) + '</button></div></section>';
+      return h;
+    }
+    h += '<p class="me-cap">' + esc(T('Which phone?')) + '</p><div class="tchips me-pick" role="radiogroup">' + ['ios', 'android'].map(function (k) {
+      var on = k === pick, brand = { ios: 'iPhone', android: 'Android' }[k];
+      return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-do="me-install-pick" data-v="' + k + '">' + brand + '</button>';
+    }).join('') + '</div>';
+    var steps = pick === 'ios'
+      ? [T('Tap Share (the square with an arrow) in Safari.'), T('Choose "Add to Home Screen", then "Add".'), T('Open Bellatrix from the home screen and sign in with your email address and this code:')]
+      : [T('Tap ⋮ at the top right of Chrome.'), T('Choose "Install app" or "Add to Home screen".'), T('Open Bellatrix from your home screen.')];
+    h += '<section class="card me-card"><ol class="me-steps">' + steps.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ol>';
+    if (pick === 'ios' && w === 'ios') {
+      var hc = S.handoff;
+      h += hc && hc.code ? '<p class="handoff"><b class="code">' + esc(hc.code.slice(0, 3) + ' ' + hc.code.slice(3)) + '</b><small class="fine">' + esc(hc.email || '') + '</small><small class="fine">' + esc(T('Valid 15 minutes.')) + '</small></p>' +
+        '<button type="button" class="link small" data-do="install-code">' + esc(T('New code')) + '</button>'
+        : '<button type="button" class="btn" data-do="install-code">' + esc(T('Show my code')) + '</button>';
+    }
+    if (w === 'other') h += '<p class="fine">' + esc(T('On a computer: open this address on your phone.')) + '</p><div class="copyrow"><input id="appAddr" readonly value="' + esc(appAddress()) + '" aria-label="' + esc(T('Copy the address')) + '"><button type="button" class="btn" data-do="install-copy">' + esc(T('Copy the address')) + '</button></div>';
+    return h + '</section>';
+  }
   /* ---------- installing the app (14 Nov, Rahma: "the app is not added on the phone") ----------
      - Android Chrome: the browser's own install prompt (beforeinstallprompt) when it offers one, else
        the ⋮ menu steps.
@@ -1594,6 +1734,7 @@
       '<button type="button" class="btn ghost" data-do="install-later">' + esc(T('Not now')) + '</button></div></section>';
   }
   function installPage() {
+    if (V2_ME) return installPageV2();
     var w = installWhere(), steps = [], h = '<button type="button" class="link back" data-do="install-close">‹ ' + esc(T('Back')) + '</button>' +
       '<section class="card installsheet" data-install="' + w + '"><h1>' + esc(T('Install the app')) + '</h1>';
     var copy = '<div class="copyrow"><input id="appAddr" readonly value="' + esc(appAddress()) + '" aria-label="' + esc(T('Copy the address')) + '"><button type="button" class="btn" data-do="install-copy">' + esc(T('Copy the address')) + '</button></div>';
@@ -1897,6 +2038,20 @@
     }
     if (what === 'logout') { fam('POST', 'logout', {}).catch(function () { /* signed out here anyway */ }).then(function () { signedOut(); render(); }); return; }
     if (what === 'theme') { put(THEMEKEY, curTheme() === 'dark' ? 'light' : 'dark'); applyTheme(); render(); return; }
+    if (V2_ME && what === 'account') { S.sheet = ''; S.tab = 'premium'; render(); follow(); return; }
+    if (what === 'me-open') { S.sheet = 'me-' + el.getAttribute('data-p'); S.confirmData = false; S.confirmDelete = false; render(); window.scrollTo(0, 0); return; }
+    if (what === 'me-back') { S.sheet = ''; S.tab = 'premium'; S.pay = null; S.gift = null; S.inListen = false; render(); follow(); window.scrollTo(0, 0); return; }
+    if (what === 'me-choose') { chooseResident(el.getAttribute('data-rid')); S.sheet = 'me-people'; render(); return; }
+    if (what === 'me-install-pick') { S.installPick = el.getAttribute('data-v'); render(); return; }
+    if (what === 'me-bell') { if (window.PortailCalls && PortailCalls.openSheet) PortailCalls.openSheet(); return; }
+    if (what === 'me-test') { api('POST', 'family/notify/test', {}).then(function () { toast(T('Test sent.')); }, function (e) { toast(errText(e)); }); return; }
+    if (what === 'me-push') {
+      if (!window.PortailCalls) return;
+      var pon = pushNow() === 'on', pr = pon ? PortailCalls.turnOff() : PortailCalls.turnOn();
+      Promise.resolve(pr).then(function () { render(); }, function () { render(); });
+      setTimeout(render, 1500);
+      return;
+    }
     if (what === 'account') { S.sheet = S.sheet === 'account' ? '' : 'account'; render(); return; }
     if (what === 'account-close') { S.sheet = ''; render(); return; }
     if (what === 'link') { var c = val('linkCode'); if (c) linkCode(c); return; }
