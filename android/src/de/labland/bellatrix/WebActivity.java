@@ -172,6 +172,23 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
     }
 
     /** The two screens open each other through this, from JavaScript. */
+    /* 24 Nov: the app's own hand pointer, laid over the page the first time the page asks for it. */
+    de.labland.bellatrix.hands.CursorOverlay cursor;
+
+    static final class CursorTask implements Runnable {
+        final WebActivity a;
+        final String json;
+        CursorTask(WebActivity a, String json) { this.a = a; this.json = json; }
+        @Override public void run() {
+            if (a.cursor == null) {
+                a.cursor = new de.labland.bellatrix.hands.CursorOverlay(a);
+                a.addContentView(a.cursor, new android.view.ViewGroup.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+            }
+            a.cursor.fromPage(json);
+            Hands.get(a).overlay = a.cursor;
+        }
+    }
+
     static final class Bridge {
         final WebActivity a;
 
@@ -374,6 +391,13 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
         @JavascriptInterface
         public void handsPictures(int ms) {
             try { Hands.get(a).pictures(ms); } catch (Throwable t) { Log.w(TAG, "handsPictures: " + t); }
+        }
+
+        /** 24 Nov (Rahma): the hand's pointer drawn by the app, like the Telekom app (hands/CursorOverlay):
+         *  {on, mirror, flipY, zone, box:[left,top,width,height] (CSS px), dpr, size, ring, lock:[x,y]|null}. */
+        @JavascriptInterface
+        public void handsCursor(String json) {
+            try { a.runOnUiThread(new CursorTask(a, json)); } catch (Throwable t) { Log.w(TAG, "handsCursor: " + t); }
         }
 
         /** Settings for the next handsStart: {"camera":"id","backend":"cpu|gpu","rot":0|90|180|270}. */

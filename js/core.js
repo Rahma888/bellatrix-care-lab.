@@ -574,6 +574,7 @@
   function nhStop() {
     if (!nh.on) return;
     nhPictures(false);
+    ncOff();
     nh.on = false;
     try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ }
     if (S.rec) S.rec.camMs += Date.now() - nh.onAt;
@@ -581,7 +582,7 @@
   }
   function nhFail(why) {
     var was = nh.on;
-    nh.on = false; nh.failed = true;
+    ncOff(); nh.on = false; nh.failed = true;
     try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ }
     if (was && S.rec) S.rec.camMs += Date.now() - nh.onAt;
     log('Hand tracking in the app off (' + why + '): detection on the page instead', 'app', 'camera');
@@ -596,9 +597,45 @@
       lm = [];
       for (i = 0; i < d.lm.length; i++) { p = d.lm[i]; lm.push({ x: +p[0], y: +p[1], z: +p[2] || 0 }); }
     }
+    nh.cur = lm && d.cur && d.cur.length === 2 ? [+d.cur[0], +d.cur[1]] : null;
     nh.n++;
     try { hwResult(lm); } catch (err) { log('Detection error: ' + err.message, 'app', 'error'); }
   };
+  /* 24 Nov (Rahma: "the pointer is not smooth like the Telekom app, copy it as it is"): with an app that has
+     BellatrixApp.handsCursor (hands/CursorOverlay) the pointer is drawn by the app itself at every camera picture,
+     straight from the Telekom filter, as in the Telekom tablet app. The page hides its own pointer, tells the app
+     how the picture maps onto the screen, the ring and the button the pointer is held on, and chooses the buttons
+     at the app's position (d.cur). 'bellatrix-native-cursor' '0' = the page's own pointer, as before. */
+  var nc = { on: false, sent: 0, ring: -1, lock: '' };
+  function ncAvail() {
+    var off = false;
+    try { off = localStorage.getItem('bellatrix-native-cursor') === '0'; } catch (e) { off = false; }
+    return !off && nh.on && !!window.CamView && !!window.BellatrixApp && typeof window.BellatrixApp.handsCursor === 'function';
+  }
+  function ncSend(o) { try { window.BellatrixApp.handsCursor(JSON.stringify(o)); } catch (e) { /* an older app */ } }
+  function ncMap() {
+    var r = stage.getBoundingClientRect(), s = r.width / stageW(), CV = window.CamView, f = CV.flip();
+    return { on: true, mirror: !!CV.mirror(), flipY: !!(f && f.y), zone: CV.zone(), box: [r.left, r.top, r.width, r.height], dpr: window.devicePixelRatio || 1, size: 120 * s };
+  }
+  function ncShow(now) {
+    if (!ncAvail()) { ncOff(); return false; }
+    if (!nc.on || now - nc.sent > 700) { ncSend(ncMap()); nc.sent = now; }
+    if (!nc.on) { nc.on = true; var c = $('airCursor'); if (c) c.classList.add('native'); }
+    return true;
+  }
+  function ncOff() {
+    if (!nc.on) return;
+    nc.on = false; nc.ring = -1; nc.lock = '';
+    ncSend({ on: false });
+    var c = $('airCursor'); if (c) c.classList.remove('native');
+  }
+  function ncRing(p) { if (!nc.on) return; p = Math.round(p * 50) / 50; if (p === nc.ring) return; nc.ring = p; ncSend({ ring: p }); }
+  function ncLock(pt) {
+    if (!nc.on) return;
+    var k = pt ? Math.round(pt[0]) + ',' + Math.round(pt[1]) : '';
+    if (k === nc.lock) return;
+    nc.lock = k; ncSend({ lock: pt ? [Math.round(pt[0]), Math.round(pt[1])] : null });
+  }
   /* 16 Nov (Rahma): pointing also on the waiting screen ("Hallo, ich bin Bellatrix" and "Call my family") for
      IDLE_AIR_MS after a session in 'air' mode ended. The app's camera follows the hand as in a session (nothing is
      recorded); the buttons marked data-b and data-a="click" are chosen with the same OK. A session that starts
@@ -635,7 +672,7 @@
     idleTick();
   }
   /* The cursor goes with the camera: no ring left on the screen after a session (16 Nov). */
-  function airHide() { var c = $('airCursor'); if (c) c.hidden = true; hover(null); setRing(0); air.seen = false; }
+  function airHide() { var c = $('airCursor'); if (c) c.hidden = true; hover(null); setRing(0); air.seen = false; ncOff(); }
   /* js/presence.js and js/posture.js call this before they open the page's camera. */
   window.__bellatrixHandsRelease = function () { nhStop(); };
   function loadVision() {
@@ -785,7 +822,7 @@
     var showHand = on && st && (st.pose || handsHints(st) || airMode(st));
     $('chipHand').hidden = !showHand && !cam.failed.camera;
     if (!showHand) $('holdBar').hidden = true;
-    if (!airMode(st)) $('airCursor').hidden = true;
+    if (!airMode(st)) { $('airCursor').hidden = true; ncOff(); }
   }
   function setHandText(t) { $('handText').textContent = Lab.t(t); $('chipHand').hidden = false; }
   function detectLoop() {
@@ -1014,8 +1051,8 @@
   }
   var air = { x: 540, y: 960, seen: false, last: 0, key: null, since: 0, done: null, guard: null, ready: 0 }, hovered = null;
   /* On every new screen; the guard of the last press is kept on purpose (see RELEASE_PX). */
-  function resetAir() { air.key = null; air.since = 0; air.done = null; air.seen = false; air.ready = performance.now() + AIR.SETTLE_MS; setRing(0); hover(null); var c = $('airCursor'); if (c) c.hidden = true; }
-  function setRing(p) { var c = $('airCursor'); if (c) c.style.setProperty('--p', p); }
+  function resetAir() { air.key = null; air.since = 0; air.done = null; air.seen = false; air.ready = performance.now() + AIR.SETTLE_MS; setRing(0); hover(null); var c = $('airCursor'); if (c) c.hidden = true; ncOff(); }
+  function setRing(p) { var c = $('airCursor'); if (c) c.style.setProperty('--p', p); ncRing(p); }
   function hover(b) { if (hovered === b) return; if (hovered) hovered.classList.remove('airhover'); hovered = b; if (b) b.classList.add('airhover'); }
   /* 16 Nov (Rahma): no scrolling by a swipe in the air any more, only pointing. Lists that are longer than the
      screen keep their arrow buttons, which are chosen by pointing like any other button. */
@@ -1134,7 +1171,7 @@
   function airFrame(lm, now) {
     var cur = $('airCursor');
     if (!lm) {
-      if (air.seen && now - air.last > AIR.LOST_MS) { air.seen = false; cur.hidden = true; hover(null); air.key = null; air.guard = null; air.snap = null; air.hold = null; setRing(0); }
+      if (air.seen && now - air.last > AIR.LOST_MS) { air.seen = false; cur.hidden = true; hover(null); air.key = null; air.guard = null; air.snap = null; air.hold = null; setRing(0); ncOff(); }
       if (!air.seen) setHandText('Point at the screen with one finger');
       return;
     }
@@ -1144,6 +1181,8 @@
     var pr = CV ? ptr.update(lm, now, fs.w, fs.h, false, false) : ptr.update(lm, now, fs.w, fs.h, !fl.x, fl.y);
     if (!pr) return;
     if (CV) pr = airScreen(pr, r);
+    /* the app draws the pointer: the buttons are chosen exactly where it is drawn */
+    if (ncShow(now) && nh.cur) { var na = CV.toScreen(nh.cur[0], nh.cur[1], r); pr.u = na.u; pr.v = na.v; }
     if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; air.needOpen = false; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
     var confirm = airConfirm(), shut = confirm && handClosed(lm), wasClosed = !!air.closed;
@@ -1171,6 +1210,7 @@
     if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
     air.x = nx0; air.y = ny0;
+    if (nc.on) ncLock(lockOn ? [r.left + air.x * s, r.top + air.y * s] : null);
     air.seen = true; air.last = now;
     airLog(now, pr);
     cur.hidden = false;

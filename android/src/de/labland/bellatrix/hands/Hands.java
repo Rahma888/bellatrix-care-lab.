@@ -89,6 +89,19 @@ public final class Hands {
     int windowProc, windowCam;
     long procWindowStart;
 
+    /* 24 Nov (Rahma: "copy the Telekom pointer as it is"): the palm (mean of points 0, 5, 9, 13, 17) through
+     * the Telekom app's one-euro filter (shell/HandCursor.kt: MIN_CUTOFF_HZ 1.2, BETA 1.5, DERIVATIVE_CUTOFF_HZ
+     * 1; a hand gone 250 ms starts afresh), at EVERY picture the tracker works on. The result goes to the
+     * pointer drawn by the app (CursorOverlay, when the page turned it on) and to the page as "cur", so the
+     * page chooses the buttons at the very place the pointer is drawn. */
+    static final float CUR_MIN_CUT = 1.2f, CUR_BETA = 1.5f, CUR_D_CUT = 1f;
+    static final long CUR_GONE_MS = 250;
+    public volatile CursorOverlay overlay;
+    static final int[] PALM_IDS = {0, 5, 9, 13, 17};
+    float curX, curY, curDx, curDy;
+    long curT, curLast;
+    boolean curHas;
+
     // Delivery to the page (compute thread).
     long nextHandAt, lastNullAt;
     boolean lastHad;
@@ -364,8 +377,35 @@ public final class Hands {
         }
     }
 
+    private static float euroAlpha(float cut, float dt) { float tau = (float) (1.0 / (2 * Math.PI * cut)); return 1f / (1f + tau / dt); }
+
+    /** One step of the Telekom filter for the palm at time t (ms); returns false when there is no hand. */
+    private boolean updateCursor(long t) {
+        if (!engine.hasHand) { CursorOverlay o = overlay; if (o != null) o.noHand(); return false; }
+        float[] p = engine.points;
+        int[] ids = PALM_IDS;
+        float x = 0f, y = 0f;
+        for (int id : ids) { x += p[3 * id]; y += p[3 * id + 1]; }
+        x /= ids.length; y /= ids.length;
+        if (!curHas || t - curLast > CUR_GONE_MS) { curHas = true; curX = x; curY = y; curDx = 0f; curDy = 0f; curT = t; }
+        else {
+            float dt = Math.max(0.001f, (t - curT) / 1000f);
+            curT = t;
+            float dx = (x - curX) / dt, dy = (y - curY) / dt;
+            curDx += euroAlpha(CUR_D_CUT, dt) * (dx - curDx);
+            curDy += euroAlpha(CUR_D_CUT, dt) * (dy - curDy);
+            curX += euroAlpha(CUR_MIN_CUT + CUR_BETA * Math.abs(curDx), dt) * (x - curX);
+            curY += euroAlpha(CUR_MIN_CUT + CUR_BETA * Math.abs(curDy), dt) * (y - curY);
+        }
+        curLast = t;
+        CursorOverlay o = overlay;
+        if (o != null) o.hand(curX, curY);
+        return true;
+    }
+
     /** At most 30 hands a second, at most 10 "no hand" a second (the first one at once). */
     private void publish(long arrived) {
+        boolean cur = updateCursor(arrived);
         Sink s = sink;
         if (s == null) return;
         long now = SystemClock.uptimeMillis();
@@ -382,7 +422,9 @@ public final class Hands {
                 if (i > 0) b.append(',');
                 b.append('[').append(num(p[3 * i])).append(',').append(num(p[3 * i + 1])).append(',').append(num(p[3 * i + 2])).append(']');
             }
-            b.append("]}");
+            b.append(']');
+            if (cur) b.append(",\"cur\":[").append(num(curX)).append(',').append(num(curY)).append(']');
+            b.append('}');
         } else {
             if (!lastHad && now - lastNullAt < 100) return;
             lastHad = false;

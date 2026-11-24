@@ -1087,3 +1087,6 @@ svg text { font-family: var(--font-display); }
 .picture.facebox .bface.blogo { box-shadow: none !important; background: transparent; aspect-ratio: auto; width: auto; height: 78%; max-width: 86%; }
 .stage:not(.land) .picture.facebox .bface.blogo { width: 68%; height: auto; max-height: 74%; }
 .stage.land .picture.facebox .bface.blogo { height: 68%; width: auto; max-width: 76%; }
+
+/* 24 Nov: the app draws the pointer itself (hands/CursorOverlay), the page’s pointer only marks the place */
+.aircursor.native { visibility: hidden !important; }
