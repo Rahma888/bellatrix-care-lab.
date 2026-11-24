@@ -65,8 +65,7 @@ final class TensorImage {
      */
     private void sample(PixelFrame frame, float originX, float originY, float stepUX, float stepUY,
                         float stepVX, float stepVY, boolean blocks) {
-        int[] pixels = frame.pixels;
-        int width = frame.width, height = frame.height, stride = frame.width;
+        int width = frame.width, height = frame.height;
         float[] out = values;
         int next = 0;
         float rowX = originX, rowY = originY;
@@ -79,8 +78,7 @@ final class TensorImage {
                     int y0 = (int) y;
                     if (y < y0) y0--;
                     if (x0 >= 0 && y0 >= 0 && x0 < width - 1 && y0 < height - 1) {
-                        int row0 = y0 * stride + x0, row1 = row0 + stride;
-                        int p00 = pixels[row0], p01 = pixels[row0 + 1], p10 = pixels[row1], p11 = pixels[row1 + 1];
+                        int p00 = frame.at(x0, y0), p01 = frame.at(x0 + 1, y0), p10 = frame.at(x0, y0 + 1), p11 = frame.at(x0 + 1, y0 + 1);
                         out[next++] = ((p00 & 0xFF) + (p01 & 0xFF) + (p10 & 0xFF) + (p11 & 0xFF)) * QUARTER;
                         out[next++] = (((p00 >>> 8) & 0xFF) + ((p01 >>> 8) & 0xFF) + ((p10 >>> 8) & 0xFF) + ((p11 >>> 8) & 0xFF)) * QUARTER;
                         out[next++] = (((p00 >>> 16) & 0xFF) + ((p01 >>> 16) & 0xFF) + ((p10 >>> 16) & 0xFF) + ((p11 >>> 16) & 0xFF)) * QUARTER;
@@ -90,7 +88,7 @@ final class TensorImage {
                         for (int tap = 0; tap < 4; tap++) {
                             int tx = x0 + (tap & 1), ty = y0 + (tap >>> 1);
                             if (tx < 0 || ty < 0 || tx >= width || ty >= height) continue;
-                            int p = pixels[ty * stride + tx];
+                            int p = frame.at(tx, ty);
                             red += p & 0xFF;
                             green += (p >>> 8) & 0xFF;
                             blue += (p >>> 16) & 0xFF;
@@ -110,7 +108,7 @@ final class TensorImage {
                     int yi = (int) ny;
                     if (ny < yi) yi--;
                     if (xi >= 0 && yi >= 0 && xi < width && yi < height) {
-                        int p = pixels[yi * stride + xi];
+                        int p = frame.at(xi, yi);
                         out[next++] = UNIT[p & 0xFF];
                         out[next++] = UNIT[(p >>> 8) & 0xFF];
                         out[next++] = UNIT[(p >>> 16) & 0xFF];

@@ -16,6 +16,56 @@ final class PixelFrame {
     int width, height;
     int[] pixels = new int[0];
 
+    /* 24 Nov (Rahma: "not smooth like the Telekom app"): the Telekom app gets ready RGBA frames from CameraX;
+     * here every pixel of every 640x480 frame was converted and turned in Java before the models looked at
+     * a small part of it. Now prepare() only takes the planes, and at(x, y) converts a pixel the first time
+     * it is read (stamp == gen). fill() (everything at once) stays for comparison (handsConfig {"lazy":false}). */
+    private int[] stamp = new int[0];
+    private int gen;
+    private Yuv src;
+    private int rot, srcW, srcH;
+    private boolean lazy;
+
+    /** Takes the planes of yuv for a frame turned clockwise by rotation degrees; converts nothing yet. */
+    void prepare(Yuv f, int rotation) {
+        int w = f.width, h = f.height;
+        boolean sideways = rotation == 90 || rotation == 270;
+        width = sideways ? h : w;
+        height = sideways ? w : h;
+        int n = width * height;
+        if (pixels.length != n) pixels = new int[n];
+        if (stamp.length != n) { stamp = new int[n]; gen = 0; }
+        gen++;
+        if (gen == 0) { java.util.Arrays.fill(stamp, 0); gen = 1; }
+        src = f; rot = rotation; srcW = w; srcH = h; lazy = true;
+    }
+
+    /** The upright pixel at (x, y), 0 <= x < width, 0 <= y < height (red lowest, as in pixels). */
+    int at(int x, int y) {
+        int i = y * width + x;
+        if (!lazy || stamp[i] == gen) return pixels[i];
+        stamp[i] = gen;
+        int sx, sy;
+        if (rot == 90) { sx = y; sy = srcH - 1 - x; }
+        else if (rot == 180) { sx = srcW - 1 - x; sy = srcH - 1 - y; }
+        else if (rot == 270) { sx = srcW - 1 - y; sy = x; }
+        else { sx = x; sy = y; }
+        Yuv f = src;
+        int Y = f.y[sy * f.yRowStride + sx] & 0xFF;
+        int ci = (sy >> 1) * f.uvRowStride + (sx >> 1) * f.uvPixelStride;
+        int U = (f.u[ci] & 0xFF) - 128;
+        int V = (f.v[ci] & 0xFF) - 128;
+        int r = Y + ((1436 * V) >> 10);
+        int g = Y - ((352 * U + 731 * V) >> 10);
+        int b = Y + ((1815 * U) >> 10);
+        if (r < 0) r = 0; else if (r > 255) r = 255;
+        if (g < 0) g = 0; else if (g > 255) g = 255;
+        if (b < 0) b = 0; else if (b > 255) b = 255;
+        int p = 0xFF000000 | (b << 16) | (g << 8) | r;
+        pixels[i] = p;
+        return p;
+    }
+
     /** The copied camera planes of one frame (filled on the camera thread, read on the compute thread). */
     static final class Yuv {
         byte[] y = new byte[0], u = new byte[0], v = new byte[0];
@@ -25,6 +75,7 @@ final class PixelFrame {
 
     /** Converts yuv into this frame, turned clockwise by rotation degrees (0, 90, 180, 270). */
     void fill(Yuv f, int rotation) {
+        lazy = false;
         int w = f.width, h = f.height;
         boolean sideways = rotation == 90 || rotation == 270;
         int outW = sideways ? h : w, outH = sideways ? w : h;

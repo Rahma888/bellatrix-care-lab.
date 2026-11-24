@@ -79,6 +79,15 @@ public final class Hands {
     volatile float fps, inferMs, detectMs;
     int windowFrames;
     long windowStart;
+    /* 24 Nov: to compare with the Telekom app on the tablet: the whole work per frame (workMs), frames worked
+     * on a second (procFps), frames the camera sent a second (camFps), hands lost since the start (lost).
+     * lazy = convert only the pixels the models read (PixelFrame.prepare / at); false = every pixel, as before. */
+    volatile float workMs, procFps, camFps;
+    volatile int lost;
+    volatile boolean lazy = true;
+    volatile int cameraFrames;
+    int windowProc, windowCam;
+    long procWindowStart;
 
     // Delivery to the page (compute thread).
     long nextHandAt, lastNullAt;
@@ -110,6 +119,7 @@ public final class Hands {
             JSONObject o = new JSONObject(json == null || json.isEmpty() ? "{}" : json);
             if (o.has("camera")) cameraOverride = o.optString("camera", "");
             if (o.has("backend")) preferGpu = !"cpu".equals(o.optString("backend"));
+            if (o.has("lazy")) lazy = o.optBoolean("lazy", true);
             if (o.has("rot")) {
                 int r = o.optInt("rot", 0);
                 extraRotation = (r == 90 || r == 180 || r == 270) ? r : 0;
@@ -209,6 +219,11 @@ public final class Hands {
                 .append(",\"fps\":").append(Math.round(fps * 10) / 10.0)
                 .append(",\"inferMs\":").append(Math.round(inferMs * 10) / 10.0)
                 .append(",\"detectMs\":").append(Math.round(detectMs * 10) / 10.0)
+                .append(",\"workMs\":").append(Math.round(workMs * 10) / 10.0)
+                .append(",\"procFps\":").append(Math.round(procFps * 10) / 10.0)
+                .append(",\"camFps\":").append(Math.round(camFps * 10) / 10.0)
+                .append(",\"lost\":").append(lost)
+                .append(",\"lazy\":").append(lazy)
                 .append(",\"camera\":").append(JSONObject.quote(cameraText))
                 .append(",\"cameras\":").append(camerasText)
                 .append(",\"error\":").append(JSONObject.quote(error))
@@ -275,11 +290,10 @@ public final class Hands {
         if (s == null || frame.width < PIC_STEP || frame.height < PIC_STEP) return;
         int w = frame.width / PIC_STEP, h = frame.height / PIC_STEP;
         if (picPixels.length != w * h) picPixels = new int[w * h];
-        int[] src = frame.pixels;
         for (int y = 0; y < h; y++) {
-            int si = y * PIC_STEP * frame.width, di = y * w;
+            int di = y * w;
             for (int x = 0; x < w; x++) {
-                int c = src[si + x * PIC_STEP];   // ABGR (red lowest) -> ARGB for the Bitmap
+                int c = frame.at(x * PIC_STEP, y * PIC_STEP);   // ABGR (red lowest) -> ARGB for the Bitmap
                 picPixels[di + x] = (c & 0xFF00FF00) | ((c & 0xFF) << 16) | ((c >> 16) & 0xFF);
             }
         }
@@ -293,15 +307,18 @@ public final class Hands {
 
     void process() {
         long arrived = yuv.arrivedAtMs;
+        long t0 = System.nanoTime();
+        boolean had = engine.hasHand;
         try {
             if (!running || !modelsReady) return;
-            frame.fill(yuv, rotation);
+            if (lazy) frame.prepare(yuv, rotation); else frame.fill(yuv, rotation);
             int every = picturesEveryMs;
             if (every > 0 && arrived - lastPictureAt >= every) {
                 lastPictureAt = arrived;
                 try { publishPicture(arrived); } catch (Throwable t) { Log.w(TAG, "picture: " + t); }
             }
             if (!engine.process(frame, arrived)) return;
+            if (had && !engine.hasHand) lost++;
             measure();
             publish(arrived);
         } catch (Throwable t) {
@@ -309,6 +326,25 @@ public final class Hands {
             engine.reset();
         } finally {
             gate.completed(arrived);
+            float ms = (System.nanoTime() - t0) / 1e6f;
+            workMs = workMs == 0 ? ms : workMs * 0.9f + ms * 0.1f;
+            countWindow();
+        }
+    }
+
+    /** Frames worked on and frames sent by the camera, per second (compute thread). */
+    private void countWindow() {
+        windowProc++;
+        long now = SystemClock.uptimeMillis();
+        if (procWindowStart == 0) { procWindowStart = now; windowCam = cameraFrames; }
+        if (now - procWindowStart >= 1000) {
+            float s = (now - procWindowStart) / 1000f;
+            int cam = cameraFrames;
+            procFps = windowProc / s;
+            camFps = (cam - windowCam) / s;
+            windowProc = 0;
+            windowCam = cam;
+            procWindowStart = now;
         }
     }
 

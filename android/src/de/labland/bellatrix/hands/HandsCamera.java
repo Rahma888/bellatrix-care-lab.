@@ -333,6 +333,7 @@ final class HandsCamera {
         if (img == null) return;
         try {
             long now = SystemClock.uptimeMillis();
+            hands.cameraFrames++;
             if (!wanted || !hands.ready(now)) return;
             Image.Plane[] p = img.getPlanes();
             PixelFrame.Yuv y = hands.yuv;
