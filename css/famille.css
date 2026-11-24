@@ -181,3 +181,16 @@ h1, .avatar, .ringbox h1 { font-family: var(--font-display); font-weight: var(--
 .incall.group .remote { height: calc(100% - 178px - 48vw - 24px); }
 @media (min-width: 720px) { .incall.group .remote { height: calc(100% - 200px - 170px); } }
 /* ---------- end of Group call ---------- */
+
+/* ---------- the call screen 2.0 (Rahma, review of 24 Nov): round buttons, the time in the middle ---------- */
+.incall.v2 .ctop { justify-content: center; }
+.incall.v2 .ctop .cname { display: none; }
+.incall.v2 .ctop span { border-radius: 999px; padding: 6px 16px; }
+.incall.v2 .self { border-radius: 16px; border: 2px solid #FFFFFF; }
+.incall.v2 .self.back { transform: none; }
+.incall.v2 .cbar { gap: 14px; }
+.incall.v2 .cbtn { width: 76px; font-size: 13px; }
+.incall.v2 .cbtn svg { width: 34px; height: 34px; padding: 17px; border-radius: 50%; background: rgba(255, 255, 255, .18); }
+.incall.v2 .cbtn[aria-pressed="true"] svg { background: #FFFFFF; color: #00325F; }
+.incall.v2 .cbtn.danger svg { background: var(--hang); color: #FFFFFF; }
+@media (min-width: 700px) { .incall.v2 .cbtn { width: 96px; font-size: 15px; } .incall.v2 .cbtn svg { width: 40px; height: 40px; padding: 20px; } }

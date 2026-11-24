@@ -33,7 +33,7 @@
       connecting: 'Connexion…',
       voiceOnly: 'Pas de caméra : l’appel se fait avec la voix seulement.',
       mute: 'Couper le micro', unmute: 'Activer le micro',
-      camOff: 'Couper la caméra', camOn: 'Activer la caméra',
+      camOff: 'Couper la caméra', camOn: 'Activer la caméra', flipCam: 'Retourner',
       hangup: 'Raccrocher',
       tapSound: 'Toucher pour activer le son',
       ended: 'Appel terminé',
@@ -92,7 +92,7 @@
       connecting: 'Verbindung wird hergestellt…',
       voiceOnly: 'Keine Kamera: Der Anruf läuft nur mit Ton.',
       mute: 'Mikrofon aus', unmute: 'Mikrofon an',
-      camOff: 'Kamera aus', camOn: 'Kamera an',
+      camOff: 'Kamera aus', camOn: 'Kamera an', flipCam: 'Kamera drehen',
       hangup: 'Auflegen',
       tapSound: 'Tippen, um den Ton einzuschalten',
       ended: 'Anruf beendet',
@@ -151,7 +151,7 @@
       connecting: 'Connecting…',
       voiceOnly: 'No camera: this call is voice only.',
       mute: 'Mute', unmute: 'Unmute',
-      camOff: 'Camera off', camOn: 'Camera on',
+      camOff: 'Camera off', camOn: 'Camera on', flipCam: 'Flip',
       hangup: 'Hang up',
       tapSound: 'Tap to turn the sound on',
       ended: 'Call ended',
@@ -201,6 +201,7 @@
     hangup: svg(HANDSET),
     mic: svg('<rect x="36" y="10" width="28" height="50" rx="14" fill="currentColor"/><path d="M24 46 a26 26 0 0 0 52 0" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><rect x="46" y="72" width="8" height="16" fill="currentColor"/><rect x="32" y="84" width="36" height="8" rx="4" fill="currentColor"/>'),
     cam: svg('<rect x="8" y="28" width="58" height="44" rx="10" fill="currentColor"/><path d="M66 44 L92 30 V70 L66 56 Z" fill="currentColor"/>'),
+    flip: svg('<path d="M20 38 A32 32 0 0 1 78 34" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><path d="M80 18 L80 38 L60 38" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M80 62 A32 32 0 0 1 22 66" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/><path d="M20 82 L20 62 L40 62" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'),
     slash: '<line x1="12" y1="12" x2="88" y2="88" stroke="currentColor" stroke-width="9" stroke-linecap="round"/>'
   };
 
@@ -424,7 +425,7 @@
   }
   function callView() {
     var c = call;
-    show('call', '<section class="incall">' +
+    show('call', '<section class="incall v2">' +
       '<video class="remote" id="remotev" autoplay playsinline></video>' +
       '<div class="others n0" id="others"></div>' +
       '<button type="button" class="tapsound" id="tapsound" data-act="sound" hidden>' + esc(t('tapSound')) + '</button>' +
@@ -443,6 +444,7 @@
       '<div class="cbar">' +
       '<button type="button" class="cbtn" data-act="mute" aria-pressed="false">' + I.mic + '<span>' + esc(t('mute')) + '</span></button>' +
       (c.voiceOnly ? '' : '<button type="button" class="cbtn" data-act="cam" aria-pressed="false">' + I.cam + '<span>' + esc(t('camOff')) + '</span></button>') +
+      (c.voiceOnly || !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '' : '<button type="button" class="cbtn" data-act="flip">' + I.flip + '<span>' + esc(t('flipCam')) + '</span></button>') +
       '<button type="button" class="cbtn danger" data-act="hangup">' + I.hangup + '<span>' + esc(t('hangup')) + '</span></button>' +
       '</div></section>');
     attach();
@@ -655,6 +657,23 @@
     end(c, null);
     refresh(false);
   }
+  /* 24 Nov (Rahma, review: "new version" of the call screen): turn the camera (front / back). The new picture
+     replaces the old one in every connection; the call itself goes on unchanged. */
+  function flip() {
+    var c = call, md = navigator.mediaDevices;
+    if (!c || !c.local || !md || !md.getUserMedia) return;
+    var old = c.local.getVideoTracks()[0]; if (!old) return;
+    var face = c.facing === 'environment' ? 'user' : 'environment';
+    md.getUserMedia({ audio: false, video: { facingMode: { ideal: face }, width: { ideal: 1280 }, height: { ideal: 720 } } }).then(function (s) {
+      var nt = s.getVideoTracks()[0]; if (!nt) return;
+      nt.enabled = !c.camOff;
+      var pcs = [c.pc].concat(livePeerIds(c).map(function (id) { return c.peers[id].pc; }));
+      pcs.forEach(function (pc) { if (pc && pc.getSenders) pc.getSenders().forEach(function (snd) { if (snd.track && snd.track.kind === 'video' && snd.replaceTrack) snd.replaceTrack(nt).catch(noop); }); });
+      c.local.removeTrack(old); old.stop(); c.local.addTrack(nt); c.facing = face;
+      var sv = document.getElementById('selfv'); if (sv) { sv.srcObject = c.local; sv.classList.toggle('back', face === 'environment'); sv.play().catch(noop); }
+      applyCaps(c);
+    }).catch(noop);
+  }
   function toggle(kind, btn) {
     var c = call;
     if (!c || !c.local) return;
@@ -774,6 +793,7 @@
     else if (a === 'cancel' || a === 'hangup') hangUp();
     else if (a === 'retry' || a === 'home') refresh(false);
     else if (a === 'mute' || a === 'cam') toggle(a, b);
+    else if (a === 'flip') flip();
     else if (call && a === 'gaccept') { el('ginvite').hidden = true; if (gameSend(call, { type: 'accept' })) el('gtoast').hidden = true; }
     else if (call && a === 'gdecline') { el('ginvite').hidden = true; gameSend(call, { type: 'decline' }); }
     else if (call && a === 'groll') gamePlay(call, { type: 'roll' });

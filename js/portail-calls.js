@@ -21,6 +21,9 @@
   /* ---------- texts ---------- */
   (function () {
     function addNew(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    /* Calls 2.0 (24 Nov) */
+    addNew('fr', { 'When would you like to call?': 'Quand voulez-vous appeler ?', 'Choose a precise date': 'Choisir une date précise', 'Coming up': 'À venir', 'Call back': 'Rappeler', 'Video calls with {name}': 'Appels vidéo avec {name}', 'Which day?': 'Quel jour ?', 'At what time?': 'À quelle heure ?', 'Suggest {day} at {time}': 'Proposer {day} à {time}', 'The care team confirms the time.': 'L’équipe soignante confirme l’heure.', 'No call yet.': 'Pas encore d’appel.', 'Today': 'Aujourd’hui' });
+    addNew('de', { 'When would you like to call?': 'Wann möchten Sie anrufen?', 'Choose a precise date': 'Ein genaues Datum wählen', 'Coming up': 'Demnächst', 'Call back': 'Zurückrufen', 'Video calls with {name}': 'Videoanrufe mit {name}', 'Which day?': 'Welcher Tag?', 'At what time?': 'Um wie viel Uhr?', 'Suggest {day} at {time}': '{day} um {time} vorschlagen', 'The care team confirms the time.': 'Das Pflegeteam bestätigt die Uhrzeit.', 'No call yet.': 'Noch kein Anruf.', 'Today': 'Heute' });
     addNew('fr', {
       'Notifications on this phone': 'Notifications sur ce téléphone', 'On': 'Activées', 'Off': 'Désactivées',
       'Blocked by the browser: allow them in its settings.': 'Bloquées par le navigateur : autorisez-les dans ses réglages.',
@@ -370,7 +373,7 @@
 
   /* ---------- the Calls screen (the tab, or the panel from the bell) ---------- */
   var WHEN = [['soon', 'As soon as possible'], ['today', 'Today'], ['tomorrow', 'Tomorrow']];
-  function callsHtml() {
+  function callsHtmlOld() {
     var c = S.calls, h = '';
     if (!c) return '<section class="card"><p class="muted">' + esc(T('One moment…')) + '</p></section>';
     if (c.invite) {
@@ -424,6 +427,82 @@
     if (!after) h += '<section class="card pc-notifcard"><h2>' + esc(T('Notifications')) + '</h2>' + pushCard('tab') + '</section>';
     return h;
   }
+
+  /* ---------- Calls 2.0 (Rahma, review of 24 Nov: "new version") ----------
+     One card to ask for a call (when, a word, one big button, a link to a precise date), then "Coming up"
+     (the planned call, the robot on its way) and "Last calls" (a missed one can be called back at once).
+     The notifications leave this page (Me > Notifications: window.PortailCalls.pushRow / pushCard).
+     V2_CALLS = false brings back the screens as they were (callsHtmlOld, planHtmlOld). */
+  var V2_CALLS = true;
+  function callsHtml() { return V2_CALLS ? callsHtmlV2() : callsHtmlOld(); }
+  function planHtml() { return V2_CALLS ? planHtmlV2() : planHtmlOld(); }
+  function badge(cls, text) { return '<span class="pc2-badge ' + cls + '">' + esc(text) + '</span>'; }
+  function callsHtmlV2() {
+    var c = S.calls, h = '';
+    if (!c) return '<section class="card"><p class="muted">' + esc(T('One moment…')) + '</p></section>';
+    if (c.invite) {
+      h += '<section class="card pc-invite"><div class="pc-ring" aria-hidden="true">' + ICON.video + '</div>' +
+        '<h1>' + esc(T('Bellatrix · {name} is calling you', { name: who() })) + '</h1>' +
+        '<p class="fine">' + esc(T('Video call · until {time}', { time: hhmm(c.invite.until) })) + '</p>' +
+        '<button type="button" class="btn call" data-pc="join">' + ICON.video + '<span>' + esc(T('Join the call')) + '</span></button>' + qrBox(c.invite.token) + '</section>';
+    }
+    var q = c.request;
+    if (S.plan && !(q && q.state === 'calling')) return h + planHtml();
+    h += '<h1 class="pc2-title">' + esc(T('Video calls with {name}', { name: who() })) + '</h1>';
+    if (!q) {
+      h += '<section class="pc2-card"><h2>' + esc(T('When would you like to call?')) + '</h2><div class="pc2-chips" role="radiogroup">' + WHEN.map(function (w) {
+          var on = S.when === w[0];
+          return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-when="' + w[0] + '">' + esc(T(w[1])) + '</button>';
+        }).join('') + '</div>' +
+        '<label class="field"><span>' + esc(T('A word for the care team (optional)')) + '</span><input id="pcNote" maxlength="120" autocomplete="off" placeholder="' + esc(T('e.g. free after 6 pm')) + '"></label>' +
+        '<button type="button" class="btn primary pc2-ask" data-pc="ask"' + (S.busy ? ' disabled' : '') + '>' + ICON.video + '<span>' + esc(T('Ask for a call')) + '</span></button>' +
+        '<button type="button" class="link" data-pc="plan-open">' + esc(T('Choose a precise date')) + '</button></section>';
+    }
+    /* coming up: the request in progress */
+    var up = '';
+    if (q && q.state !== 'calling' && q.visitAt) up = '<li>' + ICON.call + '<span class="pc2-t"><b>' + esc(T('Bellatrix is on the way to {name}…', { name: who() })) + '</b><small>' + esc(when(q.visitAt)) + '</small></span>' + badge('ok', T('On the way')) + '</li>';
+    else if (q && q.state !== 'calling' && q.when === 'planned' && q.planAt) up = '<li>' + ICON.call + '<span class="pc2-t"><b>' + esc(planText(q.planAt)) + '</b><small>' + esc(T('The care team sees your date.')) + '</small>' + (q.note ? '<small>' + esc(quote(q.note)) + '</small>' : '') + '</span>' + badge('wait', T('Call planned')) + '</li>';
+    else if (q && q.state !== 'calling') { var later = q.state === 'later'; up = '<li>' + ICON.call + '<span class="pc2-t"><b>' + esc(later ? T('The care team will get back to you soon.') : T('The care team will send you an invitation.')) + '</b><small>' + esc(when(q.at)) + '</small>' + (q.note ? '<small>' + esc(quote(q.note)) + '</small>' : '') + '</span>' + badge(later ? 'wait' : 'ok', later ? T('A little later') : T('Request sent')) + '</li>'; }
+    else if (q && q.state === 'calling' && !c.invite) up = '<li>' + ICON.video + '<span class="pc2-t"><b>' + esc(T('Invitation sent')) + '</b></span>' + badge('ok', T('Invitation sent')) + '</li>';
+    if (up) {
+      h += '<h2 class="pc2-h">' + esc(T('Coming up')) + '</h2><ul class="pc2-list">' + up + '</ul>';
+      if (q && q.state !== 'calling') h += '<div class="pc2-row">' + (q.when === 'planned' ? '<button type="button" class="link small" data-pc="plan-open">' + esc(T('Change the date')) + '</button>' : '') +
+        '<button type="button" class="link small" data-pc="cancel" data-id="' + esc(q.id) + '">' + esc(T('Cancel the request')) + '</button></div>';
+    }
+    h += '<h2 class="pc2-h">' + esc(T('Last calls')) + '</h2>';
+    if (c.recent && c.recent.length) {
+      h += '<ul class="pc2-list">' + c.recent.map(function (r) {
+        var k = r.state === 'answered' ? ['ok', 'Call taken', ICON.ok] : r.state === 'missed' ? ['miss', 'Missed call', ICON.missed] : ['off', 'Call cancelled', ICON.call];
+        return '<li class="' + k[0] + '">' + k[2] + '<span class="pc2-t"><b>' + esc(T(k[1])) + '</b><small>' + esc(when(r.at)) + '</small></span>' +
+          (r.state === 'missed' && !q ? '<button type="button" class="link small" data-pc="recall">' + esc(T('Call back')) + '</button>' : '') + '</li>';
+      }).join('') + '</ul>';
+    } else h += '<p class="muted">' + esc(T('No call yet.')) + '</p>';
+    return h;
+  }
+  /* a precise date: the next 7 days as cards, the hours as chips, a word for the team, one button */
+  var PLAN_TIMES = ['10:00', '11:00', '14:00', '15:00', '16:00', '17:30', '18:30'];
+  function planHtmlV2() {
+    var today = new Date(), days = [], i, d;
+    for (i = 0; i < 7; i++) { d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i); days.push(d); }
+    if (!S.planDay) S.planDay = dayValue(days[1]);
+    if (!S.planTime) S.planTime = '15:00';
+    var loc = LOCALE[S.lang], chosen = days.filter(function (x) { return dayValue(x) === S.planDay; })[0] || days[1];
+    var dayName = function (x, o) { try { return x.toLocaleDateString(loc, o); } catch (e) { return dayValue(x); } };
+    return '<section class="pc2-card pc2-plan"><h1>' + esc(T('Plan a call with {name}', { name: who() })) + '</h1>' +
+      '<h2>' + esc(T('Which day?')) + '</h2><div class="pc2-days" role="radiogroup">' + days.map(function (x, j) {
+        var v = dayValue(x), on = v === S.planDay;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="pc2-day' + (on ? ' on' : '') + '" data-pc="pday" data-v="' + v + '">' +
+          '<small>' + esc(j === 0 ? T('Today') : dayName(x, { weekday: 'short' })) + '</small><b>' + x.getDate() + '</b></button>';
+      }).join('') + '</div>' +
+      '<h2>' + esc(T('At what time?')) + '</h2><div class="pc2-chips" role="radiogroup">' + PLAN_TIMES.map(function (t) {
+        var on = t === S.planTime;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-pc="ptime" data-v="' + t + '">' + t + '</button>';
+      }).join('') + '</div>' +
+      '<p class="fine">' + esc(T('The care team confirms the time.')) + '</p>' +
+      '<label class="field"><span>' + esc(T('A word for the care team (optional)')) + '</span><input id="pcPlanNote" maxlength="120" autocomplete="off" value="' + esc(S.planNote || '') + '" placeholder="' + esc(T('e.g. free after 6 pm')) + '"></label>' +
+      '<button type="button" class="btn primary" data-pc="plan-save"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Suggest {day} at {time}', { day: dayName(chosen, { weekday: 'long', day: 'numeric' }), time: S.planTime })) + '</button>' +
+      '<button type="button" class="link" data-pc="plan-close">' + esc(T('Cancel')) + '</button></section>';
+  }
   /* ---------- the reminder and the planned call ---------- */
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
   function dayValue(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
@@ -431,7 +510,7 @@
     var d = new Date(iso);
     try { return d.toLocaleString(LOCALE[S.lang], { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }); } catch (e) { return d.toISOString().slice(0, 16).replace('T', ' '); }
   }
-  function planHtml() {
+  function planHtmlOld() {
     var today = new Date(), tomorrow = new Date(today.getTime() + 86400000);
     if (!S.planDay) S.planDay = dayValue(tomorrow);
     return '<section class="card pc-plan"><h1>' + esc(T('Plan a call with {name}', { name: who() })) + '</h1>' +
@@ -440,7 +519,7 @@
       '<button type="button" class="btn primary" data-pc="plan-save"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Save the date')) + '</button>' +
       '<button type="button" class="link" data-pc="plan-close">' + esc(T('Cancel')) + '</button></section>';
   }
-  function keepPlan() { var d = document.getElementById('pcDay'), t = document.getElementById('pcTime'); if (d && d.value) S.planDay = d.value; if (t && t.value) S.planTime = t.value; }
+  function keepPlan() { var d = document.getElementById('pcDay'), t = document.getElementById('pcTime'), n = document.getElementById('pcPlanNote'); if (d && d.value) S.planDay = d.value; if (t && t.value) S.planTime = t.value; if (n) S.planNote = n.value; }
   function openPlan() { S.plan = true; paintRemind(); if (!showTab()) openPanel(); else paintCalls(); var d = document.getElementById('pcDay'); if (d && d.scrollIntoView) d.scrollIntoView({ block: 'center' }); }
   function savePlan() {
     keepPlan();
@@ -448,8 +527,8 @@
     var at = m && tm ? new Date(+m[1], +m[2] - 1, +m[3], +tm[1], +tm[2]) : null;
     if (!at || !isFinite(at.getTime()) || at.getTime() < Date.now()) { toast(T('Please choose a day and a time to come.')); return; }
     S.busy = true; paintCalls();
-    api('POST', 'family/calls/plan', { at: at.toISOString() }).then(function (r) {
-      S.busy = false; S.plan = false; S.planDay = '';
+    api('POST', 'family/calls/plan', S.planNote ? { at: at.toISOString(), note: String(S.planNote).trim().slice(0, 120) } : { at: at.toISOString() }).then(function (r) {
+      S.busy = false; S.plan = false; S.planDay = ''; S.planNote = '';
       S.calls = S.calls || {}; S.calls.request = r.request; S.calls.reminder = null;
       toast(T('Planned call saved.'));
       paintCalls(); paintRemind();
@@ -714,6 +793,9 @@
     if (what === 'remind-now') { remindAction('now', ''); return; }
     if (what === 'remind-plan') { remindAction('plan', ''); return; }
     if (what === 'plan-open') { openPlan(); return; }
+    if (what === 'pday') { keepPlan(); S.planDay = b.getAttribute('data-v'); paintCalls(); return; }
+    if (what === 'ptime') { keepPlan(); S.planTime = b.getAttribute('data-v'); paintCalls(); return; }
+    if (what === 'recall') { S.when = 'soon'; ask(); return; }
     if (what === 'plan-close') { S.plan = false; if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); paintCalls(); paintRemind(); return; }
     if (what === 'plan-save') { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); savePlan(); return; }
     if (what === 'cancel') {
@@ -830,5 +912,5 @@
     window.addEventListener('load', register);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', begin); else begin();
-  window.PortailCalls = { tab: TAB, render: render, state: S, ring: RING, pollRing: pollRing, openSheet: openSheet, openCalls: openPanel, turnOn: turnOn, turnOff: turnOff, pushState: pushState, pushRow: pushRow, remind: remindAction, _load: function () { return Promise.all([loadNotes(), loadCalls()]); } };
+  window.PortailCalls = { tab: TAB, render: render, state: S, ring: RING, pollRing: pollRing, openSheet: openSheet, openCalls: openPanel, turnOn: turnOn, turnOff: turnOff, pushState: pushState, pushRow: pushRow, pushCard: pushCard, v2: function () { return V2_CALLS; }, remind: remindAction, _load: function () { return Promise.all([loadNotes(), loadCalls()]); } };
 })();
