@@ -1,1 +1,34 @@
 /* Family app 2.0 (Rahma, review of 24 Nov): shop screens. Uses the tokens of css/portail.css and css/brand.css. */
+/* Premium like a store: a list of offers with a square icon, one offer's page, the payment page */
+.shop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.shop-list li + li { border-top: 1px solid var(--line); }
+.shop-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px 0; background: none; border: 0; color: var(--ink); text-align: left; font: inherit; cursor: pointer; min-height: 0; }
+.shop-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 12px; }
+.shop-ico { flex: none; width: 56px; height: 56px; border-radius: 16px; background: var(--accent); color: var(--on-accent); display: flex; align-items: center; justify-content: center; }
+.shop-ico svg { width: 28px; height: 28px; }
+.shop-ico.lg { width: 84px; height: 84px; border-radius: 22px; }
+.shop-ico.lg svg { width: 42px; height: 42px; }
+.shop-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.shop-txt b { font-size: 18px; line-height: 1.2; }
+.shop-txt small { color: var(--muted); font-size: 15px; line-height: 1.3; }
+.shop-txt .chips { margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.shop-meta { font-size: 15px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+.shop-chev { font-style: normal; font-size: 28px; line-height: 1; color: var(--muted); }
+.shop-hero { display: flex; align-items: center; gap: 16px; }
+.shop-hero h1 { margin: 0; font-size: 26px; line-height: 1.1; }
+.shop-hero p { margin: 4px 0 0; }
+.shop-page h2 { font-size: 20px; margin: 6px 0 0; }
+.shop-months { display: flex; flex-wrap: wrap; gap: 8px; }
+.shop-months .tchip { border-radius: 999px; border-width: 1.5px; font-size: 16px; }
+.shop-give { font-size: 19px; border-radius: 14px; }
+.shop-about { margin: 0; padding-left: 20px; }
+.shop-about li + li { margin-top: 6px; }
+.shop-order { display: flex; align-items: center; gap: 12px; background: var(--soft); border-radius: 14px; padding: 12px 14px; }
+.shop-order .shop-ico { width: 44px; height: 44px; border-radius: 12px; }
+.shop-order .shop-ico svg { width: 22px; height: 22px; }
+.shop-amount { font-size: 20px; white-space: nowrap; }
+.shop-pay .field > span { text-transform: none; letter-spacing: normal; font-size: 16px; font-weight: 500; color: var(--ink); }
+.shop-pay .field input { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; background-color: var(--surface); min-height: 54px; font-size: 18px; }
+.shop-pay .field input:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 3px var(--soft); }
+.shop-pay .btn { border-radius: 14px; }
+.shop-demo { text-align: center; margin: 0; }

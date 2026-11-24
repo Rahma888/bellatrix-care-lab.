@@ -109,6 +109,7 @@
       'No card data is kept. Do not type your real card: use 4242 4242 4242 4242.': 'Aucune donnée de carte n’est conservée. N’entrez pas votre vraie carte : utilisez 4242 4242 4242 4242.',
       'Name on the card': 'Nom sur la carte', 'Card number': 'Numéro de carte', 'Expiry (MM/YY)': 'Expiration (MM/AA)', 'Security code': 'Cryptogramme',
       'Pay (demo)': 'Payer (démo)', 'Continue': 'Continuer', 'Demonstration': 'Démonstration',
+      /* family app 2.0, shop */ 'Premium for {name}': 'Premium pour {name}', 'For {name}': 'Pour {name}', 'from {price} / month': 'dès {price} / mois', 'Give · {price}': 'Offrir · {price}', 'About': 'À propos', 'Given by you': 'Offert par vous', 'Payment': 'Paiement', 'Pay {price}': 'Payer {price}', 'Demo payment': 'Paiement de démonstration', 'Card details are not kept.': 'Les données de carte ne sont pas gardées.', 'As on the card': 'Comme sur la carte', 'MM/YY': 'MM/AA', '3 or 4 digits': '3 ou 4 chiffres', 'Choose songs for {name}': 'Choisir des chansons pour {name}', 'Songs and lyrics without limits': 'Chansons et paroles sans limite', 'Listen together with the family': 'Écouter ensemble avec la famille', 'Premium books': 'Des livres Premium', 'Recorded voices for reading': 'Des voix enregistrées pour la lecture',
       'Paid. Bellatrix switches it on for {name} in a moment.': 'Payé. Bellatrix l’active pour {name} dans un instant.',
       'Thank you! The care team will switch it on for {name}.': 'Merci ! L’équipe va l’activer pour {name}.',
       'All right. Nothing is switched on.': 'D’accord. Rien n’est activé.', 'Stopped. Bellatrix switches it off.': 'Arrêté. Bellatrix le désactive.',
@@ -247,6 +248,7 @@
       'No card data is kept. Do not type your real card: use 4242 4242 4242 4242.': 'Es werden keine Kartendaten gespeichert. Geben Sie nicht Ihre echte Karte ein: Nutzen Sie 4242 4242 4242 4242.',
       'Name on the card': 'Name auf der Karte', 'Card number': 'Kartennummer', 'Expiry (MM/YY)': 'Ablauf (MM/JJ)', 'Security code': 'Prüfnummer',
       'Pay (demo)': 'Bezahlen (Demo)', 'Continue': 'Weiter', 'Demonstration': 'Demonstration',
+      /* family app 2.0, shop */ 'Premium for {name}': 'Premium für {name}', 'For {name}': 'Für {name}', 'from {price} / month': 'ab {price} / Monat', 'Give · {price}': 'Schenken · {price}', 'About': 'Über das Angebot', 'Given by you': 'Von Ihnen geschenkt', 'Payment': 'Zahlung', 'Pay {price}': '{price} bezahlen', 'Demo payment': 'Demo-Zahlung', 'Card details are not kept.': 'Kartendaten werden nicht gespeichert.', 'As on the card': 'Wie auf der Karte', 'MM/YY': 'MM/JJ', '3 or 4 digits': '3 oder 4 Ziffern', 'Choose songs for {name}': 'Lieder für {name} auswählen', 'Songs and lyrics without limits': 'Lieder und Liedtexte ohne Grenzen', 'Listen together with the family': 'Gemeinsam mit der Familie hören', 'Premium books': 'Premium-Bücher', 'Recorded voices for reading': 'Aufgenommene Stimmen zum Vorlesen',
       'Paid. Bellatrix switches it on for {name} in a moment.': 'Bezahlt. Bellatrix schaltet es gleich für {name} ein.',
       'Thank you! The care team will switch it on for {name}.': 'Danke! Das Pflegeteam schaltet es für {name} ein.',
       'All right. Nothing is switched on.': 'In Ordnung. Es wird nichts eingeschaltet.', 'Stopped. Bellatrix switches it off.': 'Beendet. Bellatrix schaltet es aus.',
@@ -1066,22 +1068,78 @@
       '<button type="button" class="btn primary" data-do="gift-next">' + esc(T('Continue')) + '</button>' +
       '<button type="button" class="link" data-do="gift-back">' + esc(T('Back')) + '</button></section>';
   }
-  function premiumTab() {
-    if (S.pay) return payForm();
-    if (S.gift) return giftChooser();
-    if (S.inListen) return listenView();
-    var h = '';
-    waitingRequests().forEach(function (q) {
-      h += '<section class="card ask"><div class="ghead"><span class="crown">' + ICON.crown + '</span><h1>' + esc(T('The care team proposes {product} for {name}', { product: productName(q.product), name: who() })) + '</h1></div>' +
-        '<p>' + esc(T('{n} month(s)', { n: q.months })) + ' · <b>' + price(q.cents, q.currency) + '</b></p>' + testLine() +
-        '<div class="two"><button type="button" class="btn primary" data-do="req-pay" data-id="' + esc(q.id) + '">' + esc(T('Pay')) + '</button>' +
-        '<button type="button" class="btn" data-do="req-refuse" data-id="' + esc(q.id) + '">' + esc(T('Refuse')) + '</button></div></section>';
-    });
-    if (S.me && S.me.listen && S.me.listen.available) {
-      h += '<section class="card listen"><div class="ghead"><span class="crown">' + ICON.listen + '</span><h2>' + esc(T('Listen together with {name}', { name: who() })) + '</h2></div>' +
-        '<button type="button" class="btn" data-do="listen-open">' + esc(T('Open')) + '</button></section>';
-    }
-    h += '<section class="card"><h1>' + esc(T('Subscriptions of {name}', { name: who() })) + '</h1><ul class="subs">' + PRODUCTS.map(function (p) {
+  /* ---------- Family app 2.0: Premium like a store (Rahma, review of 24 Nov: "je la veux comme le Play Store") ----------
+     The offers as a list (a square icon, the name, one line, the price from one month); one offer opens its page: the
+     big icon and the name, "For {name}", the durations as chips, a big "Give" button with the price, "About", and the
+     state when there is a subscription. The payment page: the order, the card fields with neutral placeholders,
+     "Pay {price}" and a small demo badge (only the last 4 digits are sent, nothing is kept, as before).
+     data-do="shop-open" opens the list as its own screen (for the "Moi" page). V2_SHOP = false brings back the
+     screens before (giftChooser, payForm, subsOld). */
+  var V2_SHOP = true;
+  var BOOK_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
+  var SHOP_ABOUT = { play: ['Songs and lyrics without limits', 'Listen together with the family'], books: ['Premium books', 'Recorded voices for reading'] };
+  function shopIcon(id, big) { return '<span class="shop-ico' + (big ? ' lg' : '') + '" aria-hidden="true">' + (id === 'books' ? BOOK_ICO : ICON.note) + '</span>'; }
+  function fromPrice(id) {
+    var info = productInfo(id), p = (info.prices || []).slice().sort(function (a, b) { return a.months - b.months; })[0];
+    return p ? T('from {price} / month', { price: money(Math.round(p.cents / p.months), info.currency) }) : '';
+  }
+  function shopList() {
+    return '<section class="card shop"><h1>' + esc(T('Premium for {name}', { name: who() })) + '</h1><ul class="shop-list">' + PRODUCTS.map(function (p) {
+      var c = current(p[0]), on = c && (c.state === 'active' || c.state === 'paid' || c.state === 'given' || c.state === 'awaiting_family');
+      return '<li><button type="button" class="shop-item" data-do="gift" data-product="' + p[0] + '">' + shopIcon(p[0]) +
+        '<span class="shop-txt"><b>' + esc(T(p[1])) + '</b><small>' + esc(T(p[2])) + '</small>' +
+        (on ? '<span class="chips">' + stateLine(c) + '</span>' : '<span class="shop-meta">' + esc(fromPrice(p[0])) + '</span>') +
+        '</span><i class="shop-chev" aria-hidden="true">›</i></button></li>';
+    }).join('') + '</ul></section>';
+  }
+  function listenEntry() {
+    return '<section class="card shop"><button type="button" class="shop-item" data-do="listen-open"><span class="shop-ico" aria-hidden="true">' + ICON.listen + '</span>' +
+      '<span class="shop-txt"><b>' + esc(T('Listen together')) + '</b><small>' + esc(T('Choose songs for {name}', { name: who() })) + '</small></span><i class="shop-chev" aria-hidden="true">›</i></button></section>';
+  }
+  /* the store list as its own screen (opened from the "Moi" page) */
+  function shopScreen() {
+    var h = '<button type="button" class="link back" data-do="shop-close">‹ ' + esc(T('Back')) + '</button>';
+    if (S.me && S.me.listen && S.me.listen.available) h += listenEntry();
+    return h + shopList();
+  }
+  function shopDetail() {
+    var g = S.gift, id = g.product, info = productInfo(id), c = current(id), mine = c && c.x && (c.x.paidByMe || c.x.mine);
+    var prices = info.prices || [], sel = prices.filter(function (x) { return x.months === g.months; })[0] || prices[0] || { months: g.months, cents: 0 };
+    g.months = sel.months;
+    var canGive = !c || c.state === 'refused' || c.state === 'expired';
+    var h = '<button type="button" class="link back" data-do="gift-back">‹ ' + esc(T('Back')) + '</button>' +
+      '<section class="card shop-page"><div class="shop-hero">' + shopIcon(id, true) + '<div><h1>' + esc(productName(id)) + '</h1><p class="muted">' + esc(T('For {name}', { name: who() })) + '</p></div></div>';
+    if (c) h += '<p class="chips">' + stateLine(c) + (mine && (c.state === 'active' || c.state === 'paid') ? ' <span class="chip s-shown">' + esc(T('Given by you')) + '</span>' : '') + '</p>';
+    if (canGive) {
+      h += '<div class="shop-months" role="radiogroup" aria-label="' + esc(T('Duration')) + '">' + prices.map(function (x) {
+        var on = x.months === sel.months;
+        return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-months="' + x.months + '">' + esc(T('{n} month(s)', { n: x.months })) + ' · ' + price(x.cents, info.currency) + '</button>';
+      }).join('') + '</div>' +
+        '<button type="button" class="btn primary shop-give" data-do="gift-next">' + esc(T('Give · {price}', { price: money(sel.cents, info.currency) })) + '</button>' +
+        '<p class="fine">' + esc(T('One payment, no automatic renewal. You can stop at any time.')) + '</p>';
+    } else if (c.state === 'active') h += '<button type="button" class="btn" data-do="' + (c.kind === 'request' ? 'req-stop' : 'stop-offer') + '" data-id="' + esc(c.x.id) + '">' + esc(T('Stop')) + '</button>';
+    else if (c.state === 'given') h += '<button type="button" class="btn" data-do="stop-offer" data-id="' + esc(c.x.id) + '">' + esc(T('Cancel')) + '</button>';
+    h += '<h2>' + esc(T('About')) + '</h2><ul class="shop-about">' + (SHOP_ABOUT[id] || []).map(function (k) { return '<li>' + esc(T(k)) + '</li>'; }).join('') + '</ul></section>';
+    return h;
+  }
+  function payForm2() {
+    var p = S.pay, info = productInfo(p.product), pr = p.kind === 'request' ? { cents: p.cents } : (info.prices || []).filter(function (x) { return x.months === p.months; })[0] || { cents: 0 };
+    var amount = money(pr.cents, info.currency);
+    return '<button type="button" class="link back" data-do="pay-back">‹ ' + esc(T('Back')) + '</button>' +
+      '<section class="card shop-pay"><h1>' + esc(T('Payment')) + '</h1>' +
+      '<div class="shop-order">' + shopIcon(p.product) + '<span class="shop-txt"><b>' + esc(productName(p.product)) + '</b><small>' + esc(T('{n} month(s)', { n: p.months })) + ' · ' + esc(T('For {name}', { name: who() })) + '</small></span><b class="shop-amount">' + esc(amount) + '</b></div>' +
+      '<form id="payForm" autocomplete="off" onsubmit="return false">' +
+      '<label class="field"><span>' + esc(T('Name on the card')) + '</span><input id="payName" autocomplete="off" spellcheck="false" maxlength="60" placeholder="' + esc(T('As on the card')) + '"></label>' +
+      '<label class="field"><span>' + esc(T('Card number')) + '</span><input id="payNum" class="masked" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="23" placeholder="•••• •••• •••• ••••"></label>' +
+      '<div class="two"><label class="field"><span>' + esc(T('Expiry (MM/YY)')) + '</span><input id="payExp" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="' + esc(T('MM/YY')) + '"></label>' +
+      '<label class="field"><span>' + esc(T('Security code')) + '</span><input id="payCvc" class="masked" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="' + esc(T('3 or 4 digits')) + '"></label></div></form>' +
+      '<p class="fine">' + esc(T('Card details are not kept.')) + '</p>' +
+      '<button type="button" class="btn primary" data-do="pay"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Pay {price}', { price: amount })) + '</button>' +
+      '<p class="shop-demo"><span class="chip s-rec">' + esc(T('Demo payment')) + '</span></p></section>';
+  }
+  /* the subscriptions list before 2.0 (V2_SHOP = false) */
+  function subsOld() {
+    return '<section class="card"><h1>' + esc(T('Subscriptions of {name}', { name: who() })) + '</h1><ul class="subs">' + PRODUCTS.map(function (p) {
       var c = current(p[0]), btn = '', mine = c && c.x && (c.x.paidByMe || c.x.mine);
       if (c && c.state === 'active') btn = '<button type="button" class="btn sm" data-do="' + (c.kind === 'request' ? 'req-stop' : 'stop-offer') + '" data-id="' + esc(c.x.id) + '">' + esc(T('Stop')) + '</button>';
       else if (c && c.state === 'given') btn = '<button type="button" class="btn sm" data-do="stop-offer" data-id="' + esc(c.x.id) + '">' + esc(T('Cancel')) + '</button>';
@@ -1089,6 +1147,25 @@
       return '<li><span class="crown sm">' + ICON.crown + '</span><div class="hbody"><b>' + esc(T(p[1])) + '</b><small class="fine">' + esc(T(p[2])) + '</small><p class="chips">' + stateLine(c) +
         (mine && (c.state === 'active' || c.state === 'paid') ? ' <span class="chip s-shown">' + esc(T('Paid by you')) + '</span>' : '') + '</p></div>' + btn + '</li>';
     }).join('') + '</ul><p class="fine">' + esc(T('One payment, no automatic renewal. You can stop at any time.')) + '</p></section>';
+  }
+  function premiumTab() {
+    if (S.pay) return V2_SHOP ? payForm2() : payForm();
+    if (S.gift) return V2_SHOP ? shopDetail() : giftChooser();
+    if (S.inListen) return listenView();
+    if (V2_SHOP && S.shopOpen) return shopScreen();
+    var h = '';
+    waitingRequests().forEach(function (q) {
+      h += '<section class="card ask"><div class="ghead"><span class="crown">' + ICON.crown + '</span><h1>' + esc(T('The care team proposes {product} for {name}', { product: productName(q.product), name: who() })) + '</h1></div>' +
+        '<p>' + esc(T('{n} month(s)', { n: q.months })) + ' · <b>' + price(q.cents, q.currency) + '</b></p>' + testLine() +
+        '<div class="two"><button type="button" class="btn primary" data-do="req-pay" data-id="' + esc(q.id) + '">' + esc(T('Pay')) + '</button>' +
+        '<button type="button" class="btn" data-do="req-refuse" data-id="' + esc(q.id) + '">' + esc(T('Refuse')) + '</button></div></section>';
+    });
+    if (S.me && S.me.listen && S.me.listen.available && V2_SHOP) h += listenEntry();
+    else if (S.me && S.me.listen && S.me.listen.available) {
+      h += '<section class="card listen"><div class="ghead"><span class="crown">' + ICON.listen + '</span><h2>' + esc(T('Listen together with {name}', { name: who() })) + '</h2></div>' +
+        '<button type="button" class="btn" data-do="listen-open">' + esc(T('Open')) + '</button></section>';
+    }
+    h += V2_SHOP ? shopList() : subsOld();
     var pays = (S.me && S.me.payments) || [];
     if (pays.length) {
       h += '<section class="card"><h2>' + esc(T('My payments')) + '</h2><ul class="hist">' + pays.map(function (x) {
@@ -1545,6 +1622,8 @@
     if (what === 'call') { var link = S.me && S.me.account && S.me.account.callLink; if (link) window.open(link, '_blank', 'noopener'); return; }
     if (what === 'gift') { S.gift = { product: el.getAttribute('data-product'), months: 3 }; render(); follow(); return; }
     if (what === 'gift-back') { S.gift = null; render(); follow(); return; }
+    if (what === 'shop-open') { S.shopOpen = true; S.gift = null; S.pay = null; S.inListen = false; S.tab = 'premium'; render(); follow(); return; }
+    if (what === 'shop-close') { S.shopOpen = false; S.gift = null; render(); follow(); return; }
     if (what === 'gift-next') { S.pay = { kind: 'gift', product: S.gift.product, months: S.gift.months }; render(); return; }
     if (what === 'req-pay') {
       var rq = requests().filter(function (q) { return q.id === id; })[0];
