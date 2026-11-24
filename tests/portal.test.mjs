@@ -75,6 +75,8 @@ test('BF-01 every text of the portal exists in French and German; FR / DE / EN s
   /* the translation tables at the top of portail.js */
   const tables = src.slice(src.indexOf('(function () {\n    function addNew'), src.indexOf('  var $ = function (id)'));
   vm.runInContext(tables, ctx);
+  /* Family app 2.0 (24 Nov): each redesigned screen keeps its new texts in a small block next to its code */
+  for (const m of src.matchAll(/^  \(function \(\) \{\n    function add[A-Za-z]*\(l, t\)[\s\S]*?^  \}\)\(\);$/gm)) vm.runInContext(m[0], ctx);
   const keys = new Set();
   for (const m of src.matchAll(/\bT\(\s*'((?:[^'\\]|\\.)*)'/g)) keys.add(m[1].replace(/\\'/g, "'").replace(/\\u2019/g, '’'));
   for (const m of src.matchAll(/^\s+'[a-z-]+': '((?:[^'\\]|\\.)*)',?$/gm)) keys.add(m[1]);

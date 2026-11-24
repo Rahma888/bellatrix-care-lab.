@@ -515,7 +515,8 @@
       var title = res.length > 1 ? '<label class="pick"><span class="with">' + esc(T('With {name}', { name: '' }).replace(/\s+$/, '')) + '</span><span class="sr">' + esc(T('Resident')) + '</span><select id="resSel">' + res.map(function (r) {
         return '<option value="' + esc(r.rid) + '"' + (r.rid === S.rid ? ' selected' : '') + '>' + esc(r.label) + (r.status !== 'active' ? ' (' + esc(T('Suspended')) + ')' : '') + '</option>';
       }).join('') + '</select></label>' : '<b class="wordmark">' + esc(T('With {name}', { name: who() })) + '</b>';
-      brand = cross + '<div class="brand">' + title + '<small class="avail">' + esc(T('Available')) + '</small></div>';
+      brand = V2_MESSAGES ? '<span class="v2-av" aria-hidden="true">' + esc(initialOf(who())) + '</span><div class="brand v2-brand">' + (res.length > 1 ? title : '<b class="wordmark">' + esc(who()) + '</b>') + '<small class="avail">' + esc(T('Available')) + '</small></div>'
+        : cross + '<div class="brand">' + title + '<small class="avail">' + esc(T('Available')) + '</small></div>';
     } else brand = cross + '<div class="brand"><b class="wordmark">Bellatrix</b><small>' + esc(T('Family portal')) + '</small></div>';
     return '<header class="top">' + brand + langSwitch() + theme + '</header>';
   }
@@ -786,7 +787,7 @@
     return '<p class="fine ticklegend"><span class="ticks t-sent">' + TICK1 + '</span> ' + esc(T('Sent')) + ' · <span class="ticks t-delivered">' + TICK2 + '</span> ' + esc(T('On Bellatrix')) +
       ' · <span class="ticks t-read">' + TICK2 + '</span> ' + esc(T('Seen by {name}', { name: who() })) + '</p>';
   }
-  function messagesTab() {
+  function messagesTabOld() {
     var lim = (S.me && S.me.limits) || { text: 300 };
     var list = ((S.me && S.me.messages) || []).filter(function (m) { return m.kind !== 'album'; }).slice().sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
     var h = installOnce() + callButton() + requestBanner() + '<section class="thread"><h1>' + esc(T('Messages')) + '</h1>';
@@ -824,6 +825,83 @@
     return '<section class="composer wa" aria-label="' + esc(T('Write to {name}', { name: who() })) + '">' +
       '<input type="file" id="pickPhoto" data-for="send" accept="image/*" hidden><input type="file" id="pickVideo" accept="video/mp4,video/webm,video/quicktime,video/*" hidden>' +
       top + bar + '<p class="fine wa-note">' + esc(T('Messages go straight to Bellatrix. No links.')) + '</p></section>';
+  }
+
+  /* ---------- Family app 2.0: Messages (Rahma's review, 24 Nov) ----------
+     "Messages: la nouvelle version" (a real conversation, the status under each message, no tick legend) and
+     "Envoyer photo / vidéo / vocal: comme Messenger, WhatsApp ou Instagram, une barre smooth": the writing bar
+     stays at the bottom above the tabs: + (a sheet slides up: Photo, Take a photo, Video, Voice message),
+     a rounded field with a camera, and the round button (microphone, or the send arrow once there is
+     something to send). The old screen stays: V2_MESSAGES = false brings it back as it was. */
+  var V2_MESSAGES = true;
+  (function () {
+    function add(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    add('en', { 'Send to {name}': 'Send to {name}', 'Take a photo': 'Take a photo', 'Close': 'Close', 'Write the first message to {name}.': 'Write the first message to {name}.', 'From the care team': 'From the care team' });
+    add('fr', { 'Send to {name}': 'Envoyer à {name}', 'Take a photo': 'Prendre une photo', 'Video': 'Vidéo', 'Voice message': 'Message vocal', 'Close': 'Fermer', 'Write the first message to {name}.': 'Écrivez le premier message à {name}.', 'From the care team': 'De l\u2019équipe soignante' });
+    add('de', { 'Send to {name}': 'An {name} senden', 'Take a photo': 'Foto aufnehmen', 'Video': 'Video', 'Voice message': 'Sprachnachricht', 'Close': 'Schließen', 'Write the first message to {name}.': 'Schreiben Sie {name} die erste Nachricht.', 'From the care team': 'Vom Pflegeteam' });
+  })();
+  function messagesTab() { return V2_MESSAGES ? messagesTabV2() : messagesTabOld(); }
+  /* the status under one of my messages: Sent / On Bellatrix / Seen by Marie */
+  function statusLine(m) {
+    if (m.status === 'withdrawn') return '<span class="v2-st-t">' + esc(T('Withdrawn by the team')) + '</span>';
+    var st = tickState(m);
+    return '<span class="v2-st-t">' + esc(st === 'read' ? T('Seen by {name}', { name: who() }) : st === 'delivered' ? T('On Bellatrix') : T('Sent')) + '</span>' + ticks(m);
+  }
+  function bubbleV2(m) {
+    var k = KIND[m.kind] || KIND.text;
+    var media = !m.hasMedia || m.hasPhoto ? '' : m.kind === 'voice' ? voiceNote(m.id) :
+      '<button type="button" class="wa-video" data-do="playmine" data-id="' + esc(m.id) + '" aria-label="' + esc(T(k[0])) + '"><span class="wa-vplay">' + ICON.play + '</span></button>';
+    return '<li class="v2-row"><div class="v2-bub k-' + esc(m.kind || 'text') + (m.hasPhoto ? ' withphoto' : '') + '">' +
+      (m.hasPhoto ? thumb(m, k[1]) : '') + media + (m.text ? '<p class="htext">' + esc(m.text) + '</p>' : '') +
+      '<span class="v2-time">' + esc(timeText(m.at)) + '</span></div>' +
+      '<div class="v2-st">' + statusLine(m) + ' · <button type="button" class="link small" data-del="' + esc(m.id) + '">' + esc(T('Remove')) + '</button></div></li>';
+  }
+  function messagesTabV2() {
+    var lim = (S.me && S.me.limits) || { text: 300 };
+    var rows = ((S.me && S.me.messages) || []).filter(function (m) { return m.kind !== 'album'; }).map(function (m) { return { at: m.at, html: bubbleV2(m) }; });
+    /* the Journée merged into the conversation (js/portail-feed.js, V2_FEED_IN_MESSAGES) */
+    var F = window.PortailFeed;
+    if (F && typeof F.chatEvents === 'function') { try { rows = rows.concat(F.chatEvents(ctx()) || []); } catch (e) { /* the conversation without the day */ } }
+    rows.sort(function (a, b) { return String(a.at).localeCompare(String(b.at)); });
+    var h = installOnce() + callButton() + requestBanner() + '<section class="thread v2-thread"><h1 class="sr">' + esc(T('Messages')) + '</h1>';
+    if (rows.length) {
+      var last = '';
+      h += '<ul class="v2-chat">' + rows.map(function (r) {
+        var dk = dayKey(r.at), lab = dk !== last ? '<li class="v2-day" aria-hidden="true"><span>' + esc(dayLabel(r.at)) + '</span></li>' : '';
+        last = dk; return lab + r.html;
+      }).join('') + '</ul>';
+    } else h += '<div class="v2-empty"><span class="v2-av lg" aria-hidden="true">' + esc(initialOf(who())) + '</span><p>' + esc(T('Write the first message to {name}.', { name: who() })) + '</p></div>';
+    return h + '</section>' + composerHtmlV2(lim);
+  }
+  function initialOf(name) { var s = String(name || '').trim(); return s ? s.charAt(0).toUpperCase() : 'B'; }
+  var ICON_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  var ICON_CAM = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+  function composerHtmlV2(lim) {
+    var r = S.rec, md = S.media, has = !!(S.photo || md || (S.draft && S.draft.trim())), top = '', sheet = '';
+    if (S.photo || md || r) S.attach = false;
+    if (S.photo) top = '<figure class="wa-prev"><img src="' + S.photo.url + '" alt=""><button type="button" class="wa-x" data-do="photo-del" aria-label="' + esc(T('Remove')) + '">×</button></figure>';
+    else if (r) top = recorderHtml(r.kind);
+    else if (md) top = '<div class="wa-prev media">' + (md.kind === 'voice' ? voiceNote('', true) + '<audio id="draftAudio" src="' + md.url + '" preload="metadata" hidden></audio>' : '<video class="live" controls playsinline src="' + md.url + '"></video>') +
+      '<button type="button" class="wa-x" data-do="rec-again" aria-label="' + esc(T('Remove')) + '">×</button></div>';
+    if (S.attach) sheet = '<div class="v2-sheetwrap"><button type="button" class="v2-dim" data-do="attach" aria-label="' + esc(T('Close')) + '"></button>' +
+      '<div class="v2-sheet" role="dialog" aria-label="' + esc(T('Send to {name}', { name: who() })) + '"><i class="v2-grab" aria-hidden="true"></i><h2>' + esc(T('Send to {name}', { name: who() })) + '</h2><div class="v2-tiles">' +
+      '<button type="button" data-do="pick">' + ICON.photo + '<span>' + esc(T('Photo')) + '</span></button>' +
+      '<button type="button" data-do="pick-camera">' + ICON_CAM + '<span>' + esc(T('Take a photo')) + '</span></button>' +
+      '<button type="button" data-do="rec-video">' + ICON.video + '<span>' + esc(T('Video')) + '</span></button>' +
+      '<button type="button" data-do="rec-voice">' + ICON.voice + '<span>' + esc(T('Voice message')) + '</span></button>' +
+      '<button type="button" data-do="pick-video">' + ICON.album + '<span>' + esc(T('Choose a video')) + '</span></button></div></div></div>';
+    var bar = r ? '<div class="wabar v2-bar rec"><button type="button" class="wa-btn ghost" data-do="rec-cancel" aria-label="' + esc(T('Remove')) + '">×</button>' +
+        '<p class="rectime" id="recTime"><i class="recdot" aria-hidden="true"></i>' + esc(T('Recording…')) + '</p>' +
+        '<button type="button" class="wa-btn round" data-do="rec-stop" aria-label="' + esc(T('Stop')) + '"><i class="sq"></i></button></div>'
+      : '<div class="wabar v2-bar' + (has ? ' has' : '') + '" id="waBar">' +
+        '<button type="button" class="v2-plus' + (S.attach ? ' on' : '') + '" data-do="attach" aria-expanded="' + !!S.attach + '" aria-label="' + esc(T('Attach')) + '">' + ICON_PLUS + '</button>' +
+        '<div class="v2-field"><label class="wa-field"><span class="sr">' + esc(T('Your message')) + '</span><textarea id="msgText" rows="1" maxlength="' + lim.text + '" placeholder="' + esc(T('Write a message')) + '"></textarea></label>' +
+        '<button type="button" class="v2-cam" data-do="pick-camera" aria-label="' + esc(T('Take a photo')) + '">' + ICON_CAM + '</button></div>' +
+        '<button type="button" class="wa-btn round wa-mic" data-do="rec-voice" aria-label="' + esc(T('Record a voice message')) + '">' + ICON.voice + '</button>' +
+        '<button type="button" class="wa-btn round wa-send" data-do="send" aria-label="' + esc(S.busy ? T('Sending…') : T('Send')) + '"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '<span class="wa-busy">' + esc(T('Sending…')) + '</span>' : ICON.send) + '</button></div>';
+    return '<section class="composer wa v2-compose" aria-label="' + esc(T('Write to {name}', { name: who() })) + '">' +
+      '<input type="file" id="pickPhoto" data-for="send" accept="image/*" hidden><input type="file" id="pickVideo" accept="video/mp4,video/webm,video/quicktime,video/*" hidden>' +
+      top + bar + '</section>' + sheet;
   }
   function thumb(m, icon) {
     if (!m.hasPhoto) return '<span class="thumb t">' + icon + '</span>';
@@ -1506,7 +1584,8 @@
     if (what === 'account') { S.sheet = S.sheet === 'account' ? '' : 'account'; render(); return; }
     if (what === 'account-close') { S.sheet = ''; render(); return; }
     if (what === 'link') { var c = val('linkCode'); if (c) linkCode(c); return; }
-    if (what === 'pick') { var f = $('pickPhoto'); if (f) f.click(); return; }
+    if (what === 'pick') { var f = $('pickPhoto'); if (f) { f.removeAttribute('capture'); f.click(); } S.attach = false; return; }
+    if (what === 'pick-camera') { var fc = $('pickPhoto'); if (fc) { fc.setAttribute('capture', 'environment'); fc.click(); } S.attach = false; return; }
     if (what === 'pick-video') { var fv = $('pickVideo'); if (fv) fv.click(); return; }
     if (what === 'rec-start') { startRec(S.mode); return; }
     if (what === 'rec-stop') { stopRec(); return; }
