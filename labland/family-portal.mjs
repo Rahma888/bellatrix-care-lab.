@@ -81,6 +81,20 @@ function str(v, max) { return typeof v === 'string' ? v.replace(/[\u0000-\u0008\
 function rnd(n) { return crypto.randomBytes(n || 16).toString('base64url'); }
 function hash(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
 function same(a, b) { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); }
+/* 24 Nov (Rahma: input checks): a phone number is 8 to 15 digits (spaces, dots, dashes, brackets and a leading + allowed). */
+function phoneOk(v) { return /^\+?\d{8,15}$/.test(String(v || '').replace(/[\s.\-()\/]/g, '')); }
+/* an album date: a real day (YYYY-MM-DD) from 1900 to today */
+function dateOk(v) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return false;
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3]), d = new Date(t);
+  return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] && +m[1] >= 1900 && t <= Date.now() + 86400000;
+}
+/* 24 Nov (Rahma: a password to get in more easily): 8 to 128 characters with a letter and a digit, kept only as a scrypt
+   hash with its own salt. After PW_FAILS wrong passwords the account waits PW_LOCK_MS. */
+const PW_FAILS = 5, PW_LOCK_MS = 15 * 60 * 1000, PW_FRESH_MS = 30 * 60 * 1000;
+function pwStrong(pw) { return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128 && /[A-Za-z]/.test(pw) && /\d/.test(pw); }
+function pwHash(pw, salt) { return crypto.scryptSync(String(pw), salt, 32).toString('hex'); }
+function pwCheck(pw, rec) { if (!rec || !rec.salt || !rec.hash || typeof pw !== 'string' || pw.length > 128) return false; return same(pwHash(pw, rec.salt), rec.hash); }
 function iso(t) { return new Date(t).toISOString(); }
 function lang(v) { return LANGS.includes(v) ? v : 'en'; }
 function inviteCode() { let s = ''; const b = crypto.randomBytes(8); for (let i = 0; i < 8; i++) s += INVITE_ABC[b[i] % INVITE_ABC.length]; return s.slice(0, 4) + '-' + s.slice(4); }
@@ -362,9 +376,9 @@ export function createPortal(opts = {}) {
     if (link && link.status === 'refused') access = 'access-refused';
     return { hash: h, session: s, person, links, link, access, account: access === 'ok' ? link : null, resident: access === 'ok' ? d.residents[link.rid] : null };
   }
-  function newSession(d, pid) {
+  function newSession(d, pid, how) {
     const token = rnd(32);
-    d.sessions[hash(token)] = { pid, created: iso(now()), expires: iso(now() + SESSION_MS) };
+    d.sessions[hash(token)] = { pid, created: iso(now()), expires: iso(now() + SESSION_MS), how: how || 'code' };
     return token;
   }
   function personByEmail(d, email) { return Object.values(d.people).find((p) => p.email === email) || null; }
@@ -436,7 +450,7 @@ export function createPortal(opts = {}) {
     const d = load(), p = sess.person, a = sess.account, r = sess.resident;
     const residents = sess.links.filter((x) => x.status !== 'removed').map((x) => { const rr = d.residents[x.rid]; return { rid: x.rid, label: rr.label, lang: rr.lang, status: x.status, relation: x.relation || '' }; });
     const out = {
-      person: { id: p.id, name: p.name, email: p.email, lang: p.lang, consentAt: p.consentAt },
+      person: { id: p.id, name: p.name, email: p.email, lang: p.lang, consentAt: p.consentAt, hasPassword: !!p.pw },
       account: { id: a ? a.id : '', name: p.name, email: p.email, relation: a ? a.relation : '', lang: p.lang, consentAt: p.consentAt, createdBy: a ? a.createdBy : '', callLink: a ? a.callLink || '' : '' },
       needsConsent: !p.consentAt,
       residents, access: sess.access,
@@ -516,6 +530,7 @@ export function createPortal(opts = {}) {
       const email = str(body.email, 160).toLowerCase(), first = str(body.first, 40), last = str(body.last, 40);
       if (!EMAIL.test(email)) return [400, { error: 'bad-email' }];
       if (!first || !last) return [400, { error: 'bad-name' }];
+      if (!phoneOk(body.phone)) return [400, { error: 'bad-phone' }];
       const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
       const res = Object.values(d.residents).find((r) => fold(r.code) === fold(body.code) && fold(r.label) === fold(body.resident) && fold(r.code));
       if (!res) { log('request-access refused: no resident with code ' + str(body.code, 24).replace(/[^\w .-]/g, '')); return [404, { error: 'unknown-resident' }]; }
@@ -540,6 +555,24 @@ export function createPortal(opts = {}) {
         log('sign-in code asked by a relative: ' + c.code + ' (15 min, also shown in Care Team > Family > Accounts)');
       }
       return [200, { ok: true }];
+    }
+    if (p === 'login/password' && post) {
+      if (limited(req, 'pwlogin', 12)) return [429, { error: 'slow-down' }];
+      const email = str(body.email, 160).toLowerCase(), pw = typeof body.password === 'string' ? body.password : '';
+      const person = EMAIL.test(email) ? personByEmail(d, email) : null;
+      if (person && person.pwLockUntil && Date.parse(person.pwLockUntil) > now()) return [429, { error: 'slow-down' }];
+      /* the same work whether the address exists or not: no hint that an address has an account */
+      const ok = person && person.pw ? pwCheck(pw, person.pw) : (pwHash(pw.slice(0, 128), 'x'), false);
+      if (!ok) {
+        if (person) { person.pwFails = (person.pwFails || 0) + 1; if (person.pwFails >= PW_FAILS) { person.pwLockUntil = iso(now() + PW_LOCK_MS); person.pwFails = 0; } save(); }
+        return [401, { error: 'bad-login' }];
+      }
+      person.pwFails = 0; delete person.pwLockUntil;
+      const token = newSession(d, person.id, 'password');
+      person.lastSignIn = iso(now());
+      save();
+      const s = sessionOf({ headers: { authorization: 'Bearer ' + token } });
+      return [200, { token, me: me(s) }];
     }
     if (p === 'login/verify' && post) {
       if (limited(req, 'verify', 30)) return [429, { error: 'slow-down' }];
@@ -569,6 +602,20 @@ export function createPortal(opts = {}) {
       return [200, { ok: true, code: c.code, email: pr.email, until: iso(c.expires) }];
     }
     if (p === 'logout' && post) { delete d.sessions[sess.hash]; save(); return [200, { ok: true }]; }
+    /* Set or change the password. Changing one needs the current one, except right after signing in with a code
+       (PW_FRESH_MS): that is how a forgotten password is replaced. */
+    if (p === 'password' && post) {
+      if (limited(req, 'password', 10)) return [429, { error: 'slow-down' }];
+      const pw = typeof body.password === 'string' ? body.password : '';
+      if (!pwStrong(pw)) return [400, { error: 'weak-password' }];
+      const fresh = sess.session.how === 'code' && now() - Date.parse(sess.session.created) < PW_FRESH_MS;
+      if (pr.pw && !fresh && !pwCheck(typeof body.current === 'string' ? body.current : '', pr.pw)) return [403, { error: 'bad-current' }];
+      const salt = rnd(16);
+      pr.pw = { salt, hash: pwHash(pw, salt), at: iso(now()) };
+      pr.pwFails = 0; delete pr.pwLockUntil;
+      save();
+      return [200, { ok: true }];
+    }
     if (p === 'lang' && post) { pr.lang = lang(body.lang); save(); return [200, { ok: true }]; }
     if (p === 'consent' && post) {
       if (body.consent !== true) return [400, { error: 'consent-needed' }];
@@ -630,6 +677,7 @@ export function createPortal(opts = {}) {
       if (text.length > (album ? 90 : TEXT_MAX) || question.length > 160 || date.length > 30) return [400, { error: 'too-long' }];
       if (LINK.test(text) || LINK.test(question) || LINK.test(date)) return [400, { error: 'no-links' }];
       if (album && !THEMES.includes(album.theme)) return [400, { error: 'bad-theme' }];
+      if (album && date && !dateOk(date)) return [400, { error: 'bad-date' }];
       let photo = null, size = null, up = null;
       if (body.upload) {
         up = uploads.get(str(body.upload, 40));

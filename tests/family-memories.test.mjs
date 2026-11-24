@@ -104,7 +104,7 @@ test('a new family account waits for the care team; a family message never does'
   await FM.request('POST', 'robot/resident', { code: 'P1', label: 'Marie', lang: 'fr' });
   const R = bot.auth();
   /* A relative asks for an account: pending until the team validates it. */
-  const ask = await call('POST', 'family/request-access', { first: 'Sophie', last: 'Martin', relation: 'fille', phone: '', email: 'sophie@example.test', code: 'P1', resident: 'Marie', lang: 'fr', consent: true });
+  const ask = await call('POST', 'family/request-access', { first: 'Sophie', last: 'Martin', relation: 'fille', phone: '06 12 34 56 78', email: 'sophie@example.test', code: 'P1', resident: 'Marie', lang: 'fr', consent: true });
   assert.equal(ask.status, 200, JSON.stringify(ask.data));
   S.token = ask.data.token;
   assert.equal(ask.data.me.access, 'access-pending');
@@ -202,7 +202,7 @@ test('the album copy leaves when the family deletes the photo, and stays when th
 
 test('album photos the family sends for the album still go there by themselves', async () => {
   const before = Object.keys(bot.pics).length;
-  const sent = await call('POST', 'family/message', { text: 'Mariage de Paul', photo: jpeg(640, 480), album: { theme: 'celebrations', date: '1978' } }, B(S.token));
+  const sent = await call('POST', 'family/message', { text: 'Mariage de Paul', photo: jpeg(640, 480), album: { theme: 'celebrations', date: '1978-06-15' } }, B(S.token));
   assert.equal(sent.status, 200, JSON.stringify(sent.data));
   await FM.sync();
   assert.equal(Object.keys(bot.pics).length, before + 1);

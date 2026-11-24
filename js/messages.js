@@ -186,7 +186,13 @@ var FamilyMessages = (function () {
     });
   }
   function albumOn() { return !!(window.Album && typeof window.Album.add === 'function'); }
-  function captionOf(a) { var t = String(a.text || ''), d = String(a.date || ''); return (d ? (t ? t + ' · ' + d : d) : t).slice(0, 90); }
+  function captionOf(a) { var t = String(a.text || ''), d = dateLabel(String(a.date || '')); return (d ? (t ? t + ' · ' + d : d) : t).slice(0, 90); }
+  /* 24 Nov: the family app sends a real date (YYYY-MM-DD) now; older photos keep their free text */
+  function dateLabel(d) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d); if (!m) return d;
+    var l = (window.Lab && Lab.opt && Lab.opt.lang) || 'en', loc = { fr: 'fr-FR', de: 'de-DE' }[l] || 'en-GB';
+    try { return new Date(+m[1], +m[2] - 1, +m[3], 12).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return d; }
+  }
   /* ---------- the care team puts a photo MESSAGE of the family into the Memories album ----------
      One tap in Care Team > Activities > Memories > Personalise (js/album-staff.js). The album keeps its own copy
      (theme "Family", the message's words as the caption, the "Family" mark); 'bellatrix-messages-album-map'

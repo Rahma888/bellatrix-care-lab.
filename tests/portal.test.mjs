@@ -217,10 +217,10 @@ test('BF-14 sent -> received (on the robot) -> read (opened), updated for the se
 /* ---------- BF-15/16: album ---------- */
 test('BF-15/16 an album photo with caption and date reaches the robot; hidden then deleted, it leaves', async () => {
   const H = as(X.sophie, X.p1);
-  const a = await call('POST', 'family/message', { photo: jpeg(900, 700), text: 'Mariage de Paul', album: { theme: 'celebrations', date: 'juin 1978' } }, B(X.sophie), H);
+  const a = await call('POST', 'family/message', { photo: jpeg(900, 700), text: 'Mariage de Paul', album: { theme: 'celebrations', date: '1978-06-15' } }, B(X.sophie), H);
   let f = await call('GET', 'robot/feed', undefined, R);
   const it = f.data.messages.find((m) => m.id === a.data.message.id);
-  assert.equal(it.kind, 'album'); assert.equal(it.text, 'Mariage de Paul'); assert.equal(it.date, 'juin 1978'); assert.equal(it.theme, 'celebrations');
+  assert.equal(it.kind, 'album'); assert.equal(it.text, 'Mariage de Paul'); assert.equal(it.date, '1978-06-15'); assert.equal(it.theme, 'celebrations');
   await call('POST', 'family/message/hide', { id: a.data.message.id }, B(X.sophie), H);
   f = await call('GET', 'robot/feed', undefined, R);
   assert.equal(f.data.messages.find((m) => m.id === a.data.message.id).hidden, true);
@@ -398,7 +398,7 @@ test('invitation: the new account is pending, appears in the robot\'s pending li
 test('a robot sync registers the resident by itself: request-access works with the right first name only', async () => {
   const fresh = 'bf_fresh_' + crypto.randomBytes(5).toString('hex'), fk = crypto.randomBytes(32).toString('base64url'), FR = 'Robot ' + fresh + '.' + fk;
   await call('POST', 'robot/hello', { robot: fresh, key: fk });
-  const req = (name) => call('POST', 'family/request-access', { first: 'Zoe', last: 'Test', relation: 'fille', phone: '1', email: name.toLowerCase() + '.sync@example.test', code: 'P7', resident: name, lang: 'fr', consent: true });
+  const req = (name) => call('POST', 'family/request-access', { first: 'Zoe', last: 'Test', relation: 'fille', phone: '+49 151 2345 6789', email: name.toLowerCase() + '.sync@example.test', code: 'P7', resident: name, lang: 'fr', consent: true });
   assert.equal((await req('Marie')).status, 404, 'unknown before the sync');
   assert.equal((await call('POST', 'robot/resident/sync', { residents: [{ code: 'P7', label: 'Marie', lang: 'fr' }] }, FR)).status, 200);
   assert.equal((await req('Anna')).status, 404);
@@ -419,6 +419,65 @@ test('the portal offers "Create an account" in French and German, and no WhatsAp
   assert.match(src, /'Create an account': 'Konto erstellen'/);
   const fam = fs.readFileSync(path.join(ROOT, 'js', 'family-staff.js'), 'utf8');
   assert.ok(!fam.includes('wa.me') && !fam.includes('sms:?body') && !fam.includes('data-f="outopen"'));
+});
+
+/* ---------- 24 Nov (Rahma): input checks and a password ---------- */
+test('a wrong phone number or a date that does not exist is refused', async () => {
+  const body = (o) => Object.assign({ first: 'Lea', last: 'Test', relation: 'fille', email: 'lea.phone@example.test', code: 'P3', resident: 'Hans', lang: 'fr', consent: true }, o);
+  for (const phone of ['1', '12345', 'abcdefghij', '0612 34', '+1234567890123456']) assert.equal((await call('POST', 'family/request-access', body({ phone }))).data.error, 'bad-phone', phone);
+  assert.notEqual((await call('POST', 'family/request-access', body({ phone: '06 12 34 56 78' }))).data.error, 'bad-phone');
+  const H = as(X.sophie, X.p1);
+  for (const date of ['juin 1978', '1978-02-30', '1899-12-31', '2999-01-01', '15/06/1978']) {
+    assert.equal((await call('POST', 'family/message', { photo: jpeg(900, 700), text: 'x', album: { theme: 'celebrations', date } }, B(X.sophie), H)).data.error, 'bad-date', date);
+  }
+});
+test('a password: strong enough, kept as a hash only, sign-in with it, a wrong one locks for a while', async () => {
+  assert.equal((await call('POST', 'family/password', { password: 'short1' }, B(X.sophie))).data.error, 'weak-password');
+  assert.equal((await call('POST', 'family/password', { password: 'onlyletters' }, B(X.sophie))).data.error, 'weak-password');
+  /* right after signing in with a code no current password is asked */
+  assert.equal((await call('POST', 'family/password', { password: 'Soleil2026' }, B(X.sophie))).status, 200);
+  assert.equal((await call('GET', 'family/me', undefined, B(X.sophie))).data.person.hasPassword, true);
+  const stored = fs.readFileSync(path.join(TMP, 'portal', fs.readdirSync(path.join(TMP, 'portal')).find((f) => f.endsWith('.json'))), 'utf8');
+  assert.ok(!stored.includes('Soleil2026'), 'never kept in clear');
+  /* the same answer for an unknown address and a wrong password */
+  assert.equal((await call('POST', 'family/login/password', { email: 'nobody@example.test', password: 'Soleil2026' })).data.error, 'bad-login');
+  assert.equal((await call('POST', 'family/login/password', { email: 'sophie@example.test', password: 'Soleil2027' })).data.error, 'bad-login');
+  const ok = await call('POST', 'family/login/password', { email: 'Sophie@Example.test', password: 'Soleil2026' });
+  assert.equal(ok.status, 200); assert.ok(ok.data.token); assert.equal(ok.data.me.person.email, 'sophie@example.test');
+  /* signed in with the password: changing it needs the current one */
+  assert.equal((await call('POST', 'family/password', { password: 'Lune2026x' }, B(ok.data.token))).data.error, 'bad-current');
+  assert.equal((await call('POST', 'family/password', { password: 'Lune2026x', current: 'Soleil2026' }, B(ok.data.token))).status, 200);
+  /* the code session is no longer "just signed in" after 30 minutes */
+  clock += 31 * 60 * 1000;
+  assert.equal((await call('POST', 'family/password', { password: 'Etoile2026' }, B(X.sophie))).data.error, 'bad-current');
+  /* 5 wrong passwords: 15 minutes wait, even with the right one */
+  for (let i = 0; i < 5; i++) assert.equal((await call('POST', 'family/login/password', { email: 'sophie@example.test', password: 'wrong' + i + 'xx' })).status, 401);
+  assert.equal((await call('POST', 'family/login/password', { email: 'sophie@example.test', password: 'Lune2026x' })).status, 429);
+  clock += 16 * 60 * 1000;
+  assert.equal((await call('POST', 'family/login/password', { email: 'sophie@example.test', password: 'Lune2026x' })).status, 200);
+});
+test('the family app checks the card, the phone, the date and the e-mail before sending, and shows no demo lines', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'js', 'portail.js'), 'utf8');
+  assert.ok(!src.includes("T('A Bellatrix pilot in care homes. No advertising.')"));
+  assert.ok(!src.includes("T('No card data is kept. Do not type your real card: use 4242 4242 4242 4242.')"));
+  assert.ok(!src.includes("'<p class=\"testpay\">'"));
+  assert.ok(!fs.readFileSync(path.join(ROOT, 'js', 'portail-calls.js'), 'utf8').includes("esc(T('Calls ring on this phone"));
+  const ctx = { console }; vm.createContext(ctx);
+  const fn = (name) => { const i = src.indexOf('  function ' + name + '('); const j = src.indexOf('\n  function ', i + 5); return src.slice(i, j); };
+  vm.runInContext(['luhn', 'cardProblem', 'phoneOk', 'emailOk', 'pwStrong', 'todayIso', 'dateOk'].map(fn).join('\n') + '\nthis.F = { cardProblem, phoneOk, emailOk, pwStrong, dateOk };', ctx);
+  const F = ctx.F, next = new Date().getFullYear() % 100 + 1;
+  assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '12/' + next, '123'), null);
+  assert.equal(F.cardProblem('Marie Curie', '4242424242424241', '12/' + next, '123')[0], 'payNum', 'Luhn');
+  assert.equal(F.cardProblem('Marie Curie', '42424242', '12/' + next, '123')[0], 'payNum');
+  assert.equal(F.cardProblem('M', '4242424242424242', '12/' + next, '123')[0], 'payName');
+  assert.equal(F.cardProblem('1234', '4242424242424242', '12/' + next, '123')[0], 'payName');
+  assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '13/' + next, '123')[0], 'payExp');
+  assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '01/20', '123')[1], 'This card has expired.');
+  assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '12/' + next, '12')[0], 'payCvc');
+  assert.ok(F.phoneOk('+33 6 12 34 56 78') && F.phoneOk('0151-2345678') && !F.phoneOk('123') && !F.phoneOk('06 12 ab 56 78'));
+  assert.ok(F.emailOk('a.b@example.de') && !F.emailOk('a@b') && !F.emailOk('ab.example.de'));
+  assert.ok(F.pwStrong('Soleil2026') && !F.pwStrong('soleil') && !F.pwStrong('12345678'));
+  assert.ok(F.dateOk('1978-06-15') && !F.dateOk('1978-02-30') && !F.dateOk('2999-01-01') && !F.dateOk('juin 1978'));
 });
 
 test.after(() => { server.close(); fs.rmSync(TMP, { recursive: true, force: true }); });

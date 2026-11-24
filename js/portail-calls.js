@@ -303,8 +303,8 @@
     else if (s === 'insecure') st = T('Notifications need the https address.');
     else st = T('Not possible in this browser.');
     return '<div class="pc-pushrow" data-push="' + esc(s) + '"><span class="pc-ico">' + (s === 'on' ? ICON.bell : ICON.belloff) + '</span>' +
-      '<div class="pc-pushtxt"><b>' + esc(T('Notifications on this phone')) + '</b><small>' + esc(st) + '</small></div>' + btn + '</div>' +
-      '<p class="fine pc-ringnote">' + esc(T('Calls ring on this phone when notifications are on. On an iPhone only with the app on the Home Screen (iOS 16.4 or later); otherwise it rings while the portal is open.')) + '</p>';
+      '<div class="pc-pushtxt"><b>' + esc(T('Notifications on this phone')) + '</b><small>' + esc(st) + '</small></div>' + btn + '</div>';
+    /* 24 Nov (Rahma): the long note on how calls ring is gone; the row above already says what to do */
   }
   function pushState() { return S.push || pushSupport(); }
 

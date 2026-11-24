@@ -32,6 +32,9 @@
   /* ---------- the texts (English keys; French and German) ---------- */
   (function () {
     function addNew(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    /* 24 Nov (Rahma): input checks, password sign-in */
+    addNew('fr', { 'Please check the phone number (8 to 15 digits).': 'Vérifiez le numéro de téléphone (8 à 15 chiffres).', 'Please choose a valid date.': 'Choisissez une date valide.', 'Email or password is not right.': 'E-mail ou mot de passe incorrect.', 'The password needs at least 8 characters, with a letter and a digit.': 'Le mot de passe doit avoir au moins 8 caractères, avec une lettre et un chiffre.', 'The current password is not right.': 'Le mot de passe actuel n’est pas correct.', 'The two passwords are not the same.': 'Les deux mots de passe ne sont pas identiques.', 'Password': 'Mot de passe', 'Your password': 'Votre mot de passe', 'No password yet? Get a code': 'Pas encore de mot de passe ? Recevoir un code', 'Sign in with my password': 'Me connecter avec mon mot de passe', 'Create a password': 'Créer un mot de passe', 'Change my password': 'Changer mon mot de passe', 'With a password you sign in with your email address, without asking the care team for a code.': 'Avec un mot de passe, vous vous connectez avec votre adresse e-mail, sans demander de code à l’équipe.', 'Current password': 'Mot de passe actuel', 'New password': 'Nouveau mot de passe', 'New password again': 'Confirmer le nouveau mot de passe', 'At least 8 characters, with a letter and a digit.': 'Au moins 8 caractères, avec une lettre et un chiffre.', 'Password saved.': 'Mot de passe enregistré.', 'Save the password': 'Enregistrer le mot de passe', 'Please give the name on the card.': 'Indiquez le nom inscrit sur la carte.', 'Please check the card number.': 'Vérifiez le numéro de carte.', 'Please check the expiry date (MM/YY).': 'Vérifiez la date d’expiration (MM/AA).', 'This card has expired.': 'Cette carte est expirée.', 'Please check the security code (3 or 4 digits).': 'Vérifiez le cryptogramme (3 ou 4 chiffres).', 'Please give your first and last name.': 'Indiquez votre prénom et votre nom.', 'Please give the resident code and first name.': 'Indiquez le code et le prénom du résident.' });
+    addNew('de', { 'Please check the phone number (8 to 15 digits).': 'Bitte prüfen Sie die Telefonnummer (8 bis 15 Ziffern).', 'Please choose a valid date.': 'Bitte wählen Sie ein gültiges Datum.', 'Email or password is not right.': 'E-Mail oder Passwort ist nicht richtig.', 'The password needs at least 8 characters, with a letter and a digit.': 'Das Passwort braucht mindestens 8 Zeichen, mit einem Buchstaben und einer Ziffer.', 'The current password is not right.': 'Das aktuelle Passwort ist nicht richtig.', 'The two passwords are not the same.': 'Die beiden Passwörter sind nicht gleich.', 'Password': 'Passwort', 'Your password': 'Ihr Passwort', 'No password yet? Get a code': 'Noch kein Passwort? Einen Code erhalten', 'Sign in with my password': 'Mit meinem Passwort anmelden', 'Create a password': 'Passwort erstellen', 'Change my password': 'Passwort ändern', 'With a password you sign in with your email address, without asking the care team for a code.': 'Mit einem Passwort melden Sie sich mit Ihrer E-Mail-Adresse an, ohne das Team um einen Code zu bitten.', 'Current password': 'Aktuelles Passwort', 'New password': 'Neues Passwort', 'New password again': 'Neues Passwort bestätigen', 'At least 8 characters, with a letter and a digit.': 'Mindestens 8 Zeichen, mit einem Buchstaben und einer Ziffer.', 'Password saved.': 'Passwort gespeichert.', 'Save the password': 'Passwort speichern', 'Please give the name on the card.': 'Bitte geben Sie den Namen auf der Karte an.', 'Please check the card number.': 'Bitte prüfen Sie die Kartennummer.', 'Please check the expiry date (MM/YY).': 'Bitte prüfen Sie das Ablaufdatum (MM/JJ).', 'This card has expired.': 'Diese Karte ist abgelaufen.', 'Please check the security code (3 or 4 digits).': 'Bitte prüfen Sie die Prüfnummer (3 oder 4 Ziffern).', 'Please give your first and last name.': 'Bitte geben Sie Vor- und Nachnamen an.', 'Please give the resident code and first name.': 'Bitte geben Sie Code und Vornamen der Person an.' });
     addNew('fr', {
       /* 14 Nov: ticks, recordings without a time limit, installing the app */
       'Delivered': 'Distribué', 'On Bellatrix': 'Sur Bellatrix', 'Seen by {name}': 'Vu par {name}', 'Recording…': 'Enregistrement…', 'Sending… {p} %': 'Envoi… {p} %',
@@ -345,7 +348,7 @@
   function money(cents, cur) { try { return new Intl.NumberFormat(LOCALE[S.lang], { style: 'currency', currency: cur || 'EUR' }).format((cents || 0) / 100); } catch (e) { return ((cents || 0) / 100).toFixed(2) + ' €'; } }
   /* BF-24: the configured price (js/premium-config.js); while payments are a test, one short line. */
   function price(cents, cur) { return esc(money(cents, cur)); }
-  function testLine() { return S.me && S.me.testPayment !== false ? '<p class="testpay">' + esc(T('Simulated payment: no real payment is charged.')) + '</p>' : ''; }
+  function testLine() { return ''; }   /* 24 Nov (Rahma): no "simulated payment" lines on the screens any more */
   function toast(t) {
     var el = $('toast');
     el.textContent = t; el.hidden = false;
@@ -365,7 +368,10 @@
     'empty': 'Write a few words, or choose a photo, a voice message or a video.',
     'enough-today': 'That is plenty for today. You can send more tomorrow.',
     'offer-open': 'A gift is already on its way or active.', 'bad-theme': 'Please choose a theme.',
-    'bad-card': 'Please check the card details (demo).', 'not-open': 'This offer is no longer open.',
+    'bad-card': 'Please check the card number.', 'not-open': 'This offer is no longer open.',
+    'bad-phone': 'Please check the phone number (8 to 15 digits).', 'bad-date': 'Please choose a valid date.',
+    'bad-login': 'Email or password is not right.', 'weak-password': 'The password needs at least 8 characters, with a letter and a digit.',
+    'bad-current': 'The current password is not right.',
     'listen-closed': 'Listening together has ended.', 'queue-full': 'The queue is full for now.', 'not-in-catalogue': 'This song is not in the Bellatrix catalogue.',
     'slow-down': 'Please wait a few minutes before trying again.', 'signed-out': 'Please sign in again.',
     'network': 'No connection to Bellatrix right now. Please try again in a moment.'
@@ -508,8 +514,7 @@
       '<button type="button" class="btn" data-do="to-request">' + esc(T('Create an account')) + '</button></section>' +
       '<details class="invite"><summary>' + esc(T('I have an invitation code')) + '</summary>' +
       '<label class="field"><span>' + esc(T('Invitation code')) + '</span><input id="invCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH" maxlength="12"></label>' +
-      '<button type="button" class="btn" data-do="invite">' + esc(T('Continue')) + '</button></details>' +
-      '<p class="fine">' + esc(T('A Bellatrix pilot in care homes. No advertising.')) + '</p></main>';
+      '<button type="button" class="btn" data-do="invite">' + esc(T('Continue')) + '</button></details></main>';
   }
   function inviteScreen() {
     return head(false) + '<main class="main"><section class="card">' +
@@ -538,8 +543,18 @@
   }
   function signinScreen() {
     var step2 = !!S.email;
-    return head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Sign in')) + '</h1>' +
-      (S.invite ? '<p class="note">' + esc(T('You already have an account. Sign in: {name} will be added to it.', { name: S.invite.label })) + '</p>' : '') +
+    var top = head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Sign in')) + '</h1>' +
+      (S.invite ? '<p class="note">' + esc(T('You already have an account. Sign in: {name} will be added to it.', { name: S.invite.label })) + '</p>' : '');
+    /* 24 Nov (Rahma: a password to get in more easily): e-mail and password first; the care team's code stays the other way */
+    if (!S.signinCode) {
+      return top +
+        '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="pwEmail" type="email" autocomplete="username" inputmode="email" maxlength="160"></label>' +
+        '<label class="field"><span>' + esc(T('Your password')) + '</span><input id="pwPass" type="password" autocomplete="current-password" maxlength="128"></label>' +
+        '<button type="button" class="btn primary" data-do="pw-login"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Sign in')) + '</button>' +
+        '<button type="button" class="link" data-do="to-code">' + esc(T('No password yet? Get a code')) + '</button>' +
+        '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></section></main>';
+    }
+    return top +
       (step2 ?
         '<p>' + esc(T('The care team gives you a 6-digit code (by phone or on paper). No email is sent during the pilot.')) + '</p>' +
         '<p class="muted">' + esc(S.email) + '</p>' +
@@ -549,6 +564,7 @@
         :
         '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="sinEmail" type="email" autocomplete="email" inputmode="email" maxlength="160"></label>' +
         '<button type="button" class="btn primary" data-do="ask-code"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Get a code')) + '</button>') +
+      '<button type="button" class="link" data-do="to-password">' + esc(T('Sign in with my password')) + '</button>' +
       '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></section></main>';
   }
   function consentScreen() {
@@ -847,7 +863,7 @@
           (S.aPhoto ? '<figure class="preview"><img src="' + S.aPhoto.url + '" alt=""></figure><button type="button" class="link" data-do="pick-album">' + esc(T('Choose another photo')) + '</button>'
             : '<button type="button" class="drop" data-do="pick-album">' + ICON.photo + '<span>' + esc(T('Choose a photo')) + '</span></button>') +
           '<label class="field"><span>' + esc(T('Short caption')) + '</span><input id="aCaption" maxlength="' + lim.caption + '" placeholder="' + esc(T('e.g. Paul’s wedding')) + '"></label>' +
-          '<label class="field"><span>' + esc(T('Date (optional)')) + '</span><input id="aDate" maxlength="' + (lim.date || 30) + '" placeholder="' + esc(T('e.g. June 1978')) + '"></label>' +
+          '<label class="field"><span>' + esc(T('Date (optional)')) + '</span><input id="aDate" type="date" min="1900-01-01" max="' + todayIso() + '"></label>' +
           '<fieldset class="themes"><legend>' + esc(T('Theme')) + '</legend><div class="chips" role="radiogroup">' + THEMES.map(function (t) {
             var on = S.aTheme === t[0];
             return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-theme="' + t[0] + '">' + esc(T(t[1])) + '</button>';
@@ -910,7 +926,7 @@
     var p = S.pay, info = productInfo(p.product), pr = p.kind === 'request' ? { cents: p.cents } : (info.prices || []).filter(function (x) { return x.months === p.months; })[0] || { cents: 0 };
     return '<section class="card gift"><div class="pay"><h2>' + esc(T('Payment (demonstration)')) + '</h2>' +
       '<div class="sum"><span>' + esc(productName(p.product)) + ' · ' + esc(T('{n} month(s)', { n: p.months })) + '</span><b>' + price(pr.cents, info.currency) + '</b></div>' +
-      testLine() + '<p class="fine">' + esc(T('No card data is kept. Do not type your real card: use 4242 4242 4242 4242.')) + '</p>' +
+      testLine() +
       '<form id="payForm" autocomplete="off" onsubmit="return false">' +
       '<label class="field"><span>' + esc(T('Name on the card')) + '</span><input id="payName" autocomplete="off" spellcheck="false" maxlength="60"></label>' +
       '<label class="field"><span>' + esc(T('Card number')) + '</span><input id="payNum" class="masked" inputmode="numeric" autocomplete="off" spellcheck="false" maxlength="23" placeholder="4242 4242 4242 4242"></label>' +
@@ -963,7 +979,6 @@
           ' · ' + esc(T('{n} month(s)', { n: x.months })) + ' · ' + esc(money(x.cents, x.currency)) + '</p></div></li>';
       }).join('') + '</ul></section>';
     }
-    h += '<p class="testpay">' + esc(T('Simulated payment: no real payment is charged.')) + '</p>';
     h += installCard();
     h += '<button type="button" class="rowlink" data-do="notif-open"><span>' + esc(T('Notifications')) + '</span><i aria-hidden="true">›</i></button>';
     h += '<button type="button" class="rowlink" data-do="account"><span>' + esc(T('My account')) + '</span><i aria-hidden="true">›</i></button>';
@@ -1008,6 +1023,18 @@
       '<div class="searchrow"><label class="field"><span class="sr">' + esc(T('Invitation code')) + '</span><input id="linkCode" autocomplete="off" autocapitalize="characters" placeholder="ABCD-EFGH" maxlength="12"></label>' +
       '<button type="button" class="btn primary" data-do="link">' + esc(T('Add')) + '</button></div></section>';
   }
+  /* 24 Nov (Rahma): a password, so the next sign-in needs no code from the care team */
+  function passwordCard() {
+    var has = !!(S.me && S.me.person && S.me.person.hasPassword);
+    return '<section class="card"><h2>' + esc(T('Password')) + '</h2>' +
+      '<p class="fine">' + esc(T('With a password you sign in with your email address, without asking the care team for a code.')) + '</p>' +
+      '<form onsubmit="return false" autocomplete="on"><input type="email" autocomplete="username" value="' + esc(S.me.person.email) + '" hidden>' +
+      (has ? '<label class="field"><span>' + esc(T('Current password')) + '</span><input id="pwCur" type="password" autocomplete="current-password" maxlength="128"></label>' : '') +
+      '<label class="field"><span>' + esc(T('New password')) + '</span><input id="pwNew" type="password" autocomplete="new-password" maxlength="128"></label>' +
+      '<label class="field"><span>' + esc(T('New password again')) + '</span><input id="pwNew2" type="password" autocomplete="new-password" maxlength="128"></label>' +
+      '<p class="fine">' + esc(T('At least 8 characters, with a letter and a digit.')) + '</p></form>' +
+      '<button type="button" class="btn" data-do="set-password"' + (S.busy ? ' disabled' : '') + '>' + esc(T(has ? 'Change my password' : 'Create a password')) + '</button></section>';
+  }
   function accountPage() {
     var p = S.me.person, r = S.me.resident, lvl = r && r.consent;
     return '<button type="button" class="link back" data-do="account-close">‹ ' + esc(T('Back')) + '</button>' +
@@ -1015,7 +1042,7 @@
       '<dl class="facts"><dt>' + esc(T('First name')) + '</dt><dd>' + esc(p.name) + '</dd><dt>' + esc(T('Email address')) + '</dt><dd>' + esc(p.email) + '</dd>' +
       '<dt>' + esc(T('Consent given on')) + '</dt><dd>' + esc(dateText(p.consentAt)) + '</dd></dl>' +
       (standalone() ? '' : '<button type="button" class="btn" data-do="install-open">' + esc(T('Install the app')) + '</button>') +
-      '</section>' +
+      '</section>' + passwordCard() +
       '<section class="card"><h2>' + esc(T('My residents')) + '</h2><ul class="subs">' + (S.me.residents || []).map(function (x) {
         return '<li><div class="hbody"><b>' + esc(x.label) + '</b>' + (x.relation ? '<small class="fine">' + esc(x.relation) + '</small>' : '') + '</div><span class="chip ' + (x.status === 'active' ? 's-ok' : 's-not') + '">' + esc(T(x.status === 'active' ? 'Active' : 'Suspended')) + '</span></li>';
       }).join('') + '</ul></section>' + addResidentCard() +
@@ -1098,7 +1125,20 @@
   }
 
   /* ---------- after drawing ---------- */
+  /* input checks (24 Nov): small helpers */
+  function phoneOk(v) { return /^\+?\d{8,15}$/.test(String(v || '').replace(/[\s.\-()\/]/g, '')); }
+  function emailOk(v) { return /^[^\s@<>"']{1,64}@[^\s@<>"']{1,100}\.[A-Za-z]{2,24}$/.test(String(v || '').trim()); }
+  function pwStrong(v) { return typeof v === 'string' && v.length >= 8 && v.length <= 128 && /[A-Za-z]/.test(v) && /\d/.test(v); }
+  /* marks the field that is wrong (until it is typed in again) and puts the cursor there */
+  function bad(id) { var el = $(id); if (!el) return; el.classList.add('bad'); el.setAttribute('aria-invalid', 'true'); try { el.focus(); } catch (e) { /* hidden */ } }
   function after() {
+    [].forEach.call(document.querySelectorAll('input.bad'), function (el) { el.classList.remove('bad'); });
+    if (!document.__badWatch) { document.__badWatch = true; document.addEventListener('input', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('bad')) { el.classList.remove('bad'); el.removeAttribute('aria-invalid'); } }, true); }
+    /* the card number in groups of 4, the expiry with its slash, the code digits only */
+    var pn = $('payNum'), pe = $('payExp'), pc = $('payCvc');
+    if (pn) pn.addEventListener('input', function () { var d = pn.value.replace(/\D/g, '').slice(0, 19); pn.value = d.replace(/(\d{4})(?=\d)/g, '$1 '); });
+    if (pe) pe.addEventListener('input', function (ev) { var d = pe.value.replace(/\D/g, '').slice(0, 4); pe.value = d.length > 2 || (d.length === 2 && ev.inputType !== 'deleteContentBackward') ? d.slice(0, 2) + '/' + d.slice(2) : d; });
+    if (pc) pc.addEventListener('input', function () { pc.value = pc.value.replace(/\D/g, '').slice(0, 4); });
     var t = $('msgText'), c = $('msgCount'), bar = $('waBar');
     if (t) {
       if (S.draft) t.value = S.draft;
@@ -1202,9 +1242,33 @@
   function act(what, el) {
     var id = el && el.getAttribute('data-id');
     if (what === 'retry-start') { start(); return; }
-    if (what === 'to-signin') { S.screen = 'signin'; S.email = ''; render(); return; }
+    if (what === 'to-signin') { S.screen = 'signin'; S.email = ''; S.signinCode = false; render(); return; }
+    if (what === 'to-code') { S.signinCode = true; S.email = ''; render(); return; }
+    if (what === 'to-password') { S.signinCode = false; S.email = ''; render(); return; }
+    if (what === 'pw-login') {
+      var pe = val('pwEmail'), pp = $('pwPass') ? $('pwPass').value : '';
+      if (!emailOk(pe)) { bad('pwEmail'); toast(T(ERRORS['bad-email'])); return; }
+      if (!pp) { bad('pwPass'); toast(T(ERRORS['bad-login'])); return; }
+      busy(true);
+      fam('POST', 'login/password', { email: pe, password: pp }).then(signedIn, function (e) { busy(false); if ($('pwPass')) $('pwPass').value = ''; toast(errText(e)); });
+      return;
+    }
+    if (what === 'set-password') {
+      var cur = $('pwCur') ? $('pwCur').value : '', np = $('pwNew') ? $('pwNew').value : '', np2 = $('pwNew2') ? $('pwNew2').value : '';
+      if (!pwStrong(np)) { bad('pwNew'); toast(T(ERRORS['weak-password'])); return; }
+      if (np !== np2) { bad('pwNew2'); toast(T('The two passwords are not the same.')); return; }
+      busy(true);
+      fam('POST', 'password', { password: np, current: cur }).then(function () {
+        busy(false); if (S.me && S.me.person) S.me.person.hasPassword = true; render(); toast(T('Password saved.'));
+      }, function (e) { busy(false); toast(errText(e)); });
+      return;
+    }
     if (what === 'to-request') { S.screen = 'request'; render(); return; }
     if (what === 'request-access') {
+      if (!val('reqFirst').trim() || !val('reqLast').trim()) { bad(!val('reqFirst').trim() ? 'reqFirst' : 'reqLast'); toast(T('Please give your first and last name.')); return; }
+      if (!phoneOk(val('reqPhone'))) { bad('reqPhone'); toast(T(ERRORS['bad-phone'])); return; }
+      if (!emailOk(val('reqEmail'))) { bad('reqEmail'); toast(T(ERRORS['bad-email'])); return; }
+      if (!val('reqCode').trim() || !val('reqRes').trim()) { bad(!val('reqCode').trim() ? 'reqCode' : 'reqRes'); toast(T('Please give the resident code and first name.')); return; }
       if (!$('reqConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
       fam('POST', 'request-access', { first: val('reqFirst'), last: val('reqLast'), relation: val('reqRel'), phone: val('reqPhone'), email: val('reqEmail'), code: val('reqCode'), resident: val('reqRes'), lang: S.lang, consent: true })
@@ -1215,6 +1279,8 @@
     if (what === 'other-email') { S.email = ''; render(); return; }
     if (what === 'invite') { checkInvite(val('invCode')); return; }
     if (what === 'register') {
+      if (!val('regName').trim()) { bad('regName'); toast(T(ERRORS['bad-name'])); return; }
+      if (!emailOk(val('regEmail'))) { bad('regEmail'); toast(T(ERRORS['bad-email'])); return; }
       if (!$('regConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
       fam('POST', 'register', { code: S.invite.code, email: val('regEmail'), name: val('regName'), relation: val('regRel'), lang: S.lang, consent: true })
@@ -1314,14 +1380,28 @@
       if (ev.userChoice && ev.userChoice.then) ev.userChoice.then(function () { render(); }, function () { render(); }); else render();
     }
   }
-  /* The simulated card form: read, checked lightly, emptied at once. Nothing of it is kept. */
+  /* The card form (24 Nov, Rahma: "it accepts everything"): the name (letters), the number (13 to 19 digits that pass the
+     Luhn check), the expiry (a real month, not past) and the code (3 or 4 digits) are checked here; a wrong field is
+     marked and keeps its value. Only the last 4 digits ever leave the phone; the fields are emptied after paying. */
+  function luhn(d) { var s = 0, alt = false, i, n; for (i = d.length - 1; i >= 0; i--) { n = +d.charAt(i); if (alt) { n *= 2; if (n > 9) n -= 9; } s += n; alt = !alt; } return s % 10 === 0; }
+  function cardProblem(name, digits, exp, cvc) {
+    if (!/^[A-Za-z\u00C0-\u024F' .\-]{2,60}$/.test(name) || (name.match(/[A-Za-z\u00C0-\u024F]/g) || []).length < 2) return ['payName', 'Please give the name on the card.'];
+    if (!/^\d{13,19}$/.test(digits) || !luhn(digits)) return ['payNum', 'Please check the card number.'];
+    var m = /^(0[1-9]|1[0-2])\/?(\d{2})$/.exec(exp);
+    if (!m) return ['payExp', 'Please check the expiry date (MM/YY).'];
+    var now = new Date(), y = 2000 + +m[2], mo = +m[1];
+    if (y < now.getFullYear() || (y === now.getFullYear() && mo < now.getMonth() + 1)) return ['payExp', 'This card has expired.'];
+    if (y > now.getFullYear() + 20) return ['payExp', 'Please check the expiry date (MM/YY).'];
+    if (!/^\d{3,4}$/.test(cvc)) return ['payCvc', 'Please check the security code (3 or 4 digits).'];
+    return null;
+  }
   function pay() {
     var name = $('payName'), num = $('payNum'), exp = $('payExp'), cvc = $('payCvc');
-    var digits = String(num ? num.value : '').replace(/\D/g, ''), okExp = /^(0[1-9]|1[0-2])\/?\d{2}$/.test(String(exp ? exp.value : '').trim()), okCvc = /^\d{3,4}$/.test(String(cvc ? cvc.value : '').trim());
-    var okName = !!(name && name.value.trim()), last4 = digits.slice(-4);
+    var digits = String(num ? num.value : '').replace(/[\s-]/g, ''), last4 = digits.slice(-4);
+    var problem = cardProblem(String(name ? name.value : '').trim(), digits, String(exp ? exp.value : '').trim(), String(cvc ? cvc.value : '').trim());
+    if (problem) { bad(problem[0]); toast(T(problem[1])); digits = ''; last4 = ''; return; }
     [name, num, exp, cvc].forEach(function (x) { if (x) x.value = ''; });
     digits = '';
-    if (!okName || last4.length !== 4 || !okExp || !okCvc) { toast(T(ERRORS['bad-card'])); return; }
     var p = S.pay;
     S.busy = true; render();
     var call = p.kind === 'request' ? fam('POST', 'premium-request/pay', { id: p.id, last4: last4 }) : fam('POST', 'offer', { product: p.product, months: p.months });
@@ -1336,9 +1416,18 @@
     S.query = val('songQuery');
     fam('GET', 'listen/search?q=' + encodeURIComponent(S.query)).then(function (r) { S.found = r.items || []; render(); var i = $('songQuery'); if (i) i.focus(); }, function (e) { toast(errText(e)); });
   }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  /* a real day from 1900 to today (the date field of the album) */
+  function dateOk(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return false;
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3] && +m[1] >= 1900 && v <= todayIso();
+  }
   function sendAlbum() {
     var caption = val('aCaption'), question = val('aQuestion'), date = val('aDate');
     if (!S.aPhoto) { toast(T(ERRORS.empty)); return; }
+    if (date && !dateOk(date)) { bad('aDate'); toast(T(ERRORS['bad-date'])); return; }
+    var di = $('aDate'); if (di && di.validity && di.validity.badInput) { bad('aDate'); toast(T(ERRORS['bad-date'])); return; }
     if (/(https?:\/\/|www\.)/i.test(caption + ' ' + question + ' ' + date)) { toast(T(ERRORS['no-links'])); return; }
     S.busy = true; render();
     fam('POST', 'message', { text: caption, photo: S.aPhoto.data, album: { theme: S.aTheme, question: question, date: date } }).then(function (out) {
