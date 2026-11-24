@@ -460,6 +460,24 @@ test('a password: strong enough, kept as a hash only, sign-in with it, a wrong o
   clock += 16 * 60 * 1000;
   assert.equal((await call('POST', 'family/login/password', { email: 'sophie@example.test', password: 'Lune2026x' })).status, 200);
 });
+/* 24 Nov: a second "var KIND" (the input checks) once hid the message kinds and the Messages tab broke */
+test('no name is declared twice at the top of the family app', () => {
+  for (const f of ['portail.js', 'portail-calls.js', 'portail-feed.js']) {
+    const names = [...fs.readFileSync(path.join(ROOT, 'js', f), 'utf8').matchAll(/^  (?:var|function) ([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
+    assert.deepEqual(names.filter((n, i) => names.indexOf(n) !== i), [], f);
+  }
+});
+test('the password is chosen when the account is made (request and invitation)', async () => {
+  const body = (o) => Object.assign({ first: 'Nora', last: 'Test', relation: 'fille', phone: '0612345678', email: 'nora.pw@example.test', code: 'P3', resident: 'Hans', lang: 'de', consent: true }, o);
+  assert.equal((await call('POST', 'family/request-access', body({ password: 'kurz1' }))).data.error, 'weak-password');
+  assert.equal((await call('POST', 'family/request-access', body({ password: 'Garten2026' }))).status, 200);
+  assert.equal((await call('POST', 'family/login/password', { email: 'nora.pw@example.test', password: 'Garten2026' })).status, 200);
+  const inv = await call('POST', 'robot/invite', { rid: X.p3 }, R);
+  assert.equal((await call('POST', 'family/register', { code: inv.data.code, email: 'otto.pw@example.test', name: 'Otto', password: 'abc', consent: true })).data.error, 'weak-password');
+  const reg = await call('POST', 'family/register', { code: inv.data.code, email: 'otto.pw@example.test', name: 'Otto', password: 'Sonne2026', consent: true });
+  assert.equal(reg.status, 200); assert.equal(reg.data.me.person.hasPassword, true);
+  assert.equal((await call('POST', 'family/login/password', { email: 'otto.pw@example.test', password: 'Sonne2026' })).status, 200);
+});
 test('the family app checks the card, the phone, the date and the e-mail before sending, and shows no demo lines', () => {
   const src = fs.readFileSync(path.join(ROOT, 'js', 'portail.js'), 'utf8');
   assert.ok(!src.includes("T('A Bellatrix pilot in care homes. No advertising.')"));

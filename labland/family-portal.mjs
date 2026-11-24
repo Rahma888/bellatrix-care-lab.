@@ -99,6 +99,8 @@ function dateOk(v) {
 const PW_FAILS = 5, PW_LOCK_MS = 15 * 60 * 1000, PW_FRESH_MS = 30 * 60 * 1000;
 function pwStrong(pw) { return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128 && /[A-Za-z]/.test(pw) && /\d/.test(pw); }
 function pwHash(pw, salt) { return crypto.scryptSync(String(pw), salt, 32).toString('hex'); }
+/* 24 Nov (Rahma): the password chosen when the account is made (the family app asks for it; an older app may not send one) */
+function setNewPassword(person, pw) { if (typeof pw === 'string' && pw) { const salt = rnd(16); person.pw = { salt, hash: pwHash(pw, salt), at: new Date().toISOString() }; } }
 function pwCheck(pw, rec) { if (!rec || !rec.salt || !rec.hash || typeof pw !== 'string' || pw.length > 128) return false; return same(pwHash(pw, rec.salt), rec.hash); }
 function iso(t) { return new Date(t).toISOString(); }
 function lang(v) { return LANGS.includes(v) ? v : 'en'; }
@@ -516,10 +518,12 @@ export function createPortal(opts = {}) {
       if (!EMAIL.test(email)) return [400, { error: 'bad-email' }];
       if (!nameOk(name)) return [400, { error: 'bad-name' }];
       if (body.relation && !nameOk(str(body.relation, 40))) return [400, { error: 'bad-relation' }];
+      if (body.password !== undefined && !pwStrong(body.password)) return [400, { error: 'weak-password' }];
       /* An address that already has an account signs in first, then adds this resident (family/link):
          an invitation alone never opens someone else's account. */
       if (personByEmail(d, email)) return [409, { error: 'account-exists' }];
       const person = { id: rnd(12), email, name, lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
+      setNewPassword(person, body.password);
       d.people[person.id] = person;
       const a = newLink(d, person.id, inv.rid, 'invite', body.relation);
       /* Every NEW family account waits for the care team's one tap, also with an invitation (Rahma, 14 Nov).
@@ -541,11 +545,13 @@ export function createPortal(opts = {}) {
       if (!nameOk(first) || !nameOk(last)) return [400, { error: 'bad-name' }];
       if (!phoneOk(body.phone)) return [400, { error: 'bad-phone' }];
       if (body.relation && !nameOk(str(body.relation, 40))) return [400, { error: 'bad-relation' }];
+      if (body.password !== undefined && !pwStrong(body.password)) return [400, { error: 'weak-password' }];
       const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
       const res = Object.values(d.residents).find((r) => fold(r.code) === fold(body.code) && fold(r.label) === fold(body.resident) && fold(r.code));
       if (!res) { log('request-access refused: no resident with code ' + str(body.code, 24).replace(/[^\w .-]/g, '')); return [404, { error: 'unknown-resident' }]; }
       if (personByEmail(d, email)) return [409, { error: 'account-exists' }];
       const person = { id: rnd(12), email, name: first, last, phone: str(body.phone, 30), lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
+      setNewPassword(person, body.password);
       d.people[person.id] = person;
       const a = newLink(d, person.id, res.rid, 'request', body.relation);
       a.status = autoAccept() ? 'active' : 'pending';   /* PC test server only (PORTAL_AUTO_ACCEPT=1) */

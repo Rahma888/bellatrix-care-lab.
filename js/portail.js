@@ -32,6 +32,9 @@
   /* ---------- the texts (English keys; French and German) ---------- */
   (function () {
     function addNew(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    /* 24 Nov (Rahma: a password when the account is made) */
+    addNew('fr', { 'Password and agreement': 'Mot de passe et accord', 'Choose a password': 'Choisissez un mot de passe', 'The password again': 'Le mot de passe encore une fois', 'Step {n} of 2': 'Étape {n} sur 2' });
+    addNew('de', { 'Password and agreement': 'Passwort und Zustimmung', 'Choose a password': 'Wählen Sie ein Passwort', 'The password again': 'Das Passwort noch einmal', 'Step {n} of 2': 'Schritt {n} von 2' });
     /* 24 Nov (Rahma: strict input checks, account in 3 steps) */
     addNew('fr', { 'Step {n} of 3': 'Étape {n} sur 3', 'About you': 'Vous', 'Your loved one': 'Votre proche', 'Your agreement': 'Votre accord', 'Letters only, please (2 to 40).': 'Uniquement des lettres, s’il vous plaît (2 à 40).', 'Please check the email address (e.g. name@example.com).': 'Vérifiez l’adresse e-mail (ex. nom@exemple.fr).', 'Please give the resident code.': 'Indiquez le code du résident.', 'e.g. +49 151 23456789': 'ex. +33 6 12 34 56 78', 'name@example.com': 'nom@exemple.fr', 'Digits only, with one + at the start if you like.': 'Uniquement des chiffres, avec un + au début si vous voulez.', 'Send my request': 'Envoyer ma demande' });
     addNew('de', { 'Step {n} of 3': 'Schritt {n} von 3', 'About you': 'Über Sie', 'Your loved one': 'Ihr Angehöriger', 'Your agreement': 'Ihre Zustimmung', 'Letters only, please (2 to 40).': 'Bitte nur Buchstaben (2 bis 40).', 'Please check the email address (e.g. name@example.com).': 'Bitte prüfen Sie die E-Mail-Adresse (z. B. name@beispiel.de).', 'Please give the resident code.': 'Bitte geben Sie den Code der Person an.', 'e.g. +49 151 23456789': 'z. B. +49 151 23456789', 'name@example.com': 'name@beispiel.de', 'Digits only, with one + at the start if you like.': 'Nur Ziffern, auf Wunsch mit einem + am Anfang.', 'Send my request': 'Anfrage senden' });
@@ -554,14 +557,19 @@
       '<button type="button" class="btn" data-do="invite">' + esc(T('Continue')) + '</button></details></main>';
   }
   function inviteScreen() {
+    var st = S.regStep || 1, G = S.reg || (S.reg = {});
+    var steps = '<div class="req-steps" aria-hidden="true">' + [1, 2].map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
+      '<p class="req-step">' + esc(T('Step {n} of 2', { n: st })) + ' · <b>' + esc(T(st === 1 ? 'About you' : 'Password and agreement')) + '</b></p>';
     return head(false) + '<main class="main"><section class="card">' +
-      '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>' +
-      '<p class="muted">' + esc(T('Create your account in one minute.')) + '</p>' +
-      '<label class="field"><span>' + esc(T('Your first name')) + '</span><input id="regName" autocomplete="given-name" maxlength="40" placeholder="' + esc(T('e.g. Sophie')) + '"></label>' +
-      '<label class="field"><span>' + esc(T('Who are you for {name}? (optional)', { name: who() })) + '</span><input id="regRel" maxlength="40" placeholder="' + esc(T('e.g. granddaughter')) + '"></label>' +
-      '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="regEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="160" placeholder="' + esc(T('name@example.com')) + '"></label>' +
-      consentBlock('regConsent') +
-      '<button type="button" class="btn primary" data-do="register"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Create my account')) + '</button>' +
+      '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>' + steps +
+      (st === 1
+        ? '<label class="field"><span>' + esc(T('Your first name')) + '</span><input id="regName" autocomplete="given-name" maxlength="40" value="' + esc(G.name || '') + '" placeholder="' + esc(T('e.g. Sophie')) + '"></label>' +
+          '<label class="field"><span>' + esc(T('Who are you for {name}? (optional)', { name: who() })) + '</span><input id="regRel" maxlength="40" value="' + esc(G.rel || '') + '" placeholder="' + esc(T('e.g. granddaughter')) + '"></label>' +
+          '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="regEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="160" value="' + esc(G.email || '') + '" placeholder="' + esc(T('name@example.com')) + '"></label>' +
+          '<button type="button" class="btn primary" data-do="reg-next">' + esc(T('Continue')) + '</button>'
+        : pwFields('regPw', 'regPw2') + consentBlock('regConsent') +
+          '<button type="button" class="btn primary" data-do="register"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Create my account')) + '</button>' +
+          '<button type="button" class="link" data-do="reg-back">' + esc(T('Back')) + '</button>') +
       '<button type="button" class="link" data-do="to-signin">' + esc(T('I already have an account')) + '</button>' +
       '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></section></main>';
   }
@@ -583,14 +591,27 @@
         '<p class="muted">' + esc(T('Both are given by the care team.')) + '</p>' +
         f('reqCode', 'code', 'Resident code', 12, '', ' autocapitalize="characters" autocomplete="off" spellcheck="false"') +
         f('reqRes', 'res', 'First name of the resident', 40, '', ' autocapitalize="words" autocomplete="off" spellcheck="false"')
-      : consentBlock('reqConsent');
+      : pwFields('reqPw', 'reqPw2') + consentBlock('reqConsent');
     var steps = '<div class="req-steps" aria-hidden="true">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>';
     return head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Create an account')) + '</h1>' + steps +
-      '<p class="req-step">' + esc(T('Step {n} of 3', { n: st })) + ' · <b>' + esc(T(['About you', 'Your loved one', 'Your agreement'][st - 1])) + '</b></p>' +
+      '<p class="req-step">' + esc(T('Step {n} of 3', { n: st })) + ' · <b>' + esc(T(['About you', 'Your loved one', 'Password and agreement'][st - 1])) + '</b></p>' +
       body +
       (st < 3 ? '<button type="button" class="btn primary" data-do="req-next">' + esc(T('Continue')) + '</button>'
         : '<button type="button" class="btn primary" data-do="request-access"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Send my request')) + '</button>') +
       '<button type="button" class="link" data-do="req-back">' + esc(T('Back')) + '</button></section></main>';
+  }
+  /* 24 Nov (Rahma: "creating an account has no password field"): the password is chosen with the account */
+  function pwFields(a, b) {
+    return '<label class="field"><span>' + esc(T('Choose a password')) + '</span><input id="' + a + '" type="password" autocomplete="new-password" maxlength="128"></label>' +
+      '<label class="field"><span>' + esc(T('The password again')) + '</span><input id="' + b + '" type="password" autocomplete="new-password" maxlength="128"></label>' +
+      '<p class="fine">' + esc(T('At least 8 characters, with a letter and a digit.')) + '</p>';
+  }
+  /* the password of a new account: strong enough and typed twice the same */
+  function newPwOk(a, b) {
+    var p1 = $(a) ? $(a).value : '', p2 = $(b) ? $(b).value : '';
+    if (!pwStrong(p1)) return bad(a, T(ERRORS['weak-password'])), false;
+    if (p1 !== p2) return bad(b, T('The two passwords are not the same.')), false;
+    return p1;
   }
   /* the checks of one step: the first wrong field is marked with its reason under it */
   function reqStepOk(st) {
@@ -1216,15 +1237,17 @@
     },
     email: function (v) { var s = v.replace(/[^A-Za-z0-9._%+@-]/g, ''), i = s.indexOf('@'); if (i >= 0) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/@/g, ''); return s.replace(/\.{2,}/g, '.').slice(0, 160); },
     code: function (v) { return v.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12); },
-    digits: function (v) { return v.replace(/\D/g, '').slice(0, 6); }
+    digits: function (v) { return v.replace(/\D/g, '').slice(0, 6); },
+    pw: function (v) { return v.slice(0, 128); }
   };
-  var KIND = { reqFirst: 'name', reqLast: 'name', reqRel: 'name', reqRes: 'name', regName: 'name', regRel: 'name', payName: 'name',
-    reqPhone: 'phone', reqEmail: 'email', regEmail: 'email', sinEmail: 'email', pwEmail: 'email', reqCode: 'code', invCode: 'code', linkCode: 'code', sinCode: 'digits' };
+  var FIELD_KIND = { reqFirst: 'name', reqLast: 'name', reqRel: 'name', reqRes: 'name', regName: 'name', regRel: 'name', payName: 'name',
+    reqPhone: 'phone', reqEmail: 'email', regEmail: 'email', sinEmail: 'email', pwEmail: 'email', reqCode: 'code', invCode: 'code', linkCode: 'code', sinCode: 'digits', reqPw: 'pw', regPw: 'pw', pwNew: 'pw' };
   /* the check when a field is left (an empty field is checked only when sending) */
   var LEAVE = {
     name: function (v) { return nameOk(v) ? '' : T('Letters only, please (2 to 40).'); },
     phone: function (v) { return phoneOk(v) ? '' : T(ERRORS['bad-phone']); },
-    email: function (v) { return emailOk(v) ? '' : T('Please check the email address (e.g. name@example.com).'); }
+    email: function (v) { return emailOk(v) ? '' : T('Please check the email address (e.g. name@example.com).'); },
+    pw: function (v) { return pwStrong(v) ? '' : T(ERRORS['weak-password']); }
   };
   /* marks the field that is wrong, with the reason under it (until it is typed in again), and puts the cursor there */
   function bad(id, msg, stay) {
@@ -1240,12 +1263,12 @@
     if (!document.__badWatch) {
       document.__badWatch = true;
       document.addEventListener('input', function (e) {
-        var el = e.target, k = el && KIND[el.id];
+        var el = e.target, k = el && FIELD_KIND[el.id];
         if (k && typeof el.value === 'string') { var c = CLEAN[k](el.value); if (c !== el.value) el.value = c; }
         if (el && el.classList && el.classList.contains('bad')) unbad(el);
       }, true);
       document.addEventListener('focusout', function (e) {
-        var el = e.target, k = el && KIND[el.id], v = el && typeof el.value === 'string' ? el.value.trim() : '';
+        var el = e.target, k = el && FIELD_KIND[el.id], v = el && typeof el.value === 'string' ? el.value.trim() : '';
         if (!k || !LEAVE[k] || !v || (el.id === 'reqRel' || el.id === 'regRel') && !v) return;
         var why = LEAVE[k](v); if (why) bad(el.id, why, true);
       }, true);
@@ -1386,12 +1409,14 @@
       var R = keepReq();
       if (!reqStepOk(1)) { S.reqStep = 1; render(); reqStepOk(1); return; }
       if (!reqStepOk(2)) { S.reqStep = 2; render(); reqStepOk(2); return; }
+      var rpw = newPwOk('reqPw', 'reqPw2'); if (!rpw) return;
       if (!$('reqConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
-      fam('POST', 'request-access', { first: R.first, last: R.last, relation: R.rel || '', phone: R.phone, email: R.email, code: R.code, resident: R.res, lang: S.lang, consent: true })
+      fam('POST', 'request-access', { first: R.first, last: R.last, relation: R.rel || '', phone: R.phone, email: R.email, code: R.code, resident: R.res, password: rpw, lang: S.lang, consent: true })
         .then(function (out) { S.req = {}; signedIn(out); }, function (e) {
           busy(false);
           /* back to the step with the field the server did not accept */
+          ['reqPw', 'reqPw2'].forEach(function (i) { if ($(i)) $(i).value = ''; });
           var back = { 'bad-name': ['reqFirst', 1], 'bad-phone': ['reqPhone', 1], 'bad-email': ['reqEmail', 1], 'account-exists': ['reqEmail', 1], 'bad-relation': ['reqRel', 2], 'unknown-resident': ['reqCode', 2] }[e.code];
           if (back) { S.reqStep = back[1]; render(); bad(back[0], errText(e)); return; }
           toast(errText(e));
@@ -1401,15 +1426,23 @@
     if (what === 'to-welcome') { S.screen = 'welcome'; S.invite = null; put(INVKEY, ''); render(); return; }
     if (what === 'other-email') { S.email = ''; render(); return; }
     if (what === 'invite') { checkInvite(val('invCode')); return; }
-    if (what === 'register') {
+    if (what === 'reg-next') {
       if (!nameOk(val('regName'))) { bad('regName', T('Letters only, please (2 to 40).')); return; }
       if (val('regRel').trim() && !nameOk(val('regRel'))) { bad('regRel', T('Letters only, please (2 to 40).')); return; }
       if (!emailOk(val('regEmail'))) { bad('regEmail', T('Please check the email address (e.g. name@example.com).')); return; }
+      S.reg = { name: val('regName').trim(), rel: val('regRel').trim(), email: val('regEmail').trim() }; S.regStep = 2; render(); return;
+    }
+    if (what === 'reg-back') { S.regStep = 1; render(); return; }
+    if (what === 'register') {
+      var G = S.reg || {};
+      var gpw = newPwOk('regPw', 'regPw2'); if (!gpw) return;
       if (!$('regConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
-      fam('POST', 'register', { code: S.invite.code, email: val('regEmail'), name: val('regName'), relation: val('regRel'), lang: S.lang, consent: true })
-        .then(signedIn, function (e) {
+      fam('POST', 'register', { code: S.invite.code, email: G.email, name: G.name, relation: G.rel || '', password: gpw, lang: S.lang, consent: true })
+        .then(function (out) { S.reg = {}; S.regStep = 1; signedIn(out); }, function (e) {
           busy(false);
+          ['regPw', 'regPw2'].forEach(function (i) { if ($(i)) $(i).value = ''; });
+          if (/^bad-(name|email|relation)$/.test(e.code)) { S.regStep = 1; render(); bad({ 'bad-name': 'regName', 'bad-email': 'regEmail', 'bad-relation': 'regRel' }[e.code], errText(e)); return; }
           if (e.code === 'account-exists') { put(INVKEY, S.invite.code); S.email = ''; S.screen = 'signin'; render(); toast(T('You already have an account. Sign in: {name} will be added to it.', { name: S.invite.label })); return; }
           toast(errText(e));
         });
@@ -1568,7 +1601,7 @@
     fam('POST', 'invite', { code: code }).then(function (r) {
       S.invite = { code: code, label: r.label };
       if (!get(LANGKEY) && r.lang) S.lang = I18N.valid(r.lang);
-      S.screen = 'invite'; render();
+      S.screen = 'invite'; S.regStep = 1; S.reg = {}; render();
     }, function (e) { S.screen = 'welcome'; render(); toast(errText(e)); });
   }
 
@@ -1606,6 +1639,7 @@
     if (e.key !== 'Enter' || !e.target || e.target.tagName !== 'INPUT') return;
     var id = e.target.id;
     if (/^req/.test(id)) { e.preventDefault(); act((S.reqStep || 1) < 3 ? 'req-next' : 'request-access'); }
+    else if (/^reg/.test(id)) { e.preventDefault(); act((S.regStep || 1) < 2 ? 'reg-next' : 'register'); }
     else if (id === 'invCode') act('invite');
     else if (id === 'sinEmail') act('ask-code');
     else if (id === 'sinCode') act('verify');
