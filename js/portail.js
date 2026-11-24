@@ -691,7 +691,7 @@
   function inviteScreen() {
     var st = S.regStep || 1, G = S.reg || (S.reg = {});
     var steps = stepHead(st, 2, st === 1 ? 'About you' : 'Password and agreement');
-    return head(false) + '<main class="main"><section class="card signup">' +
+    return head(false) + '<main class="main"><section class="card signup' + (V2_SIGNUP_BASIC ? ' basic' : '') + '">' +
       (V2_START ? '<div class="inv-card"><span class="inv-av" aria-hidden="true">' + esc(String(who() || '?').charAt(0).toUpperCase()) + '</span><h1>' + esc(T('You are invited to the family of {name}', { name: who() })) + '</h1></div>'
         : '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>') + steps +
       (st === 1
@@ -714,7 +714,12 @@
      right, a clear title per step, the relationship as buttons ("Other" opens a field), the password with an eye
      and a strength bar. */
   var REL_CHOICES = ['Daughter', 'Son', 'Granddaughter', 'Grandson', 'Spouse'];
+  /* 24 Nov (Rahma: "something basic and simple"): plain fields, only "Step n of 3", the relationship as a plain
+     field. false = the look with ticks, titles and buttons above. */
+  var V2_SIGNUP_BASIC = true;
   function stepHead(st, n, title, sub) {
+    if (V2_SIGNUP_BASIC) return '<p class="req-step">' + esc(T(n === 3 ? 'Step {n} of 3' : 'Step {n} of 2', { n: st })) + '</p>' +
+      (sub === 'Both are given by the care team.' ? '<p class="muted">' + esc(T(sub)) + '</p>' : '');
     return '<div class="req-steps" aria-hidden="true">' + [1, 2, 3].slice(0, n).map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
       '<p class="req-step">' + esc(T(n === 3 ? 'Step {n} of 3' : 'Step {n} of 2', { n: st })) + '</p><h2 class="req-title">' + esc(T(title)) + '</h2>' +
       (sub ? '<p class="muted">' + esc(T(sub)) + '</p>' : '');
@@ -733,14 +738,14 @@
       ? stepHead(2, 3, 'Your loved one', 'Both are given by the care team.') +
         f('reqCode', 'code', 'Resident code', 12, '', ' autocapitalize="characters" autocomplete="off" spellcheck="false"') +
         f('reqRes', 'res', 'First name of the resident', 40, '', ' autocapitalize="words" autocomplete="off" spellcheck="false"') +
-        '<div class="field"><span>' + esc(T('Who are you to the resident?')) + '</span><div class="tchips" role="radiogroup">' +
+        (V2_SIGNUP_BASIC ? f('reqRel', 'rel', 'Who are you to the resident?', 40, 'e.g. daughter') : '<div class="field"><span>' + esc(T('Who are you to the resident?')) + '</span><div class="tchips" role="radiogroup">' +
         REL_CHOICES.concat(['Other']).map(function (x) {
           var on = x === 'Other' ? other : !other && R.rel === T(x);
           return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-do="rel" data-v="' + x + '">' + esc(T(x)) + '</button>';
         }).join('') + '</div>' +
-        (other ? '<div class="ibox"><input id="reqRel" maxlength="40" value="' + esc(R.rel || '') + '" placeholder="' + esc(T('e.g. niece')) + '" aria-label="' + esc(T('Who are you to the resident?')) + '"></div>' : '') + '</div>'
+        (other ? '<div class="ibox"><input id="reqRel" maxlength="40" value="' + esc(R.rel || '') + '" placeholder="' + esc(T('e.g. niece')) + '" aria-label="' + esc(T('Who are you to the resident?')) + '"></div>' : '') + '</div>')
       : stepHead(3, 3, 'Password and agreement') + pwFields('reqPw', 'reqPw2') + consentBlock('reqConsent');
-    return head(false) + '<main class="main"><section class="card signup"><h1>' + esc(T('Create an account')) + '</h1>' + body +
+    return head(false) + '<main class="main"><section class="card signup' + (V2_SIGNUP_BASIC ? ' basic' : '') + '"><h1>' + esc(T('Create an account')) + '</h1>' + body +
       (st < 3 ? '<button type="button" class="btn primary" data-do="req-next">' + esc(T('Continue')) + '</button>'
         : '<button type="button" class="btn primary" data-do="request-access"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Send my request')) + '</button>') +
       '<button type="button" class="link" data-do="req-back">' + esc(T('Back')) + '</button></section></main>';

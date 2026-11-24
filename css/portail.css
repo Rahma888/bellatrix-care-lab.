@@ -542,3 +542,13 @@ header.top .pc-badge { background: var(--brand-light, #9FD3F5); color: #00325F; 
 .signup .consent { background: var(--soft); border-left: 0; border-radius: 14px; padding: 14px 16px; }
 .signup .btn { border-radius: 14px; }
 .signup .muted { margin: -4px 0 0; }
+
+/* 24 Nov (Rahma: "basic and simple"): plain fields for creating an account (V2_SIGNUP_BASIC in js/portail.js) */
+.signup.basic .req-step { font-size: 15px; color: var(--muted); margin: 0; }
+.signup.basic .field > span { font-size: 15px; font-weight: 400; color: var(--muted); }
+.signup.basic .field input { border: 1px solid var(--line); border-radius: 8px; min-height: 48px; padding: 10px 12px; box-shadow: none; background-image: none !important; }
+.signup.basic .field input:focus { border-color: var(--accent); box-shadow: none; }
+.signup.basic .field input.good { border-color: var(--line); }
+.signup.basic .ibox.pw input, .signup.basic .ibox.pw input.good { padding-right: 52px; }
+.signup.basic .meter { display: none; }
+.signup.basic .btn { border-radius: 8px; }
