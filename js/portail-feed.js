@@ -476,6 +476,41 @@
     /* BF-27: the follow-up only at level 'all' */
     visible: function (ctx) { return ctx && ctx.features && ctx.features.feed !== undefined ? !!ctx.features.feed : levelOf(ctx) === 'all'; }
   };
+  /* Family app 2.0 (Rahma's review, 24 Nov: "fusionne-la mais garde le code de l'ancienne version"): with
+     V2_FEED_IN_MESSAGES the day's activities and moments show as small grey cards in the Messages
+     conversation and this tab is hidden; false = exactly the old Journée tab. */
+  var V2_FEED_IN_MESSAGES = true;
+  var tabVisible = TAB.visible;
+  TAB.visible = function (ctx) { return V2_FEED_IN_MESSAGES ? false : tabVisible(ctx); };
+  function chatCard(at, glyphCls, glyph, title, line) {
+    return { at: at, html: '<li class="v2-ev">' + badge(glyphCls, glyph) + '<span class="v2-ev-t"><b>' + esc(title) + '</b><small>' + esc(line) + '</small></span></li>' };
+  }
+  function chatEvents(ctx) {
+    if (!V2_FEED_IN_MESSAGES || !ctx || !tabVisible(ctx)) return [];
+    css();
+    S.lang = I18N.valid((ctx && ctx.lang) || 'fr');
+    var r = residentOf(ctx);
+    if (r.rid !== S.rid) { S.rid = r.rid; S.day = ''; S.fresh = {}; }
+    var t = today(), key = 'day:' + t, j = cached(key);
+    if ((j === undefined || Date.now() - S.updated > 60000) && !S.loading[key]) {
+      load(key, 'day?day=' + t + '&today=' + t, function () {
+        var P = window.Portail, typing = document.activeElement && /^(msgText|textarea)$/i.test(document.activeElement.id || document.activeElement.tagName);
+        if (P && P.state && P.state.screen === 'home' && P.state.tab === 'messages' && !P.state.sheet && !P.state.rec && !P.state.attach && !typing) P.render();
+      });
+    }
+    if (!j) return [];
+    var rows = [];
+    (j.items || []).forEach(function (x) {
+      var a = ACT[x.activity] || ['Activity', 'feed', 'c-green'], res = resultText(x.result), meta = [hhmm(x.start), dur(x.dur)];
+      if (res) meta.push(res);
+      rows.push(chatCard(x.start, a[2], a[1], T(a[0]), meta.join(' · ')));
+    });
+    (j.moments || []).forEach(function (m) {
+      if (m.kind === 'event') { var e = EVENT[m.event] || ['Shared by the care team', 'moments']; rows.push(chatCard(m.at, 'c-heart', e[1], T(e[0]), hhmm(m.at))); }
+      else rows.push(chatCard(m.at, 'c-heart', 'moments', m.text || T('Shared by the care team'), hhmm(m.at)));
+    });
+    return rows;
+  }
   var added = false;
   function register() {
     if (added) return true;
@@ -486,5 +521,5 @@
     document.addEventListener('DOMContentLoaded', register);
     window.addEventListener('load', register);
   }
-  window.PortailFeed = { tab: TAB, render: render, _state: S };
+  window.PortailFeed = { tab: TAB, render: render, chatEvents: chatEvents, _state: S };
 })();
