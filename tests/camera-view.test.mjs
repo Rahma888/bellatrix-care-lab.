@@ -401,7 +401,7 @@ else {
       /* the "webcam": a grey room, a fluorescent yellow-green pen in the middle (k: its size, x: its place), its dark
          green cap on top; covered = a finger (skin colour) over the cap */
       await ev("(function(){var c=document.createElement('canvas');c.width=640;c.height=480;var g=c.getContext('2d');window.__pen={x:320,y:250,k:1,covered:false};" +
-        "function draw(){var p=window.__pen,k=p.k;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14*k,p.y-60*k,28*k,140*k);g.fillStyle='rgb(20,140,80)';g.beginPath();g.arc(p.x,p.y-66*k,15*k,0,7);g.fill();" +
+        "function draw(){var p=window.__pen,k=p.k;g.fillStyle='#5a5a60';g.fillRect(0,0,640,480);g.fillStyle='rgb(215,240,70)';g.fillRect(p.x-14*k,p.y-60*k,28*k,140*k);g.fillStyle='rgb(20,140,80)';var cr=p.cr===undefined?1:p.cr;if(cr>0){g.beginPath();g.arc(p.x,p.y-66*k,15*k*cr,0,7);g.fill();}" +
         "if(p.covered){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,52*k);}if(p.partial){g.fillStyle='rgb(222,172,140)';g.fillRect(p.x-34*k,p.y-100*k,68*k,24*k);}}draw();window.__penTimer=setInterval(draw,33);" +
         "var s=c.captureStream(30);window.__gumReal2=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=function(){return Promise.resolve(s);};" +
         "localStorage.setItem('bellatrix-air-input','pen');try{Lab.endSession('test');}catch(e){}Lab.opt.camMode='air';Lab.start('hello',{preview:true,ready:true});return true;})()");
@@ -455,7 +455,41 @@ else {
       assert.equal((await look()).clicks, 2, 'touch and hold: the next choice');
       await sleep(900);
       assert.equal((await look()).clicks, 2, 'still holding: no second choice');
+      /* 24 Nov: chosen, and the thumb still on the cap: the pointer follows the highlighter again (it stayed frozen) */
+      const glideX = (x1) => ev("new Promise(function(res){var p=window.__pen,x0=p.x,k=0;var iv=setInterval(function(){k++;p.x=x0+(" + x1 + "-x0)*k/12;if(k>=12){clearInterval(iv);res(true);}},40);})");
+      const x0 = (await ev('Lab._air()')).x;
+      await glideX(420);
+      await sleep(500);
+      const x1 = (await ev('Lab._air()')).x;
+      assert.ok(Math.abs(x1 - x0) > 40, 'the pointer follows the pen after the choice, thumb still on the cap: ' + x0 + ' -> ' + x1);
+      assert.equal((await look()).clicks, 2, 'moving with the thumb on the cap chooses nothing');
       await set({ covered: false });
+      await glideX(320);
+      await sleep(1200);
+      /* 7. the pen turning: the cap smaller and smaller until gone (700 ms), then back: no touch */
+      const capTo = (to, ms) => ev("new Promise(function(res){var p=window.__pen,a=p.cr===undefined?1:p.cr,k=0,n=Math.round(" + ms + "/50);var iv=setInterval(function(){k++;p.cr=a+(" + to + "-a)*k/n;if(k>=n){clearInterval(iv);res(true);}},50);})");
+      await capTo(0, 700);
+      await sleep(1500);
+      await capTo(1, 700);
+      await sleep(1300);
+      assert.equal((await look()).clicks, 2, 'a pen turning until its cap is hidden is no touch ' + JSON.stringify((await look()).heart.pen));
+      /* 8. a thumb grazing over the whole cap for one picture: the ring may start, but stops; nothing chosen */
+      await ev("(function(){window.__pen.covered=true;setTimeout(function(){window.__pen.covered=false;},45);return true;})()");
+      await sleep(1400);
+      assert.equal((await look()).clicks, 2, 'a cap hidden for one picture (a graze) chooses nothing');
+      /* 9. a touch, then the cap comes back smaller (the grip changed): the touch still ends, and the next touch chooses again */
+      await set({ covered: true });
+      await sleep(300);
+      await set({ covered: false, cr: 0.78 });
+      await sleep(1300);
+      assert.equal((await look()).clicks, 3, 'touch with the cap coming back smaller: chosen ' + JSON.stringify((await look()).heart.pen));
+      await sleep(600);
+      await set({ covered: true });
+      await sleep(300);
+      await set({ covered: false });
+      await sleep(1300);
+      assert.equal((await look()).clicks, 4, 'the next touch after a smaller cap chooses again ' + JSON.stringify((await look()).heart.pen));
+      await set({ cr: 1 });
       await ev("(function(){window.__pen.covered=false;var b=document.querySelector('[data-b=pentest]');if(b)b.remove();localStorage.removeItem('bellatrix-air-input');localStorage.removeItem('bellatrix-pen-press');try{Lab.endSession('test');}catch(e){}" +
         "clearInterval(window.__penTimer);navigator.mediaDevices.getUserMedia=window.__gumReal2;return true;})()");
     });

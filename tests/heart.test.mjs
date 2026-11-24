@@ -105,6 +105,18 @@ const HS = require('../js/heartspot.js');
     assert.equal(find(d), null);
     assert.equal(HS.isNeon(232, 222, 150), false); assert.equal(HS.isNeon(215, 240, 70), true); assert.equal(HS.isCap(20, 140, 80), true); assert.equal(HS.isCap(215, 240, 70), false);
   });
+  /* 24 Nov (the real tablet: the pen far away, its cap a few pixels): the pen's box, and the counts in a cut around it */
+  test('highlighter: find() gives the pen\'s box; countPen counts its body and cap in a cut (and nothing of the cap under a thumb)', () => {
+    const r = find(pen(false));
+    /* the hand (skin from y 140) hides the lower part of the body: the box is the visible part, 150..166 x 100..140 */
+    assert.ok(r.bx0 <= 150 / W + 0.01 && r.bx1 >= 166 / W - 0.01 && r.by0 <= 100 / H + 0.01 && r.by1 >= 140 / H - 0.01 && r.by1 <= 142 / H, 'the box holds the visible body ' + JSON.stringify(r));
+    const cut = (d, x0, y0, w, h) => { const o = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) for (let k = 0; k < 4; k++) o[(y * w + x) * 4 + k] = d[((y0 + y) * W + x0 + x) * 4 + k]; return o; };
+    const n = HS.countPen(cut(pen(false), 120, 70, 80, 120), 80, 120);
+    assert.equal(n.s, r.samples, 'every visible body pixel, as find() counts them ' + JSON.stringify(n));
+    assert.ok(n.c > 150 && Math.abs(n.cx - 38.5 / 80) < 0.03 && Math.abs(n.cy - 26.5 / 120) < 0.05, 'the cap and its centre ' + JSON.stringify(n));
+    const t = HS.countPen(cut(pen(true), 120, 70, 80, 120), 80, 120);
+    assert.ok(t.c === 0 && t.s > 0.8 * n.s, 'the thumb hides the cap, the body is still counted ' + JSON.stringify(t));
+  });
 }
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

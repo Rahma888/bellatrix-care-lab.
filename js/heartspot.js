@@ -117,14 +117,31 @@
         y: Math.min(1, Math.max(0, (sy / cnt * step + step / 2) / h)),
         area: cnt / cap, samples: cnt,
         capSamples: pen ? (best.cap !== undefined ? best.cap : capNear(best)) : 0,
-        capX: pen ? best.capX : -1, capY: pen ? best.capY : -1   /* where the cap is (0..1), -1 when not seen */
+        capX: pen ? best.capX : -1, capY: pen ? best.capY : -1,   /* where the cap is (0..1), -1 when not seen */
+        /* the box of the pen's patches (0..1 of the picture): js/core.js measures the pen again inside it at the camera's
+           own resolution (countPen) */
+        bx0: mx0 * step / w, bx1: Math.min(1, (mx1 + 1) * step / w), by0: my0 * step / h, by1: Math.min(1, (my1 + 1) * step / h)
       };
     }
     function reset() { last.at = -1e15; }
     return { find: find, reset: reset };
   }
 
-  var HeartSpot = { create: create, isRed: isRed, isNeon: isNeon, isCap: isCap, SAT_PCT: SAT_PCT, MIN_SAMPLES: MIN_SAMPLES };
+  /* 24 Nov (the real tablet: the highlighter is small in its picture, its cap 5 to 15 pixels on the coarse grid, too few
+     to see a thumb on it): the body and cap pixels of a small picture cut around the pen at the camera's own
+     resolution, with their centres (0..1 of that cut). No patches here: the cut is the pen's surroundings only. */
+  function countPen(data, w, h) {
+    var s = 0, c = 0, sx = 0, sy = 0, cx = 0, cy = 0, x, y, o;
+    if (!data || data.length < w * h * 4) return null;
+    for (y = 0; y < h; y++) for (x = 0; x < w; x++) {
+      o = (y * w + x) * 4;
+      if (isNeon(data[o], data[o + 1], data[o + 2])) { s++; sx += x; sy += y; }
+      else if (isCap(data[o], data[o + 1], data[o + 2])) { c++; cx += x; cy += y; }
+    }
+    return { s: s, c: c, x: s ? (sx / s + 0.5) / w : -1, y: s ? (sy / s + 0.5) / h : -1, cx: c ? (cx / c + 0.5) / w : -1, cy: c ? (cy / c + 0.5) / h : -1 };
+  }
+
+  var HeartSpot = { create: create, countPen: countPen, isRed: isRed, isNeon: isNeon, isCap: isCap, SAT_PCT: SAT_PCT, MIN_SAMPLES: MIN_SAMPLES };
   if (typeof module !== 'undefined' && module.exports) module.exports = HeartSpot;
   if (root) root.HeartSpot = HeartSpot;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));

@@ -616,7 +616,21 @@
      to the next, and those jumps looked like short presses that stopped the ring).
      Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
      (MOVE) cancels it. Free again above OPEN. */
-  var PEN = { CLOSE: 0.4, TREND: 0.9, SHARE: 0.7, JUMP: 0.2, OPEN: 0.75, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 3, CAP_REF_MIN: 8, SMOOTH: 3, PX: 480,
+  /* 24 Nov: the cap and body counts are pixels of the camera picture at FINE_PX on its long side (the tablet's own 640),
+     measured in a small cut around the pen (heartPageFrame); CAP_MIN and CAP_REF_MIN are in those pixels.
+     A touch is a FAST drop: the cap falls under CLOSE of its biggest size of the last DROP_MS (the real tablet log and
+     Rahma's videos: a thumb hides the cap in 1 to 3 pictures; a pen that turns or moves away shrinks it over 300 ms and
+     more, and was taken for a touch at tablet distance), and the cap was still near its full size (FULL of the
+     reference) at the start of those DROP_MS (a pen turning makes it smaller and smaller: only its last steps are
+     quick). Most of the pen's body must still be there on that picture (BODY_KEEP of its size just before; a thumb
+     pressing from above hides up to half of it: Rahma's press video). After a touch the cap counts as back at OPEN of
+     its size before the touch, or at BACK of it for BACK_MS (the grip changes: on the real tablet the cap came back
+     smaller and the press never ended). */
+  var PEN = { CLOSE: 0.4, TREND: 0.9, SHARE: 0.7, JUMP: 0.2, OPEN: 0.75, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 6, CAP_REF_MIN: 10, SMOOTH: 3, PX: 480,
+    DROP_MS: 150, FULL: 0.6, BODY_KEEP: 0.4, BACK: 0.45, BACK_MS: 250, FINE_PX: 640, FINE_MAX: 48000,
+    /* a cap hidden for less than GRAZE_MS was a thumb passing over it, not a touch: the ring stops (her taps hide it
+       130 to 280 ms; a graze in her press video, at tablet distance, one picture of 70 ms) */
+    GRAZE_MS: 90,
     /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
        so the pointer's patience is short with it, and the ring a little quicker */
     CLOSE_PATIENCE: 0, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
@@ -633,6 +647,14 @@
     P.cs.push(c); if (P.cs.length > PEN.SMOOTH) P.cs.shift();
     var cRaw = c;   /* this frame's own count: the touch is seen on it, without the smoothing's delay */
     c = P.cs.slice().sort(function (a2, b2) { return a2 - b2; })[P.cs.length >> 1];
+    /* the biggest cap and body of the last DROP_MS (this picture left out): the fast drop and the body kept */
+    if (!P.rec) P.rec = [];
+    while (P.rec.length && now - P.rec[0].t > PEN.DROP_MS) P.rec.shift();
+    var recC = 0, recS = 0;
+    for (i = 0; i < P.rec.length; i++) { if (P.rec[i].c > recC) recC = P.rec[i].c; if (P.rec[i].s > recS) recS = P.rec[i].s; }
+    P.rec.push({ t: now, c: cRaw, s: s });
+    var fast = recC >= PEN.CAP_MIN && cRaw < PEN.CLOSE * recC, bodyKept = !recS || s >= PEN.BODY_KEEP * recS;
+    P.cr = cRaw;
     P.track.push({ t: now, x: +p.x, y: +p.y });
     while (P.track.length && now - P.track[0].t > PEN.STILL_MS) P.track.shift();
     for (i = 0; i < P.track.length; i++) {
@@ -660,13 +682,16 @@
        thumb hides the cap (its share of the pen drops) */
     var rawHidden = capRef >= PEN.CAP_REF_MIN && cRaw < PEN.CLOSE * capRef && !!ref && cRaw / s < PEN.SHARE * (ref.c / Math.max(1, ref.s));
     var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef && cRaw >= PEN.SEEN * capRef,   /* clearly seen on this frame too */
-      hidden = rawHidden && (P.prevRawHidden || (P.prevRaw !== undefined && P.prevRaw < PEN.TREND * capRef));
+      hidden = rawHidden && fast && recC >= PEN.FULL * capRef && (P.prevRawHidden || (P.prevRaw !== undefined && P.prevRaw < PEN.TREND * capRef));
     P.prevRaw = cRaw; P.prevRawHidden = rawHidden;
     P.small = capRef < PEN.CAP_REF_MIN;
     P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
     if (P.state === 'pressed') {
-      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; hz.cancelAt = now; }   /* a big move: no press, and no release either */
-      else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; }           /* let go (against the cap just before the touch) */
+      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; hz.cancelAt = now; hz.cancelWhy = 'big-move'; }   /* a big move: no press, and no release either */
+      else if (cRaw >= PEN.CAP_MIN && cRaw >= PEN.OPEN * P.capRef && now - P.pressAt < PEN.GRAZE_MS) { P.state = 'blocked'; P.why = 'graze'; hz.cancelAt = now; hz.cancelWhy = 'graze'; }
+      else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; P.backSince = 0; }           /* let go (against the cap just before the touch) */
+      else if (c >= PEN.CAP_MIN && c >= PEN.BACK * P.capRef) { if (!P.backSince) P.backSince = now; if (now - P.backSince >= PEN.BACK_MS) { P.state = 'free'; P.clearSince = 0; P.backSince = 0; } }
+      else P.backSince = 0;
     } else if (shows) {
       if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
       P.lastClear = now; P.lastShowC = c; P.clearPos = { x: +p.x, y: +p.y };
@@ -675,9 +700,9 @@
     } else if (hidden && P.state === 'free') {
       /* the pen must still be about where its cap was last seen (a pen that vanished and came back elsewhere is no touch) */
       var near = !P.clearPos || Math.abs(p.x - P.clearPos.x) + Math.abs(p.y - P.clearPos.y) < PEN.JUMP;
-      var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && inside && near;
+      var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && bodyKept && inside && near;
       P.why = ok ? 'press' : [now - P.lastClear > PEN.GAP_MS ? 'cap-seen-too-long-ago' : '', P.lastClear - P.clearSince < PEN.SEEN_MS ? 'cap-not-seen-long-enough' : '',
-        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', inside ? '' : 'edge', near ? '' : 'jumped'].filter(Boolean).join(',');
+        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', bodyKept ? '' : 'pen-going', inside ? '' : 'edge', near ? '' : 'jumped'].filter(Boolean).join(',');
       P.state = ok ? 'pressed' : 'blocked';
       if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = Math.min(capRef, P.lastShowC || capRef); }
     }
@@ -727,6 +752,9 @@
       if (mode === 'pen') shut = penPress(p, now);   /* the thumb on the highlighter's cap, strictly */
       /* the open heart's size: follows a bigger heart quickly (closer), a smaller one slowly (further away) */
       if (!shut) { hz.base += (a - hz.base) * (a > hz.base ? HEART.UP : HEART.DOWN); hz.last = { x: +p.x, y: +p.y, a: a }; }
+      /* 24 Nov: the highlighter is still seen with the thumb on its cap: it keeps pointing (the ring itself holds the
+         pointer on its button while it fills; after the choice the pointer follows again at once) */
+      else if (mode === 'pen') hz.last = { x: +p.x, y: +p.y, a: hz.last ? hz.last.a : a };
       hz.closed = shut; hz.seenAt = now;
       return hz.last ? heartLm(hz.last, shut) : null;
     }
@@ -735,7 +763,7 @@
        was cancelled so); up to LOST_MS it stays pressed, longer it is cancelled (no release, no ring) */
     if (mode === 'pen' && hz.pen && hz.pen.state === 'pressed') {
       if (now - hz.seenAt <= PEN.LOST_MS && hz.last) return heartLm(hz.last, now - hz.pen.pressAt >= PEN.MIN_MS);
-      hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now;
+      hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now; hz.cancelWhy = 'pen-lost';
     }
     var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
     if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
@@ -779,9 +807,9 @@
     out.sort(function (a, b2) { return b2[1] - a[1]; });
     return out.slice(0, 8).map(function (q) { return q[0] + 'x' + q[1]; }).join(' ');
   }
-  function penDebug(now, p, d, w, h) {
+  function penDebug(now, p, d, w, h, q) {
     if (!penDebugOn()) return;
-    var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: p ? +p.x.toFixed(3) : null, y: p ? +p.y.toFixed(3) : null, s: p ? p.samples : 0, c: p ? p.capSamples : 0,
+    var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: q ? +q.x.toFixed(3) : null, y: q ? +q.y.toFixed(3) : null, s: q ? q.s : 0, c: q ? q.c : 0, cc: p ? p.capSamples : 0, fine: +(hzFine.scale || 0).toFixed(2),
       ref: P.ratio || 0, state: P.state || '', why: P.why || '', moved: P.moved ? +P.moved.toFixed(3) : 0, closed: !!air.closed, armed: !!air.armed,
       hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small, ms: +(hzPage.ms || 0).toFixed(1), cs: P.c };
     if (p && now - (penDbg.colAt || 0) > 500) { penDbg.colAt = now; row.colours = penColours(d, w, h, p.x * w, p.y * h); }
@@ -826,9 +854,42 @@
     x.drawImage(video, 0, 0, dw, dh);
     x.setTransform(1, 0, 0, 1, 0, 0);
     var t0 = performance.now(), img = x.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
+    var q = p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null;
+    if (p && kind === 'pen') q = penFine(p, q, uw, uh, vw, vh, rt, k);
     hzPage.ms = performance.now() - t0;
-    heartFeed(heartResult(p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null, now), now);
-    if (kind === 'pen') penDebug(now, p, img, w, h);
+    heartFeed(heartResult(q, now), now);
+    if (kind === 'pen') penDebug(now, p, img, w, h, q);
+  }
+  /* 24 Nov (the real tablet log: the pen far, its cap 5 to 15 pixels on the coarse grid, so a thumb on it was often
+     not measurable): the coarse picture finds the pen, then a small cut around it (the pen's box and half its size
+     around, for the cap) is drawn again at the camera's own resolution (FINE_PX on the long side, at most FINE_MAX
+     pixels) and its body and cap pixels are counted there. The counts are given in pixels of a FINE_PX picture, so
+     they do not jump when the cut is drawn smaller for a pen that is very close. The pointer uses the finer centre. */
+  var hzFine = { canvas: null, ctx: null, scale: 0, px: 0 };
+  function penFine(p, q, uw, uh, vw, vh, rt, k) {
+    var L = Math.max(uw, uh), kf = Math.min(1, PEN.FINE_PX / L);
+    if (kf <= k * 1.05) return q;   /* the coarse picture is already as fine */
+    var bw = (p.bx1 - p.bx0) * uw, bh = (p.by1 - p.by0) * uh, m = 0.5 * Math.max(bw, bh) + 3 / k;
+    var X0 = Math.max(0, p.bx0 * uw - m), X1 = Math.min(uw, p.bx1 * uw + m), Y0 = Math.max(0, p.by0 * uh - m), Y1 = Math.min(uh, p.by1 * uh + m);
+    var area = (X1 - X0) * (Y1 - Y0) * kf * kf;
+    if (area > PEN.FINE_MAX) kf = Math.max(k, kf * Math.sqrt(PEN.FINE_MAX / area));
+    var cw = Math.max(1, Math.round((X1 - X0) * kf)), ch = Math.max(1, Math.round((Y1 - Y0) * kf));
+    if (!hzFine.canvas) { hzFine.canvas = document.createElement('canvas'); hzFine.ctx = hzFine.canvas.getContext('2d', { willReadFrequently: true }); }
+    if (hzFine.canvas.width !== cw || hzFine.canvas.height !== ch) { hzFine.canvas.width = cw; hzFine.canvas.height = ch; }
+    var g = hzFine.ctx, W = uw * kf, H = uh * kf;
+    /* the same turn as the coarse picture, at scale kf, moved so the cut starts at (0, 0) */
+    g.setTransform(1, 0, 0, 1, -X0 * kf, -Y0 * kf);
+    if (rt === 180) g.transform(-1, 0, 0, -1, W, H);
+    else if (rt === 90) g.transform(0, 1, -1, 0, W, 0);
+    else if (rt === 270) g.transform(0, -1, 1, 0, 0, H);
+    g.drawImage(video, 0, 0, vw * kf, vh * kf);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    var n = window.HeartSpot.countPen(g.getImageData(0, 0, cw, ch).data, cw, ch);
+    if (!n || !n.s) return q;
+    var u = Math.pow(PEN.FINE_PX / (L * kf), 2);   /* to pixels of a FINE_PX picture */
+    hzFine.scale = kf; hzFine.px = cw * ch;
+    return { x: (X0 + n.x * (X1 - X0)) / uw, y: (Y0 + n.y * (Y1 - Y0)) / uh, a: q.a, s: Math.round(n.s * u), c: Math.round(n.c * u),
+      cx: n.c ? (X0 + n.cx * (X1 - X0)) / uw : -1, cy: n.c ? (Y0 + n.cy * (Y1 - Y0)) / uh : -1 };
   }
   /* The hand texts with the heart. */
   var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
@@ -848,19 +909,22 @@
      once started, fills by itself at the screen's own rate until it is full, also in the pictures where the camera
      loses the pen for a moment (before, it moved only with the camera's pictures and stalled when the pen was lost). */
   var penRingRaf = 0;
+  /* 24 Nov: the touch that started this ring turned out a graze or a big move */
+  function penCancelled(A) { return !!A && (hz.cancelAt || 0) >= A.at && (hz.cancelWhy === 'graze' || hz.cancelWhy === 'big-move'); }
   function penRingStart() { if (!penRingRaf && window.requestAnimationFrame) penRingRaf = window.requestAnimationFrame(penRingTick); }
   function penRingTick() {
     penRingRaf = 0;
     var A = air.armed, now = performance.now();
     if (!A || !(markInput() === 'pen' && heartOn())) return;
     var el = A.el;
-    if (!el || !el.isConnected) { air.armed = null; setRing(0); return; }
+    if (!el || !el.isConnected || penCancelled(A)) { air.armed = null; setRing(0); return; }
     if (now >= air.ready) {
       var key = el.getAttribute('data-b'), pc = Math.min(1, (now - A.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : PEN.CONFIRM_MS));
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
         if (air.closed) air.needOpen = true;
+        air.squeeze = null;   /* 24 Nov: chosen; the pointer follows the highlighter again at once */
         dispatch(el.getAttribute('data-a'), parseInt(el.getAttribute('data-i'), 10), 'air', el);
         return;
       }
@@ -884,7 +948,7 @@
     if (!e.repeat) pressOK();
   }, true);
   Lab._heart = function () { var P = hz.pen; return { on: heartOn(), mode: heartMode(), base: hz.base, closed: hz.closed, last: hz.last,
-    pen: P ? { state: P.state, c: P.c, s: P.s, ratio: P.ratio, moved: P.moved, body: P.body, clear: Math.round(P.lastClear - P.clearSince), since: Math.round(performance.now() - P.lastClear) } : null }; };
+    pen: P ? { state: P.state, c: P.c, cr: P.cr, s: P.s, ratio: P.ratio, moved: P.moved, body: P.body, why: P.why || '', clear: Math.round(P.lastClear - P.clearSince), since: Math.round(performance.now() - P.lastClear) } : null }; };
   window.__bellatrixHands = function (d) {
     if (!d || !nh.on) return;
     if (d.pic) { nhPicture(d); return; }
@@ -1472,6 +1536,7 @@
     var cmode = confirm ? airConfirmMode() : null;
     if (confirm && air.closed && !wasClosed) {
       air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null;
+      if (penOn && air.needOpen) air.squeeze = null;   /* 24 Nov: a touch that cannot choose does not hold the pointer either */
       /* closed = OK: the ring starts at once on the button where the hand closed (not again before the hand opened) */
       if (cmode === 'close' && air.squeeze && !air.needOpen) { air.armed = { el: air.squeeze, at: now }; if (penOn) penRingStart(); }
     }
@@ -1488,6 +1553,7 @@
        hand away (2 x RELEASE_PX) cancels the OK. */
     var nx0 = pr.u * stageW(), ny0 = pr.v * stageH(), dts = Math.max(30, now - (air.last || now)) / 1000;
     if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > (penOn ? PEN.RING_MOVE_PX : 2 * AIR.RELEASE_PX)) air.armed = null;
+    if (penOn && penCancelled(air.armed)) { air.armed = null; setRing(0); }
     var lockOn = confirm && ((air.closed && air.squeeze) || air.armed) && air.hold && air.hold.isConnected;
     if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
@@ -1528,6 +1594,7 @@
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
         if (cmode === 'close' && air.closed) air.needOpen = true;   /* the next OK needs the hand opened first (already open after a short touch on the pen's cap: nothing to wait for) */
+        if (penOn) air.squeeze = null;   /* 24 Nov: chosen; the pointer follows the highlighter again at once, also with the thumb still on the cap */
         dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
       }
       return;
