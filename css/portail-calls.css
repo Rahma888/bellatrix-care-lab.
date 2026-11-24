@@ -172,3 +172,36 @@
 .pc-rbtn.decline svg { transform: rotate(135deg); }
 .pc-rbtn:focus-visible { outline: 4px solid #FFFFFF; outline-offset: 4px; }
 .pc-ringnote { margin: 4px 0 0; }
+
+/* ---------- Calls 2.0 (Rahma, review of 24 Nov) ---------- */
+.pc2-title { font-size: 28px; line-height: 1.1; margin: 4px 0 2px; color: var(--accent); }
+.pc2-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.pc2-card h2, .pc2-h { font-size: 20px; margin: 0; color: var(--ink); }
+.pc2-h { margin-top: 10px; }
+.pc2-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pc2-chips .tchip { border-radius: 999px; border-width: 1.5px; font-size: 16px; min-height: 44px; }
+.pc2-ask { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 58px; border-radius: 14px; font-size: 19px; }
+.pc2-ask svg { width: 26px; height: 26px; }
+.pc2-card .link { text-align: center; }
+.pc2-card .field input { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--surface); }
+.pc2-list { list-style: none; margin: 0; padding: 0 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.pc2-list li { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.pc2-list li:last-child { border-bottom: 0; }
+.pc2-list li > svg { width: 26px; height: 26px; flex: none; color: var(--accent); }
+.pc2-list li.miss > svg { color: var(--danger); }
+.pc2-t { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pc2-t small { color: var(--muted); font-size: 14px; }
+.pc2-badge { font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.pc2-badge.ok { background: var(--okbg, #E6F4EC); color: var(--good); }
+.pc2-badge.wait { background: var(--soft); color: var(--accent); }
+.pc2-row { display: flex; gap: 18px; flex-wrap: wrap; }
+.pc2-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pc2-day { border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font: inherit; min-height: 58px; }
+.pc2-day small { font-size: 12px; text-transform: capitalize; }
+.pc2-day b { font-size: 20px; color: var(--ink); }
+.pc2-day.on { border-color: var(--accent); background: var(--soft); }
+.pc2-day.on b, .pc2-day.on small { color: var(--accent); }
+.pc2-day:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.pc2-plan .btn.primary { border-radius: 14px; min-height: 56px; }
+.pc2-plan h1 { font-size: 24px; line-height: 1.15; margin: 0; color: var(--accent); }
+.pc2-day small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
