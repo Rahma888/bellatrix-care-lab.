@@ -5,7 +5,7 @@
 'use strict';
 /* The files without their ?v= version: an app update needs no change here (offline, the version is
    ignored when looking in the cache; online, the network always comes first). */
-var CACHE = 'bellatrix-portail-6';
+var CACHE = 'bellatrix-portail-7';
 var SHELL = ['portail.html', 'portail.webmanifest', 'css/portail.css', 'js/i18n.js', 'js/i18n-messages.js', 'js/portail.js',
   'js/portail-feed.js', 'js/portail-calls.js', 'css/portail-calls.css', 'img/suavia-cross.svg', 'img/suavia-cross-white.svg', 'icons/portail-192.png', 'icons/portail-512.png', 'icons/apple-touch-icon.png', 'css/brand.css', 'css/portail-feed.css', 'fonts/RobotoCondensed-Regular.ttf', 'fonts/RobotoCondensed-Medium.ttf', 'fonts/RobotoCondensed-Bold.ttf'];
 
@@ -23,13 +23,20 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
   /* The API (except the icons): network only, never cached. */
   if (url.pathname.indexOf('/portal/api/') === 0 && !/\/icon[^/]*$/.test(url.pathname)) return;
-  /* The portal's files: the network first (fresh after an update), the cache when offline. */
-  e.respondWith(fetch(req).then(function (res) {
+  /* The portal's files: the network first (fresh after an update), the cache when offline.
+     24 Nov (Rahma: the installed app must always open): when the robot is off or far away the network may
+     hang instead of failing; after 4 s the kept copy is shown, and the late answer still updates the cache. */
+  var net = fetch(req).then(function (res) {
+    /* the tunnel's own error page (robot off) is no answer: the kept copy is better */
+    if (res && res.status >= 502 && res.status <= 530) throw new Error('robot away');
     if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () { /* not kept */ }); }
     return res;
-  }).catch(function () {
+  });
+  net.catch(function () { /* answered from the cache below */ });
+  var slow = new Promise(function (ok, no) { setTimeout(no, 4000); });
+  e.respondWith(Promise.race([net, slow]).catch(function () {
     return caches.match(req, { ignoreSearch: true }).then(function (hit) {
-      return hit || caches.match('portail.html');
+      return hit || net.catch(function () { return caches.match('portail.html'); });
     });
   }));
 });

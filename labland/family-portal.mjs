@@ -47,7 +47,12 @@ const APP_DIR = path.join(HERE, '..');
 const LANGS = ['en', 'fr', 'de'];
 const ROBOT_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const ROBOT_KEY = /^[A-Za-z0-9_-]{32,86}$/;
-const EMAIL = /^[^\s@<>"']{1,64}@[^\s@<>"']{1,100}\.[A-Za-z]{2,24}$/;
+/* 24 Nov (Rahma: strict input checks): name@domain.tld, no spaces, no double dots (the family app has the same rule) */
+const EMAIL = { test: (v) => typeof v === 'string' && v.length <= 160 && v.indexOf('@') <= 64 && /^[A-Za-z0-9_%+-]+(?:\.[A-Za-z0-9_%+-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}$/.test(v) };
+/* a person's name: letters (also accented), with single spaces, hyphens or apostrophes between them, 2 to 40 characters */
+const LETTERS = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F';
+const NAME_RE = new RegExp('^[' + LETTERS + ']+(?:[ \'\u2019-][' + LETTERS + ']+)*$');
+function nameOk(v) { return typeof v === 'string' && v.length >= 2 && v.length <= 40 && NAME_RE.test(v); }
 const INVITE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const TEXT_MAX = 300;
 const PHOTO_MAX_BYTES = 3 * 1024 * 1024;
@@ -82,7 +87,7 @@ function rnd(n) { return crypto.randomBytes(n || 16).toString('base64url'); }
 function hash(s) { return crypto.createHash('sha256').update(String(s)).digest('hex'); }
 function same(a, b) { const x = Buffer.from(String(a)), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); }
 /* 24 Nov (Rahma: input checks): a phone number is 8 to 15 digits (spaces, dots, dashes, brackets and a leading + allowed). */
-function phoneOk(v) { return /^\+?\d{8,15}$/.test(String(v || '').replace(/[\s.\-()\/]/g, '')); }
+function phoneOk(v) { v = String(v || '').trim(); const n = v.replace(/\D/g, '').length; return /^\+?[0-9][0-9 ]*$/.test(v) && n >= 8 && n <= 15; }
 /* an album date: a real day (YYYY-MM-DD) from 1900 to today */
 function dateOk(v) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '')); if (!m) return false;
@@ -360,6 +365,9 @@ export function createPortal(opts = {}) {
     if (!s || now() > Date.parse(s.expires)) return null;
     const person = d.people[s.pid];
     if (!person) return null;
+    /* 24 Nov (Rahma: the installed app stays signed in): a phone that uses the app keeps its session; it is
+       renewed once half of it has gone (at most twice a year per phone). Unused for SESSION_MS, it ends. */
+    if (Date.parse(s.expires) - now() < SESSION_MS / 2) { s.expires = iso(now() + SESSION_MS); save(); }
     const links = Object.values(d.accounts).filter((a) => a.pid === person.id && d.residents[a.rid]);
     const want = str(String((req.headers || {})['x-resident'] || ''), 40);
     let link = null, access = 'ok';
@@ -506,7 +514,8 @@ export function createPortal(opts = {}) {
       if (body.consent !== true) return [400, { error: 'consent-needed' }];
       const email = str(body.email, 160).toLowerCase(), name = str(body.name, 40);
       if (!EMAIL.test(email)) return [400, { error: 'bad-email' }];
-      if (!name) return [400, { error: 'bad-name' }];
+      if (!nameOk(name)) return [400, { error: 'bad-name' }];
+      if (body.relation && !nameOk(str(body.relation, 40))) return [400, { error: 'bad-relation' }];
       /* An address that already has an account signs in first, then adds this resident (family/link):
          an invitation alone never opens someone else's account. */
       if (personByEmail(d, email)) return [409, { error: 'account-exists' }];
@@ -529,8 +538,9 @@ export function createPortal(opts = {}) {
       if (body.consent !== true) return [400, { error: 'consent-needed' }];
       const email = str(body.email, 160).toLowerCase(), first = str(body.first, 40), last = str(body.last, 40);
       if (!EMAIL.test(email)) return [400, { error: 'bad-email' }];
-      if (!first || !last) return [400, { error: 'bad-name' }];
+      if (!nameOk(first) || !nameOk(last)) return [400, { error: 'bad-name' }];
       if (!phoneOk(body.phone)) return [400, { error: 'bad-phone' }];
+      if (body.relation && !nameOk(str(body.relation, 40))) return [400, { error: 'bad-relation' }];
       const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
       const res = Object.values(d.residents).find((r) => fold(r.code) === fold(body.code) && fold(r.label) === fold(body.resident) && fold(r.code));
       if (!res) { log('request-access refused: no resident with code ' + str(body.code, 24).replace(/[^\w .-]/g, '')); return [404, { error: 'unknown-resident' }]; }

@@ -426,6 +426,10 @@ test('a wrong phone number or a date that does not exist is refused', async () =
   const body = (o) => Object.assign({ first: 'Lea', last: 'Test', relation: 'fille', email: 'lea.phone@example.test', code: 'P3', resident: 'Hans', lang: 'fr', consent: true }, o);
   for (const phone of ['1', '12345', 'abcdefghij', '0612 34', '+1234567890123456']) assert.equal((await call('POST', 'family/request-access', body({ phone }))).data.error, 'bad-phone', phone);
   assert.notEqual((await call('POST', 'family/request-access', body({ phone: '06 12 34 56 78' }))).data.error, 'bad-phone');
+  for (const phone of ['yiukhhhhhhuyikh,524', '+9865342+963542+986354+9865435421']) assert.equal((await call('POST', 'family/request-access', body({ phone }))).data.error, 'bad-phone', phone);
+  for (const email of ['lea@example', 'lea..x@example.test', 'lea x@example.test']) assert.equal((await call('POST', 'family/request-access', body({ phone: '0612345678', email }))).data.error, 'bad-email', email);
+  for (const first of ['L', 'Lea2', '<b>Lea</b>']) assert.equal((await call('POST', 'family/request-access', body({ phone: '0612345678', first }))).data.error, 'bad-name', first);
+  assert.equal((await call('POST', 'family/request-access', body({ phone: '0612345678', relation: 'fille<script>' }))).data.error, 'bad-relation');
   const H = as(X.sophie, X.p1);
   for (const date of ['juin 1978', '1978-02-30', '1899-12-31', '2999-01-01', '15/06/1978']) {
     assert.equal((await call('POST', 'family/message', { photo: jpeg(900, 700), text: 'x', album: { theme: 'celebrations', date } }, B(X.sophie), H)).data.error, 'bad-date', date);
@@ -464,7 +468,9 @@ test('the family app checks the card, the phone, the date and the e-mail before 
   assert.ok(!fs.readFileSync(path.join(ROOT, 'js', 'portail-calls.js'), 'utf8').includes("esc(T('Calls ring on this phone"));
   const ctx = { console }; vm.createContext(ctx);
   const fn = (name) => { const i = src.indexOf('  function ' + name + '('); const j = src.indexOf('\n  function ', i + 5); return src.slice(i, j); };
-  vm.runInContext(['luhn', 'cardProblem', 'phoneOk', 'emailOk', 'pwStrong', 'todayIso', 'dateOk'].map(fn).join('\n') + '\nthis.F = { cardProblem, phoneOk, emailOk, pwStrong, dateOk };', ctx);
+  const rules = src.slice(src.indexOf('  var LETTERS = '), src.indexOf('  /* marks the field that is wrong'));
+  vm.runInContext('var T = function (x) { return x; }, ERRORS = {};\n' + rules + '\n' + ['luhn', 'cardProblem', 'todayIso', 'dateOk'].map(fn).join('\n') +
+    '\nthis.F = { cardProblem, phoneOk, emailOk, nameOk, pwStrong, dateOk, CLEAN };', ctx);
   const F = ctx.F, next = new Date().getFullYear() % 100 + 1;
   assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '12/' + next, '123'), null);
   assert.equal(F.cardProblem('Marie Curie', '4242424242424241', '12/' + next, '123')[0], 'payNum', 'Luhn');
@@ -474,8 +480,19 @@ test('the family app checks the card, the phone, the date and the e-mail before 
   assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '13/' + next, '123')[0], 'payExp');
   assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '01/20', '123')[1], 'This card has expired.');
   assert.equal(F.cardProblem('Marie Curie', '4242424242424242', '12/' + next, '12')[0], 'payCvc');
-  assert.ok(F.phoneOk('+33 6 12 34 56 78') && F.phoneOk('0151-2345678') && !F.phoneOk('123') && !F.phoneOk('06 12 ab 56 78'));
-  assert.ok(F.emailOk('a.b@example.de') && !F.emailOk('a@b') && !F.emailOk('ab.example.de'));
+  /* 24 Nov (Rahma's screenshots): letters and several + are refused, also while typing */
+  assert.ok(F.phoneOk('+33 6 12 34 56 78') && F.phoneOk('0151 2345678') && !F.phoneOk('123') && !F.phoneOk('06 12 ab 56 78'));
+  assert.ok(!F.phoneOk('yiukhhhhhhuyikh,524') && !F.phoneOk('+9865342+963542+986354+9865435421') && !F.phoneOk('0151-2345678'));
+  assert.equal(F.CLEAN.phone('yiukhhhhhhuyikh,524'), '524');
+  assert.equal(F.CLEAN.phone('+9865342+963542+986354+9865435421'), '+986534296354298');
+  assert.equal(F.CLEAN.phone(' +49  151 2345a6789'), '+49 151 23456789');
+  assert.ok(F.emailOk('a.b@example.de') && F.emailOk('marie-curie+bellatrix@uni-paris.fr'));
+  for (const e of ['a@b', 'ab.example.de', 'a..b@example.de', '.ab@example.de', 'ab.@example.de', 'a b@example.de', 'ab@exa_mple.de', 'ab@-example.de', 'ab@example.d', 'ab@example.de1', 'a@b@example.de']) assert.ok(!F.emailOk(e), e);
+  assert.equal(F.CLEAN.email('Marie Curie@@ex ample..fr'), 'MarieCurie@example.fr');
+  assert.ok(F.nameOk('Zoë') && F.nameOk('Jean-Pierre') && F.nameOk("N'Diaye") && F.nameOk('Ayşe Yılmaz') && F.nameOk('Łukasz'));
+  for (const n of ['A', 'Marie2', 'Marie  Curie', 'Jean--Pierre', '-Jean', '<b>', 'Ma@rie', 'x'.repeat(41)]) assert.ok(!F.nameOk(n), n);
+  assert.equal(F.CLEAN.name('M4rie  Curie<3'), 'Mrie Curie');
+  assert.equal(F.CLEAN.code('p 1-x!'), 'P1-X');
   assert.ok(F.pwStrong('Soleil2026') && !F.pwStrong('soleil') && !F.pwStrong('12345678'));
   assert.ok(F.dateOk('1978-06-15') && !F.dateOk('1978-02-30') && !F.dateOk('2999-01-01') && !F.dateOk('juin 1978'));
 });

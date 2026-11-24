@@ -32,6 +32,12 @@
   /* ---------- the texts (English keys; French and German) ---------- */
   (function () {
     function addNew(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    /* 24 Nov (Rahma: strict input checks, account in 3 steps) */
+    addNew('fr', { 'Step {n} of 3': 'Étape {n} sur 3', 'About you': 'Vous', 'Your loved one': 'Votre proche', 'Your agreement': 'Votre accord', 'Letters only, please (2 to 40).': 'Uniquement des lettres, s’il vous plaît (2 à 40).', 'Please check the email address (e.g. name@example.com).': 'Vérifiez l’adresse e-mail (ex. nom@exemple.fr).', 'Please give the resident code.': 'Indiquez le code du résident.', 'e.g. +49 151 23456789': 'ex. +33 6 12 34 56 78', 'name@example.com': 'nom@exemple.fr', 'Digits only, with one + at the start if you like.': 'Uniquement des chiffres, avec un + au début si vous voulez.', 'Send my request': 'Envoyer ma demande' });
+    addNew('de', { 'Step {n} of 3': 'Schritt {n} von 3', 'About you': 'Über Sie', 'Your loved one': 'Ihr Angehöriger', 'Your agreement': 'Ihre Zustimmung', 'Letters only, please (2 to 40).': 'Bitte nur Buchstaben (2 bis 40).', 'Please check the email address (e.g. name@example.com).': 'Bitte prüfen Sie die E-Mail-Adresse (z. B. name@beispiel.de).', 'Please give the resident code.': 'Bitte geben Sie den Code der Person an.', 'e.g. +49 151 23456789': 'z. B. +49 151 23456789', 'name@example.com': 'name@beispiel.de', 'Digits only, with one + at the start if you like.': 'Nur Ziffern, auf Wunsch mit einem + am Anfang.', 'Send my request': 'Anfrage senden' });
+    /* 24 Nov (Rahma: the installed app must keep working) */
+    addNew('fr', { 'No connection to Bellatrix. The app tries again by itself.': 'Pas de connexion à Bellatrix. L’app réessaie toute seule.', 'Bellatrix cannot be reached right now.': 'Bellatrix n’est pas joignable pour le moment.', 'The robot may be switched off or restarting. The app tries again by itself: you stay signed in.': 'Le robot est peut-être éteint ou en train de redémarrer. L’app réessaie toute seule : vous restez connecté.', 'If it stays like this, the robot may have a new address: scan the QR code on the robot again.': 'Si cela dure, le robot a peut-être une nouvelle adresse : scannez à nouveau le QR code sur le robot.' });
+    addNew('de', { 'No connection to Bellatrix. The app tries again by itself.': 'Keine Verbindung zu Bellatrix. Die App versucht es von selbst erneut.', 'Bellatrix cannot be reached right now.': 'Bellatrix ist gerade nicht erreichbar.', 'The robot may be switched off or restarting. The app tries again by itself: you stay signed in.': 'Der Roboter ist vielleicht aus oder startet neu. Die App versucht es von selbst erneut: Sie bleiben angemeldet.', 'If it stays like this, the robot may have a new address: scan the QR code on the robot again.': 'Wenn es so bleibt, hat der Roboter vielleicht eine neue Adresse: Scannen Sie den QR-Code am Roboter erneut.' });
     /* 24 Nov (Rahma): input checks, password sign-in */
     addNew('fr', { 'Please check the phone number (8 to 15 digits).': 'Vérifiez le numéro de téléphone (8 à 15 chiffres).', 'Please choose a valid date.': 'Choisissez une date valide.', 'Email or password is not right.': 'E-mail ou mot de passe incorrect.', 'The password needs at least 8 characters, with a letter and a digit.': 'Le mot de passe doit avoir au moins 8 caractères, avec une lettre et un chiffre.', 'The current password is not right.': 'Le mot de passe actuel n’est pas correct.', 'The two passwords are not the same.': 'Les deux mots de passe ne sont pas identiques.', 'Password': 'Mot de passe', 'Your password': 'Votre mot de passe', 'No password yet? Get a code': 'Pas encore de mot de passe ? Recevoir un code', 'Sign in with my password': 'Me connecter avec mon mot de passe', 'Create a password': 'Créer un mot de passe', 'Change my password': 'Changer mon mot de passe', 'With a password you sign in with your email address, without asking the care team for a code.': 'Avec un mot de passe, vous vous connectez avec votre adresse e-mail, sans demander de code à l’équipe.', 'Current password': 'Mot de passe actuel', 'New password': 'Nouveau mot de passe', 'New password again': 'Confirmer le nouveau mot de passe', 'At least 8 characters, with a letter and a digit.': 'Au moins 8 caractères, avec une lettre et un chiffre.', 'Password saved.': 'Mot de passe enregistré.', 'Save the password': 'Enregistrer le mot de passe', 'Please give the name on the card.': 'Indiquez le nom inscrit sur la carte.', 'Please check the card number.': 'Vérifiez le numéro de carte.', 'Please check the expiry date (MM/YY).': 'Vérifiez la date d’expiration (MM/AA).', 'This card has expired.': 'Cette carte est expirée.', 'Please check the security code (3 or 4 digits).': 'Vérifiez le cryptogramme (3 ou 4 chiffres).', 'Please give your first and last name.': 'Indiquez votre prénom et votre nom.', 'Please give the resident code and first name.': 'Indiquez le code et le prénom du résident.' });
     addNew('de', { 'Please check the phone number (8 to 15 digits).': 'Bitte prüfen Sie die Telefonnummer (8 bis 15 Ziffern).', 'Please choose a valid date.': 'Bitte wählen Sie ein gültiges Datum.', 'Email or password is not right.': 'E-Mail oder Passwort ist nicht richtig.', 'The password needs at least 8 characters, with a letter and a digit.': 'Das Passwort braucht mindestens 8 Zeichen, mit einem Buchstaben und einer Ziffer.', 'The current password is not right.': 'Das aktuelle Passwort ist nicht richtig.', 'The two passwords are not the same.': 'Die beiden Passwörter sind nicht gleich.', 'Password': 'Passwort', 'Your password': 'Ihr Passwort', 'No password yet? Get a code': 'Noch kein Passwort? Einen Code erhalten', 'Sign in with my password': 'Mit meinem Passwort anmelden', 'Create a password': 'Passwort erstellen', 'Change my password': 'Passwort ändern', 'With a password you sign in with your email address, without asking the care team for a code.': 'Mit einem Passwort melden Sie sich mit Ihrer E-Mail-Adresse an, ohne das Team um einen Code zu bitten.', 'Current password': 'Aktuelles Passwort', 'New password': 'Neues Passwort', 'New password again': 'Neues Passwort bestätigen', 'At least 8 characters, with a letter and a digit.': 'Mindestens 8 Zeichen, mit einem Buchstaben und einer Ziffer.', 'Password saved.': 'Passwort gespeichert.', 'Save the password': 'Passwort speichern', 'Please give the name on the card.': 'Bitte geben Sie den Namen auf der Karte an.', 'Please check the card number.': 'Bitte prüfen Sie die Kartennummer.', 'Please check the expiry date (MM/YY).': 'Bitte prüfen Sie das Ablaufdatum (MM/JJ).', 'This card has expired.': 'Diese Karte ist abgelaufen.', 'Please check the security code (3 or 4 digits).': 'Bitte prüfen Sie die Prüfnummer (3 oder 4 Ziffern).', 'Please give your first and last name.': 'Bitte geben Sie Vor- und Nachnamen an.', 'Please give the resident code and first name.': 'Bitte geben Sie Code und Vornamen der Person an.' });
@@ -371,7 +377,7 @@
     'bad-card': 'Please check the card number.', 'not-open': 'This offer is no longer open.',
     'bad-phone': 'Please check the phone number (8 to 15 digits).', 'bad-date': 'Please choose a valid date.',
     'bad-login': 'Email or password is not right.', 'weak-password': 'The password needs at least 8 characters, with a letter and a digit.',
-    'bad-current': 'The current password is not right.',
+    'bad-current': 'The current password is not right.', 'bad-relation': 'Letters only, please (2 to 40).',
     'listen-closed': 'Listening together has ended.', 'queue-full': 'The queue is full for now.', 'not-in-catalogue': 'This song is not in the Bellatrix catalogue.',
     'slow-down': 'Please wait a few minutes before trying again.', 'signed-out': 'Please sign in again.',
     'network': 'No connection to Bellatrix right now. Please try again in a moment.'
@@ -391,6 +397,8 @@
     if (opts.raw) { o.headers['Content-Type'] = opts.type || 'application/octet-stream'; o.body = opts.raw; }
     else if (body !== undefined) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
     return fetch(API + path, o).then(function (r) {
+      /* the tunnel answers 502..530 when the robot behind it is off */
+      netState(r.status >= 502 && r.status <= 530);
       if (opts.blob && r.ok) return r.blob();
       return r.json().catch(function () { return {}; }).then(function (j) {
         if (!r.ok) {
@@ -400,9 +408,38 @@
         }
         return j;
       });
-    }, function () { var e = new Error('network'); e.code = 'network'; throw e; });
+    }, function () { netState(true); var e = new Error('network'); e.code = 'network'; throw e; });
   }
   function fam(method, path, body, opts) { return api(method, 'family/' + path, body, opts); }
+  /* 24 Nov (Rahma: "once installed the app must always work, also after leaving it and coming back"):
+     when Bellatrix cannot be reached the app keeps the account and what it shows, says so in a thin line at
+     the top (outside the page, so nothing being typed is touched), and tries again by itself: every 10 s, as
+     soon as the phone is online again, and each time the app comes back on the screen. */
+  function netState(down) {
+    down = !!down;
+    if (!!S.offline === down) return;
+    S.offline = down;
+    var b = document.getElementById('netBanner');
+    if (!b && down) { b = document.createElement('div'); b.id = 'netBanner'; b.className = 'net-banner'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
+    if (b) { b.textContent = T('No connection to Bellatrix. The app tries again by itself.'); b.classList.toggle('on', down); }
+    if (down) retrySoon();
+  }
+  var retryTimer = 0;
+  function retrySoon() {
+    if (retryTimer) return;
+    retryTimer = setInterval(function () {
+      if (S.screen !== 'unreachable' && !S.offline) { clearInterval(retryTimer); retryTimer = 0; return; }
+      if (document.visibilityState !== 'hidden') wake();
+    }, 10000);
+  }
+  /* back on the screen, back online, or the 10 s retry: fetch the account again (quietly) */
+  function wake() {
+    if (!S.token) return;
+    if (S.screen === 'unreachable') { loadMe().then(function (x) { follow(x); }, function () { /* still away: the screen stays */ }); return; }
+    if (S.screen === 'home' && !S.pay && !S.gift && !S.rec && !S.sheet) loadMe().catch(function () { /* the line at the top says it */ });
+  }
+  window.addEventListener('online', wake);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') wake(); });
   function signedOut() { S.token = ''; put(TOKEN, ''); S.me = null; S.screen = 'welcome'; S.sheet = ''; }
   function setLang(l) {
     S.lang = I18N.valid(l); put(LANGKEY, S.lang);
@@ -494,7 +531,7 @@
     var h = '';
     if (S.screen === 'loading') h = head(false) + '<main class="main center"><p class="muted">' + esc(T('One moment…')) + '</p></main>';
     /* 15 Nov: the robot's public address changes when its app restarts; an installed app keeps the old one. */
-    else if (S.screen === 'unreachable') h = head(false) + '<main class="main center"><section class="card"><h2>' + esc(T('Bellatrix cannot be reached at this address.')) + '</h2><p class="muted">' + esc(T('The robot’s address may have changed. Please scan the QR code on the robot again.')) + '</p><button type="button" class="btn primary" data-do="retry-start">' + esc(T('Try again')) + '</button></section></main>';
+    else if (S.screen === 'unreachable') { h = head(false) + '<main class="main center"><section class="card"><h2>' + esc(T('Bellatrix cannot be reached right now.')) + '</h2><p class="muted">' + esc(T('The robot may be switched off or restarting. The app tries again by itself: you stay signed in.')) + '</p><button type="button" class="btn primary" data-do="retry-start">' + esc(T('Try again')) + '</button><p class="fine">' + esc(T('If it stays like this, the robot may have a new address: scan the QR code on the robot again.')) + '</p></section></main>'; retrySoon(); }
     else if (S.screen === 'invite') h = inviteScreen();
     else if (S.screen === 'signin') h = signinScreen();
     else if (S.screen === 'request') h = requestScreen();
@@ -522,24 +559,54 @@
       '<p class="muted">' + esc(T('Create your account in one minute.')) + '</p>' +
       '<label class="field"><span>' + esc(T('Your first name')) + '</span><input id="regName" autocomplete="given-name" maxlength="40" placeholder="' + esc(T('e.g. Sophie')) + '"></label>' +
       '<label class="field"><span>' + esc(T('Who are you for {name}? (optional)', { name: who() })) + '</span><input id="regRel" maxlength="40" placeholder="' + esc(T('e.g. granddaughter')) + '"></label>' +
-      '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="regEmail" type="email" autocomplete="email" inputmode="email" maxlength="160" placeholder="nom@exemple.fr"></label>' +
+      '<label class="field"><span>' + esc(T('Your email address')) + '</span><input id="regEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="160" placeholder="' + esc(T('name@example.com')) + '"></label>' +
       consentBlock('regConsent') +
       '<button type="button" class="btn primary" data-do="register"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Create my account')) + '</button>' +
       '<button type="button" class="link" data-do="to-signin">' + esc(T('I already have an account')) + '</button>' +
       '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></section></main>';
   }
   /* A relative asks for access: the care team validates with one tap (Care Team > To handle). */
+  /* 24 Nov (Rahma: "too crowded in one part"): creating an account takes 3 short steps: 1. you, 2. your loved
+     one, 3. the agreement. What is typed is kept when going back and forth (S.req). */
+  var REQ_FIELDS = [['reqFirst', 'first'], ['reqLast', 'last'], ['reqPhone', 'phone'], ['reqEmail', 'email'], ['reqRel', 'rel'], ['reqCode', 'code'], ['reqRes', 'res']];
+  function keepReq() { var R = S.req || (S.req = {}); REQ_FIELDS.forEach(function (x) { if ($(x[0])) R[x[1]] = val(x[0]).trim(); }); return R; }
   function requestScreen() {
-    var f = function (id, label, ph, extra) { return '<label class="field"><span>' + esc(T(label)) + '</span><input id="' + id + '" maxlength="60" placeholder="' + esc(ph ? T(ph) : '') + '"' + (extra || '') + '></label>'; };
-    return head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Create an account')) + '</h1>' +
-      f('reqFirst', 'Your first name', '', ' autocomplete="given-name"') + f('reqLast', 'Your last name', '', ' autocomplete="family-name"') +
-      f('reqRel', 'Who are you to the resident?', 'e.g. daughter') + f('reqPhone', 'Your phone number', '', ' type="tel" inputmode="tel" autocomplete="tel"') +
-      f('reqEmail', 'Your email address', '', ' type="email" inputmode="email" autocomplete="email"') +
-      '<p class="muted">' + esc(T('Both are given by the care team.')) + '</p>' +
-      f('reqCode', 'Resident code', '', ' autocapitalize="characters"') + f('reqRes', 'First name of the resident', '') +
-      consentBlock('reqConsent') +
-      '<button type="button" class="btn primary" data-do="request-access"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Send my request')) + '</button>' +
-      '<button type="button" class="link" data-do="to-welcome">' + esc(T('Back')) + '</button></section></main>';
+    var st = S.reqStep || 1, R = S.req || (S.req = {});
+    var f = function (id, key, label, max, ph, extra) { return '<label class="field"><span>' + esc(T(label)) + '</span><input id="' + id + '" maxlength="' + max + '" value="' + esc(R[key] || '') + '" placeholder="' + esc(ph ? T(ph) : '') + '"' + (extra || '') + '></label>'; };
+    var body = st === 1
+      ? f('reqFirst', 'first', 'Your first name', 40, '', ' autocomplete="given-name" autocapitalize="words" spellcheck="false"') +
+        f('reqLast', 'last', 'Your last name', 40, '', ' autocomplete="family-name" autocapitalize="words" spellcheck="false"') +
+        f('reqPhone', 'phone', 'Your phone number', 20, 'e.g. +49 151 23456789', ' type="tel" inputmode="tel" autocomplete="tel"') +
+        f('reqEmail', 'email', 'Your email address', 160, 'name@example.com', ' type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false"')
+      : st === 2
+      ? f('reqRel', 'rel', 'Who are you to the resident?', 40, 'e.g. daughter') +
+        '<p class="muted">' + esc(T('Both are given by the care team.')) + '</p>' +
+        f('reqCode', 'code', 'Resident code', 12, '', ' autocapitalize="characters" autocomplete="off" spellcheck="false"') +
+        f('reqRes', 'res', 'First name of the resident', 40, '', ' autocapitalize="words" autocomplete="off" spellcheck="false"')
+      : consentBlock('reqConsent');
+    var steps = '<div class="req-steps" aria-hidden="true">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>';
+    return head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Create an account')) + '</h1>' + steps +
+      '<p class="req-step">' + esc(T('Step {n} of 3', { n: st })) + ' · <b>' + esc(T(['About you', 'Your loved one', 'Your agreement'][st - 1])) + '</b></p>' +
+      body +
+      (st < 3 ? '<button type="button" class="btn primary" data-do="req-next">' + esc(T('Continue')) + '</button>'
+        : '<button type="button" class="btn primary" data-do="request-access"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Send my request')) + '</button>') +
+      '<button type="button" class="link" data-do="req-back">' + esc(T('Back')) + '</button></section></main>';
+  }
+  /* the checks of one step: the first wrong field is marked with its reason under it */
+  function reqStepOk(st) {
+    var R = keepReq(), M_NAME = T('Letters only, please (2 to 40).');
+    if (st === 1) {
+      if (!nameOk(R.first)) return bad('reqFirst', M_NAME), false;
+      if (!nameOk(R.last)) return bad('reqLast', M_NAME), false;
+      if (!phoneOk(R.phone)) return bad('reqPhone', T(ERRORS['bad-phone'])), false;
+      if (!emailOk(R.email)) return bad('reqEmail', T('Please check the email address (e.g. name@example.com).')), false;
+    }
+    if (st === 2) {
+      if (R.rel && !nameOk(R.rel)) return bad('reqRel', M_NAME), false;
+      if (!/^[A-Z0-9-]{1,12}$/.test(R.code || '')) return bad('reqCode', T('Please give the resident code.')), false;
+      if (!nameOk(R.res)) return bad('reqRes', M_NAME), false;
+    }
+    return true;
   }
   function signinScreen() {
     var step2 = !!S.email;
@@ -1125,15 +1192,64 @@
   }
 
   /* ---------- after drawing ---------- */
-  /* input checks (24 Nov): small helpers */
-  function phoneOk(v) { return /^\+?\d{8,15}$/.test(String(v || '').replace(/[\s.\-()\/]/g, '')); }
-  function emailOk(v) { return /^[^\s@<>"']{1,64}@[^\s@<>"']{1,100}\.[A-Za-z]{2,24}$/.test(String(v || '').trim()); }
+  /* Input checks (24 Nov, Rahma: "a very strict input check for every field"). Each field lets through only
+     what it may hold while it is typed (or pasted), and is checked again when it is left and before sending;
+     the server checks the same rules (labland/family-portal.mjs). */
+  var LETTERS = 'A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u024F';
+  var NAME_RE = new RegExp('^[' + LETTERS + ']+(?:[ \'\u2019-][' + LETTERS + ']+)*$');
+  var EMAIL_RE = /^[A-Za-z0-9_%+-]+(?:\.[A-Za-z0-9_%+-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}$/;
+  /* a name: letters (also accented), single spaces, hyphens or apostrophes between them, 2 to 40 characters */
+  function nameOk(v) { v = String(v || '').trim(); return v.length >= 2 && v.length <= 40 && NAME_RE.test(v); }
+  /* a phone number: digits and spaces only, one + at the very start, 8 to 15 digits */
+  function phoneOk(v) { v = String(v || '').trim(); var n = v.replace(/\D/g, '').length; return /^\+?[0-9][0-9 ]*$/.test(v) && n >= 8 && n <= 15; }
+  /* an e-mail address: name@domain.tld, no spaces, no double dots, at most 160 characters */
+  function emailOk(v) { v = String(v || '').trim(); return v.length <= 160 && v.indexOf('@') <= 64 && EMAIL_RE.test(v); }
   function pwStrong(v) { return typeof v === 'string' && v.length >= 8 && v.length <= 128 && /[A-Za-z]/.test(v) && /\d/.test(v); }
-  /* marks the field that is wrong (until it is typed in again) and puts the cursor there */
-  function bad(id) { var el = $(id); if (!el) return; el.classList.add('bad'); el.setAttribute('aria-invalid', 'true'); try { el.focus(); } catch (e) { /* hidden */ } }
+  /* what each field lets through while typing */
+  var CLEAN = {
+    name: function (v) { return v.replace(new RegExp('[^' + LETTERS + ' \'\u2019-]', 'g'), '').replace(/^[ '\u2019-]+/, '').replace(/ {2,}/g, ' ').replace(/([-'\u2019])[-'\u2019 ]+/g, '$1').slice(0, 40); },
+    phone: function (v) {
+      var plus = /^\s*\+/.test(v), out = '', n = 0, i, c;
+      v = v.replace(/^\s*\+/, '');
+      for (i = 0; i < v.length; i++) { c = v.charAt(i); if (c >= '0' && c <= '9') { if (n >= 15) break; n++; out += c; } else if (c === ' ' && out && out.charAt(out.length - 1) !== ' ') out += ' '; }
+      return (plus ? '+' : '') + out;
+    },
+    email: function (v) { var s = v.replace(/[^A-Za-z0-9._%+@-]/g, ''), i = s.indexOf('@'); if (i >= 0) s = s.slice(0, i + 1) + s.slice(i + 1).replace(/@/g, ''); return s.replace(/\.{2,}/g, '.').slice(0, 160); },
+    code: function (v) { return v.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12); },
+    digits: function (v) { return v.replace(/\D/g, '').slice(0, 6); }
+  };
+  var KIND = { reqFirst: 'name', reqLast: 'name', reqRel: 'name', reqRes: 'name', regName: 'name', regRel: 'name', payName: 'name',
+    reqPhone: 'phone', reqEmail: 'email', regEmail: 'email', sinEmail: 'email', pwEmail: 'email', reqCode: 'code', invCode: 'code', linkCode: 'code', sinCode: 'digits' };
+  /* the check when a field is left (an empty field is checked only when sending) */
+  var LEAVE = {
+    name: function (v) { return nameOk(v) ? '' : T('Letters only, please (2 to 40).'); },
+    phone: function (v) { return phoneOk(v) ? '' : T(ERRORS['bad-phone']); },
+    email: function (v) { return emailOk(v) ? '' : T('Please check the email address (e.g. name@example.com).'); }
+  };
+  /* marks the field that is wrong, with the reason under it (until it is typed in again), and puts the cursor there */
+  function bad(id, msg, stay) {
+    var el = $(id); if (!el) return;
+    el.classList.add('bad'); el.setAttribute('aria-invalid', 'true');
+    var lab = el.closest ? el.closest('.field') : null;
+    if (lab && msg) { var s = lab.querySelector('.err'); if (!s) { s = document.createElement('small'); s.className = 'err'; s.setAttribute('role', 'alert'); lab.appendChild(s); } s.textContent = msg; }
+    if (!stay) { try { el.focus(); } catch (e) { /* hidden */ } }
+  }
+  function unbad(el) { el.classList.remove('bad'); el.removeAttribute('aria-invalid'); var lab = el.closest ? el.closest('.field') : null, s = lab && lab.querySelector('.err'); if (s) s.parentNode.removeChild(s); }
   function after() {
-    [].forEach.call(document.querySelectorAll('input.bad'), function (el) { el.classList.remove('bad'); });
-    if (!document.__badWatch) { document.__badWatch = true; document.addEventListener('input', function (e) { var el = e.target; if (el && el.classList && el.classList.contains('bad')) { el.classList.remove('bad'); el.removeAttribute('aria-invalid'); } }, true); }
+    [].forEach.call(document.querySelectorAll('input.bad'), unbad);
+    if (!document.__badWatch) {
+      document.__badWatch = true;
+      document.addEventListener('input', function (e) {
+        var el = e.target, k = el && KIND[el.id];
+        if (k && typeof el.value === 'string') { var c = CLEAN[k](el.value); if (c !== el.value) el.value = c; }
+        if (el && el.classList && el.classList.contains('bad')) unbad(el);
+      }, true);
+      document.addEventListener('focusout', function (e) {
+        var el = e.target, k = el && KIND[el.id], v = el && typeof el.value === 'string' ? el.value.trim() : '';
+        if (!k || !LEAVE[k] || !v || (el.id === 'reqRel' || el.id === 'regRel') && !v) return;
+        var why = LEAVE[k](v); if (why) bad(el.id, why, true);
+      }, true);
+    }
     /* the card number in groups of 4, the expiry with its slash, the code digits only */
     var pn = $('payNum'), pe = $('payExp'), pc = $('payCvc');
     if (pn) pn.addEventListener('input', function () { var d = pn.value.replace(/\D/g, '').slice(0, 19); pn.value = d.replace(/(\d{4})(?=\d)/g, '$1 '); });
@@ -1247,7 +1363,7 @@
     if (what === 'to-password') { S.signinCode = false; S.email = ''; render(); return; }
     if (what === 'pw-login') {
       var pe = val('pwEmail'), pp = $('pwPass') ? $('pwPass').value : '';
-      if (!emailOk(pe)) { bad('pwEmail'); toast(T(ERRORS['bad-email'])); return; }
+      if (!emailOk(pe)) { bad('pwEmail', T('Please check the email address (e.g. name@example.com).')); return; }
       if (!pp) { bad('pwPass'); toast(T(ERRORS['bad-login'])); return; }
       busy(true);
       fam('POST', 'login/password', { email: pe, password: pp }).then(signedIn, function (e) { busy(false); if ($('pwPass')) $('pwPass').value = ''; toast(errText(e)); });
@@ -1263,24 +1379,32 @@
       }, function (e) { busy(false); toast(errText(e)); });
       return;
     }
-    if (what === 'to-request') { S.screen = 'request'; render(); return; }
+    if (what === 'to-request') { S.screen = 'request'; S.reqStep = 1; S.req = {}; render(); return; }
+    if (what === 'req-next') { var st = S.reqStep || 1; if (!reqStepOk(st)) return; S.reqStep = st + 1; render(); return; }
+    if (what === 'req-back') { keepReq(); if ((S.reqStep || 1) > 1) { S.reqStep--; render(); } else { S.req = {}; act('to-welcome'); } return; }
     if (what === 'request-access') {
-      if (!val('reqFirst').trim() || !val('reqLast').trim()) { bad(!val('reqFirst').trim() ? 'reqFirst' : 'reqLast'); toast(T('Please give your first and last name.')); return; }
-      if (!phoneOk(val('reqPhone'))) { bad('reqPhone'); toast(T(ERRORS['bad-phone'])); return; }
-      if (!emailOk(val('reqEmail'))) { bad('reqEmail'); toast(T(ERRORS['bad-email'])); return; }
-      if (!val('reqCode').trim() || !val('reqRes').trim()) { bad(!val('reqCode').trim() ? 'reqCode' : 'reqRes'); toast(T('Please give the resident code and first name.')); return; }
+      var R = keepReq();
+      if (!reqStepOk(1)) { S.reqStep = 1; render(); reqStepOk(1); return; }
+      if (!reqStepOk(2)) { S.reqStep = 2; render(); reqStepOk(2); return; }
       if (!$('reqConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
-      fam('POST', 'request-access', { first: val('reqFirst'), last: val('reqLast'), relation: val('reqRel'), phone: val('reqPhone'), email: val('reqEmail'), code: val('reqCode'), resident: val('reqRes'), lang: S.lang, consent: true })
-        .then(signedIn, function (e) { busy(false); toast(errText(e)); });
+      fam('POST', 'request-access', { first: R.first, last: R.last, relation: R.rel || '', phone: R.phone, email: R.email, code: R.code, resident: R.res, lang: S.lang, consent: true })
+        .then(function (out) { S.req = {}; signedIn(out); }, function (e) {
+          busy(false);
+          /* back to the step with the field the server did not accept */
+          var back = { 'bad-name': ['reqFirst', 1], 'bad-phone': ['reqPhone', 1], 'bad-email': ['reqEmail', 1], 'account-exists': ['reqEmail', 1], 'bad-relation': ['reqRel', 2], 'unknown-resident': ['reqCode', 2] }[e.code];
+          if (back) { S.reqStep = back[1]; render(); bad(back[0], errText(e)); return; }
+          toast(errText(e));
+        });
       return;
     }
     if (what === 'to-welcome') { S.screen = 'welcome'; S.invite = null; put(INVKEY, ''); render(); return; }
     if (what === 'other-email') { S.email = ''; render(); return; }
     if (what === 'invite') { checkInvite(val('invCode')); return; }
     if (what === 'register') {
-      if (!val('regName').trim()) { bad('regName'); toast(T(ERRORS['bad-name'])); return; }
-      if (!emailOk(val('regEmail'))) { bad('regEmail'); toast(T(ERRORS['bad-email'])); return; }
+      if (!nameOk(val('regName'))) { bad('regName', T('Letters only, please (2 to 40).')); return; }
+      if (val('regRel').trim() && !nameOk(val('regRel'))) { bad('regRel', T('Letters only, please (2 to 40).')); return; }
+      if (!emailOk(val('regEmail'))) { bad('regEmail', T('Please check the email address (e.g. name@example.com).')); return; }
       if (!$('regConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
       busy(true);
       fam('POST', 'register', { code: S.invite.code, email: val('regEmail'), name: val('regName'), relation: val('regRel'), lang: S.lang, consent: true })
@@ -1291,7 +1415,7 @@
         });
       return;
     }
-    if (what === 'ask-code') { var email = val('sinEmail'); busy(true); fam('POST', 'login/start', { email: email }).then(function () { S.busy = false; S.email = email; render(); }, function (e) { busy(false); toast(errText(e)); }); return; }
+    if (what === 'ask-code') { var email = val('sinEmail'); if (!emailOk(email)) { bad('sinEmail', T('Please check the email address (e.g. name@example.com).')); return; } busy(true); fam('POST', 'login/start', { email: email }).then(function () { S.busy = false; S.email = email; render(); }, function (e) { busy(false); toast(errText(e)); }); return; }
     if (what === 'verify') { busy(true); fam('POST', 'login/verify', { email: S.email, code: val('sinCode') }).then(signedIn, function (e) { busy(false); toast(errText(e)); }); return; }
     if (what === 'consent') {
       if (!$('firstConsent').checked) { toast(T(ERRORS['consent-needed'])); return; }
@@ -1481,7 +1605,8 @@
   app.addEventListener('keydown', function (e) {
     if (e.key !== 'Enter' || !e.target || e.target.tagName !== 'INPUT') return;
     var id = e.target.id;
-    if (id === 'invCode') act('invite');
+    if (/^req/.test(id)) { e.preventDefault(); act((S.reqStep || 1) < 3 ? 'req-next' : 'request-access'); }
+    else if (id === 'invCode') act('invite');
     else if (id === 'sinEmail') act('ask-code');
     else if (id === 'sinCode') act('verify');
     else if (id === 'linkCode') act('link');
