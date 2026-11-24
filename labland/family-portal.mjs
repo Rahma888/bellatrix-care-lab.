@@ -41,6 +41,7 @@ import crypto from 'node:crypto';
 import zlib from 'node:zlib';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import { mailConfig, createMailer, mailText } from './mailer.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const APP_DIR = path.join(HERE, '..');
@@ -240,6 +241,36 @@ export function createPortal(opts = {}) {
   const PER_DAY = opts.perDay || 20;          // messages a relative may send in a day
   const log = opts.log || ((t) => console.log(new Date().toLocaleTimeString('en-GB') + '  portal: ' + t));
   const limitOn = opts.rateLimit !== false;
+  /* 24 Nov (Rahma): e-mails (labland/mailer.mjs). Not set up = nothing is sent, everything works as before. */
+  const mailer = opts.mailer || createMailer(opts.mail === false ? null : mailConfig(), log);
+  const VERIFY_MS = 48 * 3600 * 1000;
+  /* A new address gets a confirmation code (and a link when the portal's public address is set); the account works
+     meanwhile. Returns false when e-mail is not set up. */
+  function askConfirm(person) {
+    if (!mailer.enabled || person.emailVerifiedAt) return false;
+    const code = sixDigits(), token = rnd(24);
+    person.emailVerify = { code: hash(code), token: hash(token), expires: iso(now() + VERIFY_MS), tries: 0 };
+    const url = mailer.site ? mailer.site + '/portal/api/family/email/confirm?t=' + token : '';
+    const m = mailText('verify', person.lang, { name: person.name, code, url });
+    mailer.send(person.email, m.subject, m.text);
+    return true;
+  }
+  /* The link in the e-mail: a small page in the person's language. */
+  function confirmLink(req, res, t) {
+    const d = load(), h = hash(String(t || '').slice(0, 64));
+    const person = t ? Object.values(d.people).find((x) => x.emailVerify && same(x.emailVerify.token, h) && Date.parse(x.emailVerify.expires) > now()) : null;
+    if (person) { person.emailVerifiedAt = iso(now()); delete person.emailVerify; save(); }
+    const al = String((req.headers || {})['accept-language'] || '').slice(0, 2).toLowerCase();
+    const l = person ? person.lang : (al === 'fr' || al === 'de' ? al : 'en');
+    const TX = { fr: ['Adresse e-mail confirmée', 'Merci. Vous pouvez fermer cette page.', 'Lien expiré', 'Ce lien n’est plus valable. Demandez un nouveau code dans l’app.'],
+      de: ['E-Mail-Adresse bestätigt', 'Danke. Sie können diese Seite schließen.', 'Link abgelaufen', 'Dieser Link gilt nicht mehr. Fordern Sie in der App einen neuen Code an.'],
+      en: ['E-mail address confirmed', 'Thank you. You can close this page.', 'Link expired', 'This link is no longer valid. Ask for a new code in the app.'] }[l] || [];
+    const a = person ? [TX[0], TX[1]] : [TX[2], TX[3]];
+    res.writeHead(person ? 200 : 410, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
+      'X-Frame-Options': 'DENY', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'" });
+    res.end('<!doctype html><html lang="' + l + '"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bellatrix</title>' +
+      '<body style="font:18px/1.5 system-ui,sans-serif;margin:0;padding:40px 24px;color:#14212E;background:#fff"><h1 style="color:#00519E;font-size:26px">' + a[0] + '</h1><p>' + a[1] + '</p></body></html>');
+  }
 
   /* ---------- storage ---------- */
   let data = null;
@@ -460,7 +491,7 @@ export function createPortal(opts = {}) {
     const d = load(), p = sess.person, a = sess.account, r = sess.resident;
     const residents = sess.links.filter((x) => x.status !== 'removed').map((x) => { const rr = d.residents[x.rid]; return { rid: x.rid, label: rr.label, lang: rr.lang, status: x.status, relation: x.relation || '' }; });
     const out = {
-      person: { id: p.id, name: p.name, email: p.email, lang: p.lang, consentAt: p.consentAt, hasPassword: !!p.pw },
+      person: { id: p.id, name: p.name, email: p.email, lang: p.lang, consentAt: p.consentAt, hasPassword: !!p.pw, emailVerified: !!p.emailVerifiedAt, mailOn: mailer.enabled },
       account: { id: a ? a.id : '', name: p.name, email: p.email, relation: a ? a.relation : '', lang: p.lang, consentAt: p.consentAt, createdBy: a ? a.createdBy : '', callLink: a ? a.callLink || '' : '' },
       needsConsent: !p.consentAt,
       residents, access: sess.access,
@@ -525,6 +556,7 @@ export function createPortal(opts = {}) {
       const person = { id: rnd(12), email, name, lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
       setNewPassword(person, body.password);
       d.people[person.id] = person;
+      askConfirm(person);
       const a = newLink(d, person.id, inv.rid, 'invite', body.relation);
       /* Every NEW family account waits for the care team's one tap, also with an invitation (Rahma, 14 Nov).
          Only a PC test server without a robot (PORTAL_AUTO_ACCEPT=1, Rahma 24 Nov) accepts it at once. */
@@ -553,6 +585,7 @@ export function createPortal(opts = {}) {
       const person = { id: rnd(12), email, name: first, last, phone: str(body.phone, 30), lang: lang(body.lang), created: iso(now()), consentAt: iso(now()), consentVersion: CONSENT_VERSION };
       setNewPassword(person, body.password);
       d.people[person.id] = person;
+      askConfirm(person);
       const a = newLink(d, person.id, res.rid, 'request', body.relation);
       a.status = autoAccept() ? 'active' : 'pending';   /* PC test server only (PORTAL_AUTO_ACCEPT=1) */
       const token = newSession(d, person.id);
@@ -569,6 +602,7 @@ export function createPortal(opts = {}) {
       if (person && Object.values(d.accounts).some((a) => a.pid === person.id && a.status !== 'removed')) {
         const c = liveCode(person.id) || newCode(person.id);
         log('sign-in code asked by a relative: ' + c.code + ' (15 min, also shown in Care Team > Family > Accounts)');
+        if (mailer.enabled) { const m = mailText('code', person.lang, { name: person.name, code: c.code }); mailer.send(person.email, m.subject, m.text); }
       }
       return [200, { ok: true }];
     }
@@ -618,6 +652,22 @@ export function createPortal(opts = {}) {
       return [200, { ok: true, code: c.code, email: pr.email, until: iso(c.expires) }];
     }
     if (p === 'logout' && post) { delete d.sessions[sess.hash]; save(); return [200, { ok: true }]; }
+    /* 24 Nov: confirm the e-mail address with the 6-digit code of the e-mail, or send a new one */
+    if (p === 'email/verify' && post) {
+      if (limited(req, 'everify', 10)) return [429, { error: 'slow-down' }];
+      if (pr.emailVerifiedAt) return [200, { ok: true, emailVerified: true }];
+      const v = pr.emailVerify;
+      if (!v || Date.parse(v.expires) < now() || v.tries >= 5) return [410, { error: 'expired-code' }];
+      if (!same(hash(str(body.code, 12).replace(/\D/g, '')), v.code)) { v.tries++; save(); return [400, { error: 'bad-code' }]; }
+      pr.emailVerifiedAt = iso(now()); delete pr.emailVerify; save();
+      return [200, { ok: true, emailVerified: true }];
+    }
+    if (p === 'email/resend' && post) {
+      if (limited(req, 'eresend', 3)) return [429, { error: 'slow-down' }];
+      if (pr.emailVerifiedAt) return [200, { ok: true, emailVerified: true }];
+      if (!askConfirm(pr)) return [409, { error: 'mail-off' }];
+      save(); return [200, { ok: true }];
+    }
     /* Set or change the password. Changing one needs the current one, except right after signing in with a code
        (PW_FRESH_MS): that is how a forgotten password is replaced. */
     if (p === 'password' && post) {
@@ -1252,6 +1302,7 @@ export function createPortal(opts = {}) {
     if (req.method === 'OPTIONS') { res.writeHead(204, CORS); res.end(); return; }
     const p = url.pathname.replace(/^\/portal\/api\//, '');
     if (p === 'icon.svg' || p === 'icon-192.png' || p === 'icon-512.png') { icon(res, p); return; }
+    if (p === 'family/email/confirm' && req.method === 'GET') { confirmLink(req, res, url.searchParams.get('t')); return; }
     const upload = p === 'family/upload';
     const max = upload ? MEDIA_MAX : p === 'family/message' ? BODY_MAX : 65536;
     const chunks = [];

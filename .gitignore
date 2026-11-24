@@ -24,3 +24,6 @@ Thumbs.db
 android/sdk/
 android/voice/
 android/*.idsig
+
+# E-mail settings (SMTP key): local only
+labland/smtp.local.json
