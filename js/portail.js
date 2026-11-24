@@ -32,6 +32,9 @@
   /* ---------- the texts (English keys; French and German) ---------- */
   (function () {
     function addNew(l, t) { var have = I18N.dict[l] || {}, out = {}; Object.keys(t).forEach(function (k) { if (!Object.prototype.hasOwnProperty.call(have, k)) out[k] = t[k]; }); I18N.add(l, out); }
+    /* 24 Nov (Rahma: "I did not like the look of creating an account") */
+    addNew('fr', { 'Daughter': 'Fille', 'Son': 'Fils', 'Granddaughter': 'Petite-fille', 'Grandson': 'Petit-fils', 'Spouse': 'Conjoint', 'Other': 'Autre', 'e.g. niece': 'ex. nièce', 'So that the care team knows who you are.': 'Pour que l’équipe sache qui vous êtes.', 'Show the password': 'Afficher le mot de passe', 'Weak': 'Faible', 'Fair': 'Moyen', 'Good': 'Bon', 'Very good': 'Très bon', 'Who are you for {name}?': 'Qui êtes-vous pour {name} ?' });
+    addNew('de', { 'Daughter': 'Tochter', 'Son': 'Sohn', 'Granddaughter': 'Enkelin', 'Grandson': 'Enkel', 'Spouse': 'Ehepartner', 'Other': 'Andere', 'e.g. niece': 'z. B. Nichte', 'So that the care team knows who you are.': 'Damit das Team weiß, wer Sie sind.', 'Show the password': 'Passwort anzeigen', 'Weak': 'Schwach', 'Fair': 'Mittel', 'Good': 'Gut', 'Very good': 'Sehr gut', 'Who are you for {name}?': 'Wer sind Sie für {name}?' });
     /* 24 Nov (Rahma: a password when the account is made) */
     addNew('fr', { 'Password and agreement': 'Mot de passe et accord', 'Choose a password': 'Choisissez un mot de passe', 'The password again': 'Le mot de passe encore une fois', 'Step {n} of 2': 'Étape {n} sur 2' });
     addNew('de', { 'Password and agreement': 'Passwort und Zustimmung', 'Choose a password': 'Wählen Sie ein Passwort', 'The password again': 'Das Passwort noch einmal', 'Step {n} of 2': 'Schritt {n} von 2' });
@@ -558,9 +561,8 @@
   }
   function inviteScreen() {
     var st = S.regStep || 1, G = S.reg || (S.reg = {});
-    var steps = '<div class="req-steps" aria-hidden="true">' + [1, 2].map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
-      '<p class="req-step">' + esc(T('Step {n} of 2', { n: st })) + ' · <b>' + esc(T(st === 1 ? 'About you' : 'Password and agreement')) + '</b></p>';
-    return head(false) + '<main class="main"><section class="card">' +
+    var steps = stepHead(st, 2, st === 1 ? 'About you' : 'Password and agreement');
+    return head(false) + '<main class="main"><section class="card signup">' +
       '<h1>' + esc(T('Welcome to the family of {name}', { name: who() })) + '</h1>' + steps +
       (st === 1
         ? '<label class="field"><span>' + esc(T('Your first name')) + '</span><input id="regName" autocomplete="given-name" maxlength="40" value="' + esc(G.name || '') + '" placeholder="' + esc(T('e.g. Sophie')) + '"></label>' +
@@ -578,33 +580,61 @@
      one, 3. the agreement. What is typed is kept when going back and forth (S.req). */
   var REQ_FIELDS = [['reqFirst', 'first'], ['reqLast', 'last'], ['reqPhone', 'phone'], ['reqEmail', 'email'], ['reqRel', 'rel'], ['reqCode', 'code'], ['reqRes', 'res']];
   function keepReq() { var R = S.req || (S.req = {}); REQ_FIELDS.forEach(function (x) { if ($(x[0])) R[x[1]] = val(x[0]).trim(); }); return R; }
+  /* 24 Nov (Rahma: "I did not like the look of creating an account"): boxed fields with a tick once a field is
+     right, a clear title per step, the relationship as buttons ("Other" opens a field), the password with an eye
+     and a strength bar. */
+  var REL_CHOICES = ['Daughter', 'Son', 'Granddaughter', 'Grandson', 'Spouse'];
+  function stepHead(st, n, title, sub) {
+    return '<div class="req-steps" aria-hidden="true">' + [1, 2, 3].slice(0, n).map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>' +
+      '<p class="req-step">' + esc(T(n === 3 ? 'Step {n} of 3' : 'Step {n} of 2', { n: st })) + '</p><h2 class="req-title">' + esc(T(title)) + '</h2>' +
+      (sub ? '<p class="muted">' + esc(T(sub)) + '</p>' : '');
+  }
   function requestScreen() {
     var st = S.reqStep || 1, R = S.req || (S.req = {});
-    var f = function (id, key, label, max, ph, extra) { return '<label class="field"><span>' + esc(T(label)) + '</span><input id="' + id + '" maxlength="' + max + '" value="' + esc(R[key] || '') + '" placeholder="' + esc(ph ? T(ph) : '') + '"' + (extra || '') + '></label>'; };
+    var f = function (id, key, label, max, ph, extra) { return '<label class="field"><span>' + esc(T(label)) + '</span><div class="ibox"><input id="' + id + '" maxlength="' + max + '" value="' + esc(R[key] || '') + '" placeholder="' + esc(ph ? T(ph) : '') + '"' + (extra || '') + '></div></label>'; };
+    var known = REL_CHOICES.map(function (x) { return T(x); }), other = !!S.relOther || (!!R.rel && known.indexOf(R.rel) < 0);
     var body = st === 1
-      ? f('reqFirst', 'first', 'Your first name', 40, '', ' autocomplete="given-name" autocapitalize="words" spellcheck="false"') +
+      ? stepHead(1, 3, 'About you', 'So that the care team knows who you are.') +
+        f('reqFirst', 'first', 'Your first name', 40, '', ' autocomplete="given-name" autocapitalize="words" spellcheck="false"') +
         f('reqLast', 'last', 'Your last name', 40, '', ' autocomplete="family-name" autocapitalize="words" spellcheck="false"') +
         f('reqPhone', 'phone', 'Your phone number', 20, 'e.g. +49 151 23456789', ' type="tel" inputmode="tel" autocomplete="tel"') +
         f('reqEmail', 'email', 'Your email address', 160, 'name@example.com', ' type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false"')
       : st === 2
-      ? f('reqRel', 'rel', 'Who are you to the resident?', 40, 'e.g. daughter') +
-        '<p class="muted">' + esc(T('Both are given by the care team.')) + '</p>' +
+      ? stepHead(2, 3, 'Your loved one', 'Both are given by the care team.') +
         f('reqCode', 'code', 'Resident code', 12, '', ' autocapitalize="characters" autocomplete="off" spellcheck="false"') +
-        f('reqRes', 'res', 'First name of the resident', 40, '', ' autocapitalize="words" autocomplete="off" spellcheck="false"')
-      : pwFields('reqPw', 'reqPw2') + consentBlock('reqConsent');
-    var steps = '<div class="req-steps" aria-hidden="true">' + [1, 2, 3].map(function (i) { return '<i class="' + (i <= st ? 'on' : '') + '"></i>'; }).join('') + '</div>';
-    return head(false) + '<main class="main"><section class="card"><h1>' + esc(T('Create an account')) + '</h1>' + steps +
-      '<p class="req-step">' + esc(T('Step {n} of 3', { n: st })) + ' · <b>' + esc(T(['About you', 'Your loved one', 'Password and agreement'][st - 1])) + '</b></p>' +
-      body +
+        f('reqRes', 'res', 'First name of the resident', 40, '', ' autocapitalize="words" autocomplete="off" spellcheck="false"') +
+        '<div class="field"><span>' + esc(T('Who are you to the resident?')) + '</span><div class="tchips" role="radiogroup">' +
+        REL_CHOICES.concat(['Other']).map(function (x) {
+          var on = x === 'Other' ? other : !other && R.rel === T(x);
+          return '<button type="button" role="radio" aria-checked="' + on + '" class="tchip' + (on ? ' on' : '') + '" data-do="rel" data-v="' + x + '">' + esc(T(x)) + '</button>';
+        }).join('') + '</div>' +
+        (other ? '<div class="ibox"><input id="reqRel" maxlength="40" value="' + esc(R.rel || '') + '" placeholder="' + esc(T('e.g. niece')) + '" aria-label="' + esc(T('Who are you to the resident?')) + '"></div>' : '') + '</div>'
+      : stepHead(3, 3, 'Password and agreement') + pwFields('reqPw', 'reqPw2') + consentBlock('reqConsent');
+    return head(false) + '<main class="main"><section class="card signup"><h1>' + esc(T('Create an account')) + '</h1>' + body +
       (st < 3 ? '<button type="button" class="btn primary" data-do="req-next">' + esc(T('Continue')) + '</button>'
         : '<button type="button" class="btn primary" data-do="request-access"' + (S.busy ? ' disabled' : '') + '>' + esc(T('Send my request')) + '</button>') +
       '<button type="button" class="link" data-do="req-back">' + esc(T('Back')) + '</button></section></main>';
   }
   /* 24 Nov (Rahma: "creating an account has no password field"): the password is chosen with the account */
+  var EYE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
   function pwFields(a, b) {
-    return '<label class="field"><span>' + esc(T('Choose a password')) + '</span><input id="' + a + '" type="password" autocomplete="new-password" maxlength="128"></label>' +
-      '<label class="field"><span>' + esc(T('The password again')) + '</span><input id="' + b + '" type="password" autocomplete="new-password" maxlength="128"></label>' +
-      '<p class="fine">' + esc(T('At least 8 characters, with a letter and a digit.')) + '</p>';
+    var box = function (id) { return '<div class="ibox pw"><input id="' + id + '" type="password" autocomplete="new-password" maxlength="128"><button type="button" class="eye" data-do="eye" data-for="' + id + '" aria-label="' + esc(T('Show the password')) + '" aria-pressed="false">' + EYE + '</button></div>'; };
+    return '<label class="field"><span>' + esc(T('Choose a password')) + '</span>' + box(a) + '</label>' +
+      '<div class="meter" id="' + a + 'Meter" data-s="0" aria-live="polite"><i></i><i></i><i></i><i></i><small></small></div>' +
+      '<p class="fine">' + esc(T('At least 8 characters, with a letter and a digit.')) + '</p>' +
+      '<label class="field"><span>' + esc(T('The password again')) + '</span>' + box(b) + '</label>';
+  }
+  /* 0 = nothing typed, 1 weak (refused), 2 fair, 3 good, 4 very good */
+  function pwScore(v) {
+    if (!v) return 0;
+    if (!pwStrong(v)) return 1;
+    var n = 2; if (v.length >= 12) n++; if (/[^A-Za-z0-9]/.test(v) || (/[a-z]/.test(v) && /[A-Z]/.test(v))) n++;
+    return Math.min(4, n);
+  }
+  function paintMeter(el) {
+    var m = $(el.id + 'Meter'); if (!m) return;
+    var n = pwScore(el.value); m.setAttribute('data-s', String(n));
+    var sm = m.querySelector('small'); if (sm) sm.textContent = n ? T(['', 'Weak', 'Fair', 'Good', 'Very good'][n]) : '';
   }
   /* the password of a new account: strong enough and typed twice the same */
   function newPwOk(a, b) {
@@ -1247,7 +1277,8 @@
     name: function (v) { return nameOk(v) ? '' : T('Letters only, please (2 to 40).'); },
     phone: function (v) { return phoneOk(v) ? '' : T(ERRORS['bad-phone']); },
     email: function (v) { return emailOk(v) ? '' : T('Please check the email address (e.g. name@example.com).'); },
-    pw: function (v) { return pwStrong(v) ? '' : T(ERRORS['weak-password']); }
+    pw: function (v) { return pwStrong(v) ? '' : T(ERRORS['weak-password']); },
+    code: function (v) { return /^[A-Z0-9-]{1,12}$/.test(v) ? '' : T('Please give the resident code.'); }
   };
   /* marks the field that is wrong, with the reason under it (until it is typed in again), and puts the cursor there */
   function bad(id, msg, stay) {
@@ -1266,11 +1297,13 @@
         var el = e.target, k = el && FIELD_KIND[el.id];
         if (k && typeof el.value === 'string') { var c = CLEAN[k](el.value); if (c !== el.value) el.value = c; }
         if (el && el.classList && el.classList.contains('bad')) unbad(el);
+        if (el && el.classList) el.classList.remove('good');
+        if (el && /^(reqPw|regPw|pwNew)$/.test(el.id)) paintMeter(el);
       }, true);
       document.addEventListener('focusout', function (e) {
         var el = e.target, k = el && FIELD_KIND[el.id], v = el && typeof el.value === 'string' ? el.value.trim() : '';
         if (!k || !LEAVE[k] || !v || (el.id === 'reqRel' || el.id === 'regRel') && !v) return;
-        var why = LEAVE[k](v); if (why) bad(el.id, why, true);
+        var why = LEAVE[k](v); if (why) bad(el.id, why, true); else el.classList.add('good');
       }, true);
     }
     /* the card number in groups of 4, the expiry with its slash, the code digits only */
@@ -1402,7 +1435,20 @@
       }, function (e) { busy(false); toast(errText(e)); });
       return;
     }
-    if (what === 'to-request') { S.screen = 'request'; S.reqStep = 1; S.req = {}; render(); return; }
+    if (what === 'to-request') { S.screen = 'request'; S.reqStep = 1; S.req = {}; S.relOther = false; render(); return; }
+    if (what === 'rel') {
+      keepReq();
+      var rv = el.getAttribute('data-v');
+      if (rv === 'Other') { S.relOther = true; if (REL_CHOICES.map(function (x) { return T(x); }).indexOf(S.req.rel) >= 0) S.req.rel = ''; render(); var ri = $('reqRel'); if (ri) ri.focus(); }
+      else { S.relOther = false; S.req.rel = T(rv); render(); }
+      return;
+    }
+    if (what === 'eye') {
+      var pi = $(el.getAttribute('data-for')); if (!pi) return;
+      var show = pi.type === 'password'; pi.type = show ? 'text' : 'password';
+      el.classList.toggle('on', show); el.setAttribute('aria-pressed', String(show));
+      return;
+    }
     if (what === 'req-next') { var st = S.reqStep || 1; if (!reqStepOk(st)) return; S.reqStep = st + 1; render(); return; }
     if (what === 'req-back') { keepReq(); if ((S.reqStep || 1) > 1) { S.reqStep--; render(); } else { S.req = {}; act('to-welcome'); } return; }
     if (what === 'request-access') {

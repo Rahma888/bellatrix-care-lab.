@@ -514,3 +514,31 @@ header.top .pc-badge { background: var(--brand-light, #9FD3F5); color: #00325F; 
 .net-banner { position: fixed; left: 0; right: 0; top: 0; z-index: 60; padding: 8px 16px calc(8px); padding-top: calc(8px + env(safe-area-inset-top, 0px));
   background: #8A5A00; color: #fff; font-size: 14px; line-height: 1.35; text-align: center; transform: translateY(-110%); transition: transform .25s ease; pointer-events: none; }
 .net-banner.on { transform: none; }
+
+/* 24 Nov (Rahma: the look of creating an account): boxed fields, a tick when a field is right, clear steps */
+.signup { gap: 14px; }
+.signup .req-steps { margin-top: 2px; }
+.signup .req-steps i { height: 6px; border-radius: 3px; }
+.signup .req-step { margin: 0; font-size: 15px; color: var(--muted); }
+.signup .req-title { font-size: 26px; line-height: 1.1; margin: -6px 0 0; color: var(--ink); }
+.signup .field > span { text-transform: none; letter-spacing: normal; font-size: 16px; font-weight: 500; color: var(--ink); }
+.signup .ibox { position: relative; }
+.signup .field input { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 46px 12px 14px; background-color: var(--surface); min-height: 54px; font-size: 18px; width: 100%; }
+.signup .field input:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 3px var(--soft); }
+.signup .field input.good { border-color: var(--good); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232E9E6A' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M8 12.5l2.7 2.7L16 9.8'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; background-size: 22px; }
+.signup .ibox.pw input { padding-right: 54px; }
+.signup .ibox.pw input.good { background-position: right 52px center; padding-right: 84px; }
+.signup .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border: 0; background: none; color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 10px; padding: 0; }
+.signup .eye.on { color: var(--accent); }
+.signup .meter { display: flex; gap: 5px; align-items: center; margin-top: -4px; }
+.signup .meter i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.signup .meter small { flex: 0 0 76px; text-align: right; font-size: 14px; color: var(--muted); }
+.signup .meter[data-s="0"] { visibility: hidden; }
+.signup .meter[data-s="1"] i:nth-child(1) { background: var(--danger); }
+.signup .meter[data-s="2"] i:nth-child(-n+2) { background: #C98A00; }
+.signup .meter[data-s="3"] i:nth-child(-n+3), .signup .meter[data-s="4"] i { background: var(--good); }
+.signup .tchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.signup .tchip { border-radius: 999px; border-width: 1.5px; font-size: 16px; }
+.signup .consent { background: var(--soft); border-left: 0; border-radius: 14px; padding: 14px 16px; }
+.signup .btn { border-radius: 14px; }
+.signup .muted { margin: -4px 0 0; }
