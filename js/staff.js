@@ -163,9 +163,7 @@
   function renderSetup() {
     var st = store.settings;
     $('fParticipant').value = st.participant || 'P1';
-    /* 23 Nov: the prototypes (red heart, then object + button) are a fourth choice: pointing in the air with them */
-    var q = function (v) { return document.querySelector('input[name="camMode"][value="' + v + '"]'); };
-    var mode = (st.camMode === 'air' && st.airInput && q(st.airInput)) || q(st.camMode || 'off');
+    var mode = document.querySelector('input[name="camMode"][value="' + (st.camMode || 'off') + '"]');
     if (mode) mode.checked = true;
     $('optCamMove').checked = true;   /* the camera counts the movements automatically */
     buildTiles();
@@ -285,7 +283,7 @@
     var first = String(a.flow || '').split(/(?:\.|:)\s/)[0];
     return ST(first.replace(/\.$/, '') + '.');
   }
-  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air', heart: 'red heart', object: 'object and button', pen: 'highlighter' };
+  var CAM_NAME = { off: 'touch', signs: 'hand signs', air: 'pointing in the air' };
   var LANG_SHORT = { en: 'English', fr: 'Français', de: 'Deutsch' };
   var filter = 'all';
   try { filter = sessionStorage.getItem('labFilter') || 'all'; } catch (e) { filter = 'all'; }
@@ -387,18 +385,14 @@
     if (i >= 0) list.splice(i, 1); else list.push(key);
     save(); renderDetail(); renderTiles();
   }
-  /* the choice as the patient screen knows it: the red heart (23 Nov prototype) is pointing in the air ('air') with
-     airInput 'heart' */
-  function camChoice() { var m = document.querySelector('input[name="camMode"]:checked'); return m ? m.value : 'off'; }
-  var MARKS = { heart: 1, object: 1, pen: 1 };   /* the prototypes: pointing in the air with a held thing */
-  function camMode() { var c = camChoice(); return MARKS[c] ? 'air' : c; }
+  function camMode() { var m = document.querySelector('input[name="camMode"]:checked'); return m ? m.value : 'off'; }
   function renderCamNote() {
     var cam = camMode() !== 'off' || (selected().key === 'move' && $('optCamMove').checked);
     $('camNote').hidden = !cam;
   }
   function renderSummary() {
     var a = selected(), pr = patient().prefs;
-    $('startSummary').innerHTML = '<b>' + esc(patientCode()) + '</b> · ' + esc(actName(a)) + ' · ' + esc(LANG_SHORT[I18N.valid(pr.lang)]) + ' · ' + esc(ST(CAM_NAME[camChoice()]));
+    $('startSummary').innerHTML = '<b>' + esc(patientCode()) + '</b> · ' + esc(actName(a)) + ' · ' + esc(LANG_SHORT[I18N.valid(pr.lang)]) + ' · ' + esc(ST(CAM_NAME[camMode()]));
   }
   function renderPatientCard() {
     var code = patientCode();
@@ -691,8 +685,6 @@
     o.staff = st.staff || ''; o.participant = code;
     o.zone = (st.zoneFor && st.zoneFor[act.key]) || act.zone; o.mapRev = st.mapRev || ''; o.sw = st.sw || '';
     o.voice = false; o.camMode = camMode(); o.camMove = act.key === 'move' && $('optCamMove').checked;
-    /* 23 Nov (Rahma's prototype): point with the red heart instead of the hand (js/core.js, the app's HeartSpot) */
-    o.airInput = MARKS[camChoice()] ? camChoice() : '';
     pr.greet = val('fGreet').trim();
     if ($('fSector')) pr.sector = val('fSector').trim().slice(0, 24);   /* 1.17 */
     pr.rate = parseFloat(val('optRate')) || 0.92; pr.volume = (parseInt(val('optVolume'), 10) || 90) / 100;
@@ -701,7 +693,6 @@
     o.profile = pr.profile || ''; o.greet = pr.greet; o.rate = pr.rate; o.volume = pr.volume; o.textSize = pr.textSize; o.subtitles = pr.subtitles;
     o.lang = pr.lang; o.mood = pr.mood;
     o.life = JSON.parse(JSON.stringify(readLife(pr)));
-    st.airInput = o.airInput;
     st.participant = code; st.voice = false; st.camMode = o.camMode; st.camMove = $('optCamMove').checked; st.activity = act.key;
     save();
     if ($('startSummary')) { renderSummary(); renderCamNote(); }

@@ -93,12 +93,6 @@ public final class Hands {
     long lastPictureAt;
     int[] picPixels = new int[0];
 
-    /* 23 Nov (Rahma's prototype): the red heart instead of the hand. While on, every frame goes to HeartSpot (no hand
-     * models) and the page gets {t, w, h, heart: {x, y, a, n} | null} at most 30 times a second. */
-    volatile boolean heartOn;
-    final HeartSpot heart = new HeartSpot();
-    long nextHeartAt;
-
     private Hands(Context app) {
         this.app = app;
         HandlerThread w = new HandlerThread("bellatrix-hands", Process.THREAD_PRIORITY_VIDEO);
@@ -217,7 +211,6 @@ public final class Hands {
                 .append(",\"detectMs\":").append(Math.round(detectMs * 10) / 10.0)
                 .append(",\"camera\":").append(JSONObject.quote(cameraText))
                 .append(",\"cameras\":").append(camerasText)
-                .append(",\"heart\":").append(heartOn)
                 .append(",\"error\":").append(JSONObject.quote(error))
                 .append('}');
         return b.toString();
@@ -227,7 +220,7 @@ public final class Hands {
 
     /** Whether a frame arriving now would be used (otherwise it is closed without a copy). */
     boolean ready(long now) {
-        return running && modelsReady && gate.isFree(now) && (heartOn || engine.wantsFrame(now));
+        return running && modelsReady && gate.isFree(now) && engine.wantsFrame(now);
     }
 
     void submit(long now) {
@@ -271,9 +264,6 @@ public final class Hands {
         }
     }
 
-    /** The page follows the red heart (true) or the hand (false). */
-    public void heart(boolean on) { heartOn = on; }
-
     /** The page asks for pictures (ms between two) or stops them (0). */
     public void pictures(int everyMs) {
         picturesEveryMs = everyMs <= 0 ? 0 : Math.max(100, everyMs);
@@ -311,7 +301,6 @@ public final class Hands {
                 lastPictureAt = arrived;
                 try { publishPicture(arrived); } catch (Throwable t) { Log.w(TAG, "picture: " + t); }
             }
-            if (heartOn) { publishHeart(arrived); return; }
             if (!engine.process(frame, arrived)) return;
             measure();
             publish(arrived);
@@ -365,26 +354,6 @@ public final class Hands {
             b.append(",\"lm\":null}");
         }
         // Stopped or failed meanwhile: an error the page has to see must not be replaced by a late frame.
-        if (running) s.hands(b.toString());
-    }
-
-    /** The heart in this frame (compute thread). */
-    private void publishHeart(long arrived) {
-        Sink s = sink;
-        if (s == null) return;
-        boolean seen = heart.find(frame.pixels, frame.width, frame.height, arrived);
-        long now = SystemClock.uptimeMillis();
-        windowFrames++;
-        if (windowStart == 0) windowStart = now;
-        if (now - windowStart >= 1000) { fps = windowFrames * 1000f / (now - windowStart); windowFrames = 0; windowStart = now; }
-        if (now + 8 < nextHeartAt) return;
-        nextHeartAt = Math.max(now, nextHeartAt) + 33;
-        long t = System.currentTimeMillis() - (now - arrived);
-        StringBuilder b = new StringBuilder(120);
-        b.append("{\"t\":").append(t).append(",\"w\":").append(frame.width).append(",\"h\":").append(frame.height).append(",\"heart\":");
-        if (seen) b.append("{\"x\":").append(num(heart.x)).append(",\"y\":").append(num(heart.y)).append(",\"a\":").append(num(heart.area)).append(",\"n\":").append(heart.samples).append('}');
-        else b.append("null");
-        b.append('}');
         if (running) s.hands(b.toString());
     }
 

@@ -528,8 +528,7 @@
      model here (window.__bellatrixHands({pic})); the page's own camera stays off. Without that bridge: as before. */
   var NH_PIC_MS = 200;
   function nhPics() { return !!(window.BellatrixApp && window.BellatrixApp.handsPictures); }
-  /* 23 Nov: the highlighter ('pen') is followed by the page's own camera (js/heartspot.js), also on the tablet */
-  function nhWanted(st) { return !nh.failed && !!st && (!st.pose || (Lab.opt.camMode === 'air' && nhPics())) && !st.callVideo && wantCam(st) && nhApi() && markInput() !== 'pen'; }
+  function nhWanted(st) { return !nh.failed && !!st && (!st.pose || (Lab.opt.camMode === 'air' && nhPics())) && !st.callVideo && wantCam(st) && nhApi(); }
   function nhPictures(on) {
     var ms = on && nhPics() ? NH_PIC_MS : 0;
     if (nh.picMs === ms) return;
@@ -568,15 +567,13 @@
     try { r = String(window.BellatrixApp.handsStart()); } catch (e) { r = 'error:' + (e && e.message ? e.message : e); }
     if (r !== 'ok') { nhFail(r); return false; }
     nh.on = true; nh.onAt = Date.now(); nh.n = 0;
-    heartSync();
-    log('Camera on in the app for the ' + (heartOn() ? 'red heart' : 'hands') + ' (not recorded)', 'app', 'camera');
+    log('Camera on in the app for the hands (not recorded)', 'app', 'camera');
     setHandText('Starting the camera…');
     return true;
   }
   function nhStop() {
     if (!nh.on) return;
     nhPictures(false);
-    pressSync(false);
     nh.on = false;
     try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ }
     if (S.rec) S.rec.camMs += Date.now() - nh.onAt;
@@ -589,377 +586,11 @@
     if (was && S.rec) S.rec.camMs += Date.now() - nh.onAt;
     log('Hand tracking in the app off (' + why + '): detection on the page instead', 'app', 'camera');
   }
-  /* 23 Nov (Rahma's prototype): pointing with a small red heart (a soft ball the resident holds) instead of the
-     hand. The app finds the red in every camera picture (android hands/HeartSpot, no model) and sends
-     {t, w, h, heart: {x, y, a, n} | null}. The heart becomes a hand for the same pointer (palm centre = the heart's
-     centre), so the cursor, the magnet, the ring and the games' frames work as before. "OK" = close the hand over
-     the heart (it mostly disappears) and open it again (it comes back): the 'closeopen' OK. While closed, the
-     pointer stays where the heart was open. A heart gone at the edge of the picture, or for HEART.GONE_MS, is lost.
-     On: Lab.opt.airInput === 'heart' (the head's "Point with the red heart"), or localStorage 'bellatrix-air-input'
-     'heart' / 'hand' on this tablet. With the app's camera it needs BellatrixApp.handsHeart; with the page's own
-     camera (a PC webcam: testing before the robot) js/heartspot.js finds the heart here (heartPageFrame). */
-  var HEART = { CLOSE: 0.45, OPEN: 0.7, GONE_MS: 1500, UP: 0.08, DOWN: 0.02 };
-  /* The highlighter's press (23 Nov). First too loose (Rahma: "a finger in front of the cap passes for the OK"),
-     then too strict ("even when I press it does not work"); this is the middle, checked on her own video.
-     The cap is compared with its biggest size of the last REF_MS (the grip changes how much of the pen shows, so no
-     long-learnt size). The press is a click: the cap is hidden, then shows again (the 'closeopen' OK: the ring
-     fills after letting go). A press counts when
-     - the cap showed clearly (SEEN of that size) for SEEN_MS, ending at most GAP_MS before (the thumb may take
-       its time to come),
-     - the pen was fairly still just before (moved less than STILL of the picture over STILL_MS, leaving out the
-       last 150 ms: the thumb arriving shifts the pen's middle), and is not mostly gone (BODY of its size then),
-     - the pen is not near the edge of the picture (EDGE), nor was the cap when last seen (CAP_EDGE): there the
-       cap may just have left the picture,
-     - the cap is hidden (under CLOSE of that size) for at least MIN_MS (a finger flicking past is no press),
-     - and the cap is big enough to be measured at all (CAP_REF_MIN samples; else "bring the pen closer").
-     The cap count is the median of the last SMOOTH frames (Rahma's webcam: a small cap jumped 1..8 from one frame
-     to the next, and those jumps looked like short presses that stopped the ring).
-     Anything else that hides the cap is "blocked" until the cap shows clearly again. A big move during the press
-     (MOVE) cancels it. Free again above OPEN. */
-  /* 24 Nov: the cap and body counts are pixels of the camera picture at FINE_PX on its long side (the tablet's own 640),
-     measured in a small cut around the pen (heartPageFrame); CAP_MIN and CAP_REF_MIN are in those pixels.
-     A touch is a FAST drop: the cap falls under CLOSE of its biggest size of the last DROP_MS (the real tablet log and
-     Rahma's videos: a thumb hides the cap in 1 to 3 pictures; a pen that turns or moves away shrinks it over 300 ms and
-     more, and was taken for a touch at tablet distance), and the cap was still near its full size (FULL of the
-     reference) at the start of those DROP_MS (a pen turning makes it smaller and smaller: only its last steps are
-     quick). Most of the pen's body must still be there on that picture (BODY_KEEP of its size just before; a thumb
-     pressing from above hides up to half of it: Rahma's press video). After a touch the cap counts as back at OPEN of
-     its size before the touch, or at BACK of it for BACK_MS (the grip changes: on the real tablet the cap came back
-     smaller and the press never ended). */
-  var PEN = { CLOSE: 0.4, TREND: 0.9, SHARE: 0.7, JUMP: 0.2, OPEN: 0.75, SEEN: 0.5, SEEN_MS: 200, GAP_MS: 1000, STILL: 0.15, STILL_MS: 500, MOVE: 0.35, BODY: 0.25, REF_MS: 600, MIN_MS: 0, EDGE: 0.15, CAP_EDGE: 0.15, CAP_MIN: 6, CAP_REF_MIN: 10, SMOOTH: 3, PX: 480,
-    DROP_MS: 150, FULL: 0.6, BODY_KEEP: 0.4, BACK: 0.45, BACK_MS: 250, FINE_PX: 640, FINE_MAX: 48000,
-    /* a cap hidden for less than GRAZE_MS was a thumb passing over it, not a touch: the ring stops (her taps hide it
-       130 to 280 ms; a graze in her press video, at tablet distance, one picture of 70 ms) */
-    GRAZE_MS: 90,
-    /* Rahma: "it works, but the magnet takes long to start counting": the pen's own checks already filter the noise,
-       so the pointer's patience is short with it, and the ring a little quicker */
-    CLOSE_PATIENCE: 0, OPEN_PATIENCE: 100, CONFIRM_MS: 700,
-    /* on the tablet the pen is big and close: lifting the thumb shows the pen's top again and its middle jumps ~200 px
-       on the screen; that jump must not cancel the ring (it did: no ring at all in Rahma's tablet test) */
-    RING_MOVE_PX: 600, LOST_MS: 700,
-    /* only with 'bellatrix-pen-press' '0': stay on a button this long to choose it */
-    DWELL_MS: 1200 };
-  var hz = { base: 0, last: null, seenAt: 0, closed: false, pen: null, cancelAt: 0 };
-  function penPress(p, now) {
-    var P = hz.pen, s = Math.max(1, +p.s || 0), c = +p.c || 0, moved = 0, ref = null, r0 = null, i, q;
-    if (!P || now - hz.seenAt > HEART.GONE_MS) P = hz.pen = { state: 'free', clearSince: 0, lastClear: 0, track: [], hist: [], at: null, pressAt: 0, capRef: 0, cs: [] };
-    /* the cap count, smoothed: the median of the last SMOOTH frames */
-    P.cs.push(c); if (P.cs.length > PEN.SMOOTH) P.cs.shift();
-    var cRaw = c;   /* this frame's own count: the touch is seen on it, without the smoothing's delay */
-    c = P.cs.slice().sort(function (a2, b2) { return a2 - b2; })[P.cs.length >> 1];
-    /* the biggest cap and body of the last DROP_MS (this picture left out): the fast drop and the body kept */
-    if (!P.rec) P.rec = [];
-    while (P.rec.length && now - P.rec[0].t > PEN.DROP_MS) P.rec.shift();
-    var recC = 0, recS = 0;
-    for (i = 0; i < P.rec.length; i++) { if (P.rec[i].c > recC) recC = P.rec[i].c; if (P.rec[i].s > recS) recS = P.rec[i].s; }
-    P.rec.push({ t: now, c: cRaw, s: s });
-    var fast = recC >= PEN.CAP_MIN && cRaw < PEN.CLOSE * recC, bodyKept = !recS || s >= PEN.BODY_KEEP * recS;
-    P.cr = cRaw;
-    P.track.push({ t: now, x: +p.x, y: +p.y });
-    while (P.track.length && now - P.track[0].t > PEN.STILL_MS) P.track.shift();
-    for (i = 0; i < P.track.length; i++) {
-      q = P.track[i];
-      if (now - q.t < 150) break;
-      if (!r0) r0 = q;
-      moved = Math.max(moved, Math.abs(q.x - r0.x) + Math.abs(q.y - r0.y));
-    }
-    /* the reference: the biggest cap of the last REF_MS (kept as it was while pressed) */
-    /* the reference: cap and pen of the same picture (a smoothed cap with a raw pen size mixed two pictures and made a
-       pen moving away look like a touch); the middle one of the 3 biggest caps of REF_MS, so one jump does not count */
-    if (P.state !== 'pressed') P.hist.push({ t: now, c: cRaw, s: s });
-    while (P.hist.length && now - P.hist[0].t > PEN.REF_MS) P.hist.shift();
-    var top = [];
-    for (i = 0; i < P.hist.length; i++) if (P.hist[i].c >= PEN.CAP_MIN) top.push(P.hist[i]);
-    top.sort(function (a2, b2) { return b2.c - a2.c; });
-    if (top.length) ref = top[Math.min(1, top.length - 1)];
-    var capRef = ref ? ref.c : 0, still = moved < PEN.STILL, bodyOk = !ref || s >= PEN.BODY * ref.s;
-    var K = P.capPos, inside = p.x > PEN.EDGE && p.x < 1 - PEN.EDGE && p.y > PEN.EDGE && p.y < 1 - PEN.EDGE * 0.8 &&
-      (!K || (K.x > PEN.CAP_EDGE && K.x < 1 - PEN.CAP_EDGE && K.y > PEN.CAP_EDGE && K.y < 1 - PEN.CAP_EDGE));
-    /* the touch, at once (Rahma: "exactly when I touch the dark green the ring must start"): this frame's cap under
-       CLOSE of the reference, when the frame before was already going down (the thumb coming) or was hidden too; a
-       lone jump of the camera is no touch */
-    /* ... and the cap must shrink more than the pen: a pen moving away makes both smaller together (no touch), the
-       thumb hides the cap (its share of the pen drops) */
-    var rawHidden = capRef >= PEN.CAP_REF_MIN && cRaw < PEN.CLOSE * capRef && !!ref && cRaw / s < PEN.SHARE * (ref.c / Math.max(1, ref.s));
-    var shows = c >= PEN.CAP_MIN && c >= PEN.SEEN * capRef && cRaw >= PEN.SEEN * capRef,   /* clearly seen on this frame too */
-      hidden = rawHidden && fast && recC >= PEN.FULL * capRef && (P.prevRawHidden || (P.prevRaw !== undefined && P.prevRaw < PEN.TREND * capRef));
-    P.prevRaw = cRaw; P.prevRawHidden = rawHidden;
-    P.small = capRef < PEN.CAP_REF_MIN;
-    P.c = c; P.s = s; P.ratio = capRef; P.moved = moved; P.body = ref ? ref.s : 0;
-    if (P.state === 'pressed') {
-      if (P.at && Math.abs(p.x - P.at.x) + Math.abs(p.y - P.at.y) > PEN.MOVE) { P.state = 'blocked'; P.why = 'big-move'; hz.cancelAt = now; hz.cancelWhy = 'big-move'; }   /* a big move: no press, and no release either */
-      else if (cRaw >= PEN.CAP_MIN && cRaw >= PEN.OPEN * P.capRef && now - P.pressAt < PEN.GRAZE_MS) { P.state = 'blocked'; P.why = 'graze'; hz.cancelAt = now; hz.cancelWhy = 'graze'; }
-      else if (c >= PEN.CAP_MIN && c >= PEN.OPEN * P.capRef) { P.state = 'free'; P.clearSince = 0; P.backSince = 0; }           /* let go (against the cap just before the touch) */
-      else if (c >= PEN.CAP_MIN && c >= PEN.BACK * P.capRef) { if (!P.backSince) P.backSince = now; if (now - P.backSince >= PEN.BACK_MS) { P.state = 'free'; P.clearSince = 0; P.backSince = 0; } }
-      else P.backSince = 0;
-    } else if (shows) {
-      if (!P.clearSince || now - P.lastClear > 300) P.clearSince = now;
-      P.lastClear = now; P.lastShowC = c; P.clearPos = { x: +p.x, y: +p.y };
-      if (p.cx >= 0) P.capPos = { x: p.cx, y: p.cy };
-      P.state = 'free';
-    } else if (hidden && P.state === 'free') {
-      /* the pen must still be about where its cap was last seen (a pen that vanished and came back elsewhere is no touch) */
-      var near = !P.clearPos || Math.abs(p.x - P.clearPos.x) + Math.abs(p.y - P.clearPos.y) < PEN.JUMP;
-      var ok = now - P.lastClear <= PEN.GAP_MS && P.lastClear - P.clearSince >= PEN.SEEN_MS && still && bodyOk && bodyKept && inside && near;
-      P.why = ok ? 'press' : [now - P.lastClear > PEN.GAP_MS ? 'cap-seen-too-long-ago' : '', P.lastClear - P.clearSince < PEN.SEEN_MS ? 'cap-not-seen-long-enough' : '',
-        still ? '' : 'moving', bodyOk ? '' : 'pen-mostly-gone', bodyKept ? '' : 'pen-going', inside ? '' : 'edge', near ? '' : 'jumped'].filter(Boolean).join(',');
-      P.state = ok ? 'pressed' : 'blocked';
-      if (ok) { P.at = { x: +p.x, y: +p.y }; P.pressAt = now; P.capRef = Math.min(capRef, P.lastShowC || capRef); }
-    }
-    return P.state === 'pressed' && now - P.pressAt >= PEN.MIN_MS;
-  }
-  /* 23 Nov (Rahma, second try: the heart was too hard to close the hand on): 'object' = a red mark on an object the
-     resident holds (e.g. a remote) moves the pointer the same way, and the OK is a PRESS: the remote's button (the app
-     forwards it, window.__bellatrixPress) or, on a PC, Space / Enter / Page keys. No close/open in that mode. */
-  function markInput() {
-    var v = '';
-    try { v = localStorage.getItem('bellatrix-air-input') || ''; } catch (e) { v = ''; }
-    if (v === 'heart' || v === 'object' || v === 'pen') return v;
-    if (v === 'hand') return '';
-    var o = Lab.opt.airInput;
-    return o === 'heart' || o === 'object' || o === 'pen' ? o : '';
-  }
-  function heartMode() { return !!markInput(); }
-  function pressMode() { return markInput() === 'object' && heartOn(); }
-  function pressSync(on) {
-    if (!(window.BellatrixApp && window.BellatrixApp.handsPress)) return;
-    try { window.BellatrixApp.handsPress(!!on); } catch (e) { /* an app without the remote */ }
-  }
-  function heartSupported() { return !!(window.BellatrixApp && window.BellatrixApp.handsHeart); }
-  function heartPage() { return !nh.on && !!window.HeartSpot && heartMode(); }
-  function heartOn() { return heartMode() && (nh.on ? heartSupported() : !!window.HeartSpot && !!cam.stream); }
-  function heartSync() {
-    hz.base = 0; hz.last = null; hz.seenAt = 0; hz.closed = false; hz.pen = null;
-    pressSync(markInput() === 'object');
-    if (!heartSupported()) return;
-    try { window.BellatrixApp.handsHeart(heartMode()); } catch (e) { /* an app without the heart */ }
-  }
-  /* The heart as 21 hand points: the palm centre (0, 5, 9, 13, 17) on the heart, the palm length its size. */
-  function heartLm(p, closed) {
-    var r = Math.max(0.02, Math.sqrt(Math.max(0, p.a) / Math.PI) * 1.2), lm = [], i;
-    for (i = 0; i < 21; i++) lm.push({ x: p.x, y: p.y, z: 0 });
-    lm[0] = { x: p.x, y: p.y + r, z: 0 }; lm[9] = { x: p.x, y: p.y - r, z: 0 };
-    lm[5] = { x: p.x - r, y: p.y, z: 0 }; lm[17] = { x: p.x + r, y: p.y, z: 0 };
-    lm.heartClosed = closed;
-    return lm;
-  }
-  function heartResult(p, now) {
-    var mode = markInput(), press = mode === 'object' || mode === 'pen';   /* never closed by hiding the whole thing */
-    if (p && isFinite(p.x) && isFinite(p.y)) {
-      var a = +p.a || 0;
-      if (!hz.base || now - hz.seenAt > HEART.GONE_MS) hz.base = a;
-      var shut = press ? false : hz.closed ? a < HEART.OPEN * hz.base : a < HEART.CLOSE * hz.base;
-      if (mode === 'pen') shut = penPress(p, now);   /* the thumb on the highlighter's cap, strictly */
-      /* the open heart's size: follows a bigger heart quickly (closer), a smaller one slowly (further away) */
-      if (!shut) { hz.base += (a - hz.base) * (a > hz.base ? HEART.UP : HEART.DOWN); hz.last = { x: +p.x, y: +p.y, a: a }; }
-      /* 24 Nov: the highlighter is still seen with the thumb on its cap: it keeps pointing (the ring itself holds the
-         pointer on its button while it fills; after the choice the pointer follows again at once) */
-      else if (mode === 'pen') hz.last = { x: +p.x, y: +p.y, a: hz.last ? hz.last.a : a };
-      hz.closed = shut; hz.seenAt = now;
-      return hz.last ? heartLm(hz.last, shut) : null;
-    }
-    /* not seen: hidden in the fist (it was just here, away from the edges), or gone */
-    /* the pen out of sight while pressed: the pressing hand often hides it for a moment (Rahma's tablet test: every press
-       was cancelled so); up to LOST_MS it stays pressed, longer it is cancelled (no release, no ring) */
-    if (mode === 'pen' && hz.pen && hz.pen.state === 'pressed') {
-      if (now - hz.seenAt <= PEN.LOST_MS && hz.last) return heartLm(hz.last, now - hz.pen.pressAt >= PEN.MIN_MS);
-      hz.pen.state = 'blocked'; hz.pen.why = 'pen-lost'; hz.cancelAt = now; hz.cancelWhy = 'pen-lost';
-    }
-    var L = hz.last, edge = !!L && (L.x < 0.06 || L.x > 0.94 || L.y < 0.05 || L.y > 0.95);
-    if (!L || edge || now - hz.seenAt > HEART.GONE_MS) { hz.closed = false; hz.last = null; return null; }
-    hz.closed = !press;   /* the object's mark under a finger for a moment: the pointer just stays */
-    return heartLm(L, !press);
-  }
-  function heartFeed(lm, now) {
-    var st = S.step;
-    if (!S.on) { if (idle.on && nh.on) airFrame(lm, now); return; }
-    if (st && (nh.on || cam.stream) && airMode(st)) airFrame(lm, now);
-  }
-  /* PC testing only (localhost, 23 Nov): the highlighter's numbers in a small box on the screen and sent to the test
-     server (POST /__pen-log), so the tuning uses Rahma's real webcam. Numbers and a coarse 40 x 30 colour map
-     (# body, o cap), never a picture; nothing on the robot. */
-  var penDbg = { rows: [], sent: 0, mapAt: 0, el: null };
-  function penLocal() { return typeof location !== 'undefined' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && typeof fetch === 'function'; }
-  /* on the tablet only when switched on for a test (localStorage 'bellatrix-pen-debug' '1'): the box, and the rows kept
-     here (window.__penLog, the last 3000) for reading over the debugger; nothing is sent anywhere */
-  function penDebugOn() { if (penLocal()) return true; try { return localStorage.getItem('bellatrix-pen-debug') === '1'; } catch (e) { return false; } }
-  function penMap(d, w, h) {
-    var out = [], gx, gy, x, y, o, HS = window.HeartSpot;
-    for (gy = 0; gy < 30; gy++) {
-      var row = '';
-      for (gx = 0; gx < 40; gx++) {
-        x = Math.min(w - 1, Math.floor((gx + 0.5) * w / 40)); y = Math.min(h - 1, Math.floor((gy + 0.5) * h / 30)); o = (y * w + x) * 4;
-        row += HS.isNeon(d[o], d[o + 1], d[o + 2]) ? '#' : HS.isCap(d[o], d[o + 1], d[o + 2]) ? 'o' : '.';
-      }
-      out.push(row);
-    }
-    return out.join('/');
-  }
-  /* the commonest saturated colours (steps of 16) around the pen: what the webcam really makes of it */
-  function penColours(d, w, h, cx, cy) {
-    var R = Math.round(Math.max(w, h) * 0.06), n = {}, x, y, o, r, g, b, mx, mn, k, out = [];
-    for (y = Math.max(0, Math.round(cy - R)); y < Math.min(h, cy + R); y++) for (x = Math.max(0, Math.round(cx - R)); x < Math.min(w, cx + R); x++) {
-      o = (y * w + x) * 4; r = d[o]; g = d[o + 1]; b = d[o + 2]; mx = Math.max(r, g, b); mn = Math.min(r, g, b);
-      if (mx < 40 || (mx - mn) < 0.15 * mx) continue;
-      k = (r >> 4 << 4) + ',' + (g >> 4 << 4) + ',' + (b >> 4 << 4); n[k] = (n[k] || 0) + 1;
-    }
-    for (k in n) out.push([k, n[k]]);
-    out.sort(function (a, b2) { return b2[1] - a[1]; });
-    return out.slice(0, 8).map(function (q) { return q[0] + 'x' + q[1]; }).join(' ');
-  }
-  function penDebug(now, p, d, w, h, q) {
-    if (!penDebugOn()) return;
-    var P = hz.pen || {}, row = { t: Math.round(now), pen: !!p, x: q ? +q.x.toFixed(3) : null, y: q ? +q.y.toFixed(3) : null, s: q ? q.s : 0, c: q ? q.c : 0, cc: p ? p.capSamples : 0, fine: +(hzFine.scale || 0).toFixed(2),
-      ref: P.ratio || 0, state: P.state || '', why: P.why || '', moved: P.moved ? +P.moved.toFixed(3) : 0, closed: !!air.closed, armed: !!air.armed,
-      hover: hovered ? hovered.getAttribute('data-b') : null, chosen: air.chosen || 0, step: S.step && S.step.id, small: !!P.small, ms: +(hzPage.ms || 0).toFixed(1), cs: P.c };
-    if (p && now - (penDbg.colAt || 0) > 500) { penDbg.colAt = now; row.colours = penColours(d, w, h, p.x * w, p.y * h); }
-    if (now - penDbg.mapAt > 500) { penDbg.mapAt = now; row.map = penMap(d, w, h); row.w = w; row.h = h; }
-    if (!penLocal()) { var L = window.__penLog || (window.__penLog = []); L.push(row); if (L.length > 3000) L.splice(0, L.length - 3000); }
-    else penDbg.rows.push(row);
-    if (penLocal() && now - penDbg.sent > 1000 && penDbg.rows.length) {
-      penDbg.sent = now;
-      try { fetch('/__pen-log', { method: 'POST', body: JSON.stringify(penDbg.rows), keepalive: true }).catch(function () {}); } catch (e) { /* testing only */ }
-      penDbg.rows = [];
-    }
-    if (!penDbg.el) {
-      penDbg.el = document.createElement('div');
-      penDbg.el.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;background:rgba(0,0,0,.75);color:#fff;font:14px/1.35 monospace;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:pre';
-      document.body.appendChild(penDbg.el);
-    }
-    penDbg.el.textContent = 'TEST surligneur  (' + row.ms + ' ms)\n' + (p ? 'vu  x' + row.x + ' y' + row.y + '  corps ' + row.s : 'PAS VU') + '\ncapuchon ' + row.c + ' lissé ' + row.cs + ' (repère ' + row.ref + ')' +
-      (row.small && p ? '  -> rapprochez le surligneur' : '') +
-      '\nétat ' + row.state + (row.why ? '  (' + row.why + ')' : '') + '\nfermé ' + row.closed + '  anneau ' + row.armed + '  choix ' + row.chosen;
-  }
-  /* The page's own camera: the picture drawn small (HEART_PX on its long side, the app's grid) and searched here. */
-  var HEART_PX = 160, hzPage = { canvas: null, ctx: null, finder: null, kind: '' };
-  function heartPageFrame(now) {
-    var kind = markInput() === 'pen' ? 'pen' : 'red';
-    if (!hzPage.finder || hzPage.kind !== kind) { hzPage.finder = window.HeartSpot.create({ kind: kind }); hzPage.kind = kind; }
-    var vw = video.videoWidth, vh = video.videoHeight, rt = camRot();
-    if (!vw || !vh) return;
-    /* 23 Nov (Rahma: "the detection is not fast enough"): the tablet's camera gives 30 pictures a second but the search
-       took ~31 ms, so every other picture was skipped. The picture is now turned and made small in one draw (no
-       separate turned copy), and the pen's grid is half the camera's long side (320 on the tablet's 640, the PC's
-       1280 keeps PEN.PX), which is plenty for a pen that close. */
-    var turned = rt === 90 || rt === 270, uw = turned ? vh : vw, uh = turned ? vw : vh;
-    var px = kind === 'pen' ? Math.min(PEN.PX, Math.max(240, Math.round(Math.max(uw, uh) / 2))) : HEART_PX;
-    var k = px / Math.max(uw, uh), w = Math.max(1, Math.round(uw * k)), h = Math.max(1, Math.round(uh * k)), dw = Math.round(vw * k), dh = Math.round(vh * k);
-    if (!hzPage.canvas) { hzPage.canvas = document.createElement('canvas'); hzPage.ctx = hzPage.canvas.getContext('2d', { willReadFrequently: true }); }
-    if (hzPage.canvas.width !== w || hzPage.canvas.height !== h) { hzPage.canvas.width = w; hzPage.canvas.height = h; }
-    var x = hzPage.ctx;
-    if (rt === 180) x.setTransform(-1, 0, 0, -1, w, h);
-    else if (rt === 90) x.setTransform(0, 1, -1, 0, w, 0);
-    else if (rt === 270) x.setTransform(0, -1, 1, 0, 0, h);
-    else x.setTransform(1, 0, 0, 1, 0, 0);
-    x.drawImage(video, 0, 0, dw, dh);
-    x.setTransform(1, 0, 0, 1, 0, 0);
-    var t0 = performance.now(), img = x.getImageData(0, 0, w, h).data, p = hzPage.finder.find(img, w, h, 1, now);
-    var q = p ? { x: p.x, y: p.y, a: p.area, c: p.capSamples, s: p.samples, cx: p.capX, cy: p.capY } : null;
-    if (p && kind === 'pen') q = penFine(p, q, uw, uh, vw, vh, rt, k);
-    hzPage.ms = performance.now() - t0;
-    heartFeed(heartResult(q, now), now);
-    if (kind === 'pen') penDebug(now, p, img, w, h, q);
-  }
-  /* 24 Nov (the real tablet log: the pen far, its cap 5 to 15 pixels on the coarse grid, so a thumb on it was often
-     not measurable): the coarse picture finds the pen, then a small cut around it (the pen's box and half its size
-     around, for the cap) is drawn again at the camera's own resolution (FINE_PX on the long side, at most FINE_MAX
-     pixels) and its body and cap pixels are counted there. The counts are given in pixels of a FINE_PX picture, so
-     they do not jump when the cut is drawn smaller for a pen that is very close. The pointer uses the finer centre. */
-  var hzFine = { canvas: null, ctx: null, scale: 0, px: 0 };
-  function penFine(p, q, uw, uh, vw, vh, rt, k) {
-    var L = Math.max(uw, uh), kf = Math.min(1, PEN.FINE_PX / L);
-    if (kf <= k * 1.05) return q;   /* the coarse picture is already as fine */
-    var bw = (p.bx1 - p.bx0) * uw, bh = (p.by1 - p.by0) * uh, m = 0.5 * Math.max(bw, bh) + 3 / k;
-    var X0 = Math.max(0, p.bx0 * uw - m), X1 = Math.min(uw, p.bx1 * uw + m), Y0 = Math.max(0, p.by0 * uh - m), Y1 = Math.min(uh, p.by1 * uh + m);
-    var area = (X1 - X0) * (Y1 - Y0) * kf * kf;
-    if (area > PEN.FINE_MAX) kf = Math.max(k, kf * Math.sqrt(PEN.FINE_MAX / area));
-    var cw = Math.max(1, Math.round((X1 - X0) * kf)), ch = Math.max(1, Math.round((Y1 - Y0) * kf));
-    if (!hzFine.canvas) { hzFine.canvas = document.createElement('canvas'); hzFine.ctx = hzFine.canvas.getContext('2d', { willReadFrequently: true }); }
-    if (hzFine.canvas.width !== cw || hzFine.canvas.height !== ch) { hzFine.canvas.width = cw; hzFine.canvas.height = ch; }
-    var g = hzFine.ctx, W = uw * kf, H = uh * kf;
-    /* the same turn as the coarse picture, at scale kf, moved so the cut starts at (0, 0) */
-    g.setTransform(1, 0, 0, 1, -X0 * kf, -Y0 * kf);
-    if (rt === 180) g.transform(-1, 0, 0, -1, W, H);
-    else if (rt === 90) g.transform(0, 1, -1, 0, W, 0);
-    else if (rt === 270) g.transform(0, -1, 1, 0, 0, H);
-    g.drawImage(video, 0, 0, vw * kf, vh * kf);
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    var n = window.HeartSpot.countPen(g.getImageData(0, 0, cw, ch).data, cw, ch);
-    if (!n || !n.s) return q;
-    var u = Math.pow(PEN.FINE_PX / (L * kf), 2);   /* to pixels of a FINE_PX picture */
-    hzFine.scale = kf; hzFine.px = cw * ch;
-    return { x: (X0 + n.x * (X1 - X0)) / uw, y: (Y0 + n.y * (Y1 - Y0)) / uh, a: q.a, s: Math.round(n.s * u), c: Math.round(n.c * u),
-      cx: n.c ? (X0 + n.cx * (X1 - X0)) / uw : -1, cy: n.c ? (Y0 + n.cy * (Y1 - Y0)) / uh : -1 };
-  }
-  /* The hand texts with the heart. */
-  var HEART_WORDS = { 'Point at the screen with one finger': 'Show the red heart to the camera', 'Show your hand to the camera': 'Show the red heart to the camera',
-    'Point at what you want': 'Move the heart to what you want', 'Close and open your hand to choose': 'Close your hand over the heart, then open it' };
-  var OBJECT_WORDS = { 'Point at the screen with one finger': 'Show the red mark to the camera', 'Show your hand to the camera': 'Show the red mark to the camera',
-    'Point at what you want': 'Move the object to what you want' };
-  var PEN_WORDS = { 'Point at the screen with one finger': 'Show the highlighter to the camera', 'Show your hand to the camera': 'Show the highlighter to the camera',
-    'Point at what you want': 'Move the highlighter to what you want', 'Close and open your hand to choose': 'Press the cap with your thumb, then let go',
-    'Now open your hand': 'Now let go of the cap', 'Hold still to choose': 'Keep the highlighter on it to choose',
-    'Close your hand to choose': 'Press the cap with your thumb to choose', 'Keep your hand closed': 'Keep pressing', 'Open your hand': 'Let go of the cap',
-    'Move your finger, then point again': 'Move the highlighter, then point again' };
-  function handWord(t) {
-    var m = heartOn() ? markInput() : '', w = m === 'object' ? OBJECT_WORDS : m === 'heart' ? HEART_WORDS : m === 'pen' ? PEN_WORDS : null;
-    return w && w[t] ? w[t] : t;
-  }
-  /* 23 Nov (Rahma: "when I touch the green tip it does not start at once, not smooth"): with the highlighter the ring,
-     once started, fills by itself at the screen's own rate until it is full, also in the pictures where the camera
-     loses the pen for a moment (before, it moved only with the camera's pictures and stalled when the pen was lost). */
-  var penRingRaf = 0;
-  /* 24 Nov: the touch that started this ring turned out a graze or a big move */
-  function penCancelled(A) { return !!A && (hz.cancelAt || 0) >= A.at && (hz.cancelWhy === 'graze' || hz.cancelWhy === 'big-move'); }
-  function penRingStart() { if (!penRingRaf && window.requestAnimationFrame) penRingRaf = window.requestAnimationFrame(penRingTick); }
-  function penRingTick() {
-    penRingRaf = 0;
-    var A = air.armed, now = performance.now();
-    if (!A || !(markInput() === 'pen' && heartOn())) return;
-    var el = A.el;
-    if (!el || !el.isConnected || penCancelled(A)) { air.armed = null; setRing(0); return; }
-    if (now >= air.ready) {
-      var key = el.getAttribute('data-b'), pc = Math.min(1, (now - A.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : PEN.CONFIRM_MS));
-      setRing(pc);
-      if (pc >= 1) {
-        air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
-        if (air.closed) air.needOpen = true;
-        air.squeeze = null;   /* 24 Nov: chosen; the pointer follows the highlighter again at once */
-        dispatch(el.getAttribute('data-a'), parseInt(el.getAttribute('data-i'), 10), 'air', el);
-        return;
-      }
-    }
-    penRingRaf = window.requestAnimationFrame(penRingTick);
-  }
-  /* The press (the object's button): the button under the pointer is chosen at once; one press = one choice. */
-  var PRESS_KEYS = { ' ': 1, 'Enter': 1, 'PageDown': 1, 'PageUp': 1, 'AudioVolumeUp': 1, 'AudioVolumeDown': 1, 'MediaPlayPause': 1, 'MediaTrackNext': 1, 'MediaTrackPrevious': 1 };
-  function pressOK() {
-    var b = hovered, now = performance.now();
-    if (!b || !b.isConnected || !air.seen || now < air.ready) return false;
-    air.chosen = (air.chosen || 0) + 1; air.done = b.getAttribute('data-b');
-    setRing(1); setTimeout(function () { setRing(0); }, 250);
-    dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
-    return true;
-  }
-  window.__bellatrixPress = function () { if (pressMode()) pressOK(); };
-  document.addEventListener('keydown', function (e) {
-    if (!PRESS_KEYS[e.key] || !pressMode() || (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName))) return;
-    e.preventDefault(); e.stopImmediatePropagation();
-    if (!e.repeat) pressOK();
-  }, true);
-  Lab._heart = function () { var P = hz.pen; return { on: heartOn(), mode: heartMode(), base: hz.base, closed: hz.closed, last: hz.last,
-    pen: P ? { state: P.state, c: P.c, cr: P.cr, s: P.s, ratio: P.ratio, moved: P.moved, body: P.body, why: P.why || '', clear: Math.round(P.lastClear - P.clearSince), since: Math.round(performance.now() - P.lastClear) } : null }; };
   window.__bellatrixHands = function (d) {
     if (!d || !nh.on) return;
     if (d.pic) { nhPicture(d); return; }
     if (d.error) { nhFail(d.error); syncCam(); if (S.step) render(); return; }
     if (d.w > 0 && d.h > 0) { nh.w = d.w; nh.h = d.h; }
-    if (d.heart !== undefined) {
-      nh.n++;
-      var hnow = performance.now();
-      try { heartFeed(heartResult(d.heart, hnow), hnow); } catch (err) { log('Detection error: ' + err.message, 'app', 'error'); }
-      return;
-    }
     var lm = null, i, p;
     if (d.lm && d.lm.length >= 21) {
       lm = [];
@@ -982,12 +613,11 @@
     try { nhConfig(); r = String(window.BellatrixApp.handsStart()); } catch (e) { r = 'error'; }
     if (r !== 'ok') return false;
     nh.on = true; nh.onAt = Date.now(); nh.n = 0;
-    heartSync();
     return true;
   }
   function idleStop() {
     if (idle.timer) { clearInterval(idle.timer); idle.timer = 0; }
-    if (idle.on && !S.on && nh.on) { nh.on = false; pressSync(false); try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ } }
+    if (idle.on && !S.on && nh.on) { nh.on = false; try { window.BellatrixApp.handsStop(); } catch (e) { /* gone */ } }
     idle.on = false;
     airHide();
   }
@@ -1157,13 +787,13 @@
     if (!showHand) $('holdBar').hidden = true;
     if (!airMode(st)) $('airCursor').hidden = true;
   }
-  function setHandText(t) { $('handText').textContent = Lab.t(handWord(t)); $('chipHand').hidden = false; }
+  function setHandText(t) { $('handText').textContent = Lab.t(t); $('chipHand').hidden = false; }
   function detectLoop() {
     clearTimeout(cam.timer);
     if (!cam.stream) return;
     try { detectStep(); }
     catch (err) { setHandText('Detection error: ' + err.message); log('Detection error: ' + err.message, 'app', 'error'); }
-    cam.timer = setTimeout(detectLoop, heartPage() ? 8 : 25);   /* the held thing (23 Nov): every camera picture, at once */
+    cam.timer = setTimeout(detectLoop, 25);
   }
   /* The front tablet's camera delivers its picture upside down (180 degrees) in the WebView: turn each frame
      before the hand / pose models see it. Other screens: unchanged. 'bellatrix-cam-rot' (0 or 180) overrides. */
@@ -1244,8 +874,6 @@
     var st = S.step;
     if (!st || video.readyState < 2 || video.currentTime === cam.lastT) return;
     var now = performance.now(), res;
-    /* 23 Nov: the red heart on the page's own camera (a PC webcam): no hand model at all */
-    if (!st.pose && airMode(st) && heartPage()) { cam.lastT = video.currentTime; heartPageFrame(now); return; }
     if (!st.pose && (airMode(st) || handsHints(st) || (S.help && Lab.opt.camMode === 'signs' && S.camConsent)) && !hw.failed) {
       hwStart();
       if (!hw.ready) { if (!hw.failed) { setHandText('Loading hand detection…'); return; } }
@@ -1368,22 +996,13 @@
     /* Stop needs a longer closed hand, as before (Stop is the one button that must not be pressed by accident): */
     CONFIRM_STOP_MS: 1500 };
   /* 'bellatrix-air-confirm' '0' = the old way (holding still is enough); anything else = close the hand to choose. */
-  function airConfirm() {
-    /* 23 Nov (Rahma): with the highlighter the OK is the click on the cap (press, let go), never just staying on a
-       button ("even when I do not click it takes it as OK"). 'bellatrix-pen-press' '0' = choose by staying (PEN.DWELL_MS). */
-    if (markInput() === 'pen' && heartOn()) { try { return localStorage.getItem('bellatrix-pen-press') !== '0'; } catch (e) { return true; } }
-    try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; }
-  }
+  function airConfirm() { try { return localStorage.getItem('bellatrix-air-confirm') !== '0'; } catch (e) { return true; } }
   /* 16 Nov afternoon (Rahma): open hand = select (the pointer follows), closed hand = OK: the ring fills while the hand
      stays closed on the button, then it is chosen; open again before the next OK. 'bellatrix-air-confirm':
      'closeopen' = the morning's close-then-open OK, '0' = hold still as at first. */
   function airConfirmMode() {
     var v = null;
     try { v = localStorage.getItem('bellatrix-air-confirm'); } catch (e) { v = null; }
-    /* the red heart: close the hand over it, then open; the highlighter: press the cap, then let go (23 Nov) */
-    /* the highlighter (23 Nov, Rahma: "when I touch the dark green the ring must start at once", "and if I let go
-       before it is full it must fill to the end"): touching the cap starts the ring, which then fills to the end */
-    if (v !== '0' && heartOn()) return markInput() === 'pen' ? 'close' : 'closeopen';
     return v === '0' ? null : v === 'closeopen' ? 'closeopen' : 'close';
   }
   /* All four fingers folded (thumb free): the closed hand. */
@@ -1527,33 +1146,27 @@
     if (CV) pr = airScreen(pr, r);
     if (!air.seen) { air.dispInit = false; air.vx = 0; air.vy = 0; air.closed = false; air.closeAt = 0; air.openAt = 0; air.squeeze = null; air.armed = null; air.needOpen = false; }
     /* Closed or open hand, with a little patience both ways (see AIR.CLOSE_MS / OPEN_MS). */
-    var confirm = airConfirm(), shut = confirm && (lm.heartClosed !== undefined ? !!lm.heartClosed : handClosed(lm)), wasClosed = !!air.closed;
-    var penOn = markInput() === 'pen' && heartOn(), cms = penOn ? PEN.CLOSE_PATIENCE : AIR.CLOSE_MS, oms = penOn ? PEN.OPEN_PATIENCE : AIR.OPEN_MS;
-    if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= cms) air.closed = true; }
-    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= oms) air.closed = false; }
+    var confirm = airConfirm(), shut = confirm && handClosed(lm), wasClosed = !!air.closed;
+    if (shut) { air.openAt = 0; if (!air.closeAt) air.closeAt = now; if (!air.closed && now - air.closeAt >= AIR.CLOSE_MS) air.closed = true; }
+    else { air.closeAt = 0; if (!air.openAt) air.openAt = now; if (air.closed && now - air.openAt >= AIR.OPEN_MS) air.closed = false; }
     /* The "OK" (16 Nov, Rahma): close the hand on a button, then open it again; only then the ring starts to fill.
        Closing on a button remembers it (squeeze); opening again arms it; a new close starts a new OK. */
     var cmode = confirm ? airConfirmMode() : null;
     if (confirm && air.closed && !wasClosed) {
       air.armed = null; air.squeeze = air.hold && air.hold.isConnected ? air.hold : null;
-      if (penOn && air.needOpen) air.squeeze = null;   /* 24 Nov: a touch that cannot choose does not hold the pointer either */
       /* closed = OK: the ring starts at once on the button where the hand closed (not again before the hand opened) */
-      if (cmode === 'close' && air.squeeze && !air.needOpen) { air.armed = { el: air.squeeze, at: now }; if (penOn) penRingStart(); }
+      if (cmode === 'close' && air.squeeze && !air.needOpen) air.armed = { el: air.squeeze, at: now };
     }
     if (confirm && !air.closed && wasClosed) {
-      /* a highlighter press that was cancelled (moved away, pen lost) is not a release (23 Nov) */
-      if (penOn && now - (hz.cancelAt || 0) < 800) air.squeeze = null;
       if (cmode === 'closeopen' && air.squeeze && air.squeeze.isConnected) air.armed = { el: air.squeeze, at: now };
-      /* the highlighter (23 Nov, Rahma): touching the cap is the OK; the ring goes on filling after letting go */
-      else if (!(penOn && cmode === 'close' && air.armed)) air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
+      else air.armed = null;   /* closed = OK: opened before the ring was full, nothing is chosen */
       air.squeeze = null; air.needOpen = false;
     }
     /* While the hand is closed, and while the ring fills, the pointer stays on that button: closing and opening the
        hand moves the palm, and the choice must not slide to a neighbour (nor scroll the page). A big move of the
        hand away (2 x RELEASE_PX) cancels the OK. */
     var nx0 = pr.u * stageW(), ny0 = pr.v * stageH(), dts = Math.max(30, now - (air.last || now)) / 1000;
-    if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > (penOn ? PEN.RING_MOVE_PX : 2 * AIR.RELEASE_PX)) air.armed = null;
-    if (penOn && penCancelled(air.armed)) { air.armed = null; setRing(0); }
+    if (confirm && air.armed && Math.abs(nx0 - air.x) + Math.abs(ny0 - air.y) > 2 * AIR.RELEASE_PX) air.armed = null;
     var lockOn = confirm && ((air.closed && air.squeeze) || air.armed) && air.hold && air.hold.isConnected;
     if (lockOn) { nx0 = air.x; ny0 = air.y; }
     if (air.seen && dts < 0.5) { air.vx = 0.5 * (air.vx || 0) + 0.5 * (nx0 - air.x) / dts; air.vy = 0.5 * (air.vy || 0) + 0.5 * (ny0 - air.y) / dts; }
@@ -1574,12 +1187,6 @@
     /* Moving to another button starts a new wait; the button just pressed stays quiet until the
        pointer has left it, so one long hold never presses twice. */
     if (key !== air.key) { air.key = key; air.since = now; air.done = null; }
-    /* the object + button (23 Nov): pointing only shows the choice; the press chooses (pressOK) */
-    if (pressMode()) {
-      hover(b); setRing(0);
-      setHandText(nearEdge && !b ? 'Show the red mark to the camera' : !b ? 'Move the object to what you want' : 'Press the button to choose');
-      return;
-    }
     if (confirm) {
       /* Point, then "OK" = close and open the hand: the ring fills only after that, on the button where the hand
          closed. Every choice needs its own OK (holding still never chooses). */
@@ -1589,12 +1196,11 @@
         ? (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Keep your hand closed' : air.needOpen ? 'Open your hand' : 'Close your hand to choose')
         : (nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.armed ? 'Hold still to choose' : air.closed ? 'Now open your hand' : 'Close and open your hand to choose'));
       if (!b || !air.armed || now < air.ready) { setRing(0); air.since = now; return; }
-      var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : penOn ? PEN.CONFIRM_MS : AIR.CONFIRM_MS));
+      var pc = Math.min(1, (now - air.armed.at) / (key === 'stop' ? AIR.CONFIRM_STOP_MS : AIR.CONFIRM_MS));
       setRing(pc);
       if (pc >= 1) {
         air.armed = null; air.done = key; setRing(0); air.chosen = (air.chosen || 0) + 1;
-        if (cmode === 'close' && air.closed) air.needOpen = true;   /* the next OK needs the hand opened first (already open after a short touch on the pen's cap: nothing to wait for) */
-        if (penOn) air.squeeze = null;   /* 24 Nov: chosen; the pointer follows the highlighter again at once, also with the thumb still on the cap */
+        if (cmode === 'close') air.needOpen = true;   /* the next OK needs the hand opened first */
         dispatch(b.getAttribute('data-a'), parseInt(b.getAttribute('data-i'), 10), 'air', b);
       }
       return;
@@ -1605,7 +1211,7 @@
     setHandText(nearEdge && !b ? 'Show your hand to the camera' : !b ? 'Point at what you want' : air.guard ? 'Move your finger, then point again' : 'Hold still to choose');
     /* While waiting, the hold only starts counting once the pointer is free again. */
     if (!b || key === air.done || waiting) { setRing(0); if (waiting) air.since = now; return; }
-    var p = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.STOP_MS : markInput() === 'pen' && heartOn() ? PEN.DWELL_MS : AIR.DWELL_MS));
+    var p = Math.min(1, (now - air.since) / (key === 'stop' ? AIR.STOP_MS : AIR.DWELL_MS));
     setRing(p);
     if (p >= 1) {
       air.done = key; air.guard = { x: air.x, y: air.y }; setRing(0); air.chosen = (air.chosen || 0) + 1;
@@ -1875,7 +1481,7 @@
     };
   }
   function welcomeOrPractice(act) {
-    return Lab.opt.camMode === 'air' && airConfirm() && airConfirmMode() === 'close' && S.camConsent === true && !act.noPractice && !heartMode() ? practiceStep(act) : welcomeStep(act);
+    return Lab.opt.camMode === 'air' && airConfirm() && airConfirmMode() === 'close' && S.camConsent === true && !act.noPractice ? practiceStep(act) : welcomeStep(act);
   }
   /* The camera needs no question here: the care team gives consent before the session. */
   function afterYes() { moodThenStart(); }

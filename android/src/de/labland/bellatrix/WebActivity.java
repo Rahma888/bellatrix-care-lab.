@@ -15,7 +15,6 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
@@ -67,8 +66,6 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
     static final int ASK_PERMISSIONS = 43;
 
     WebView web;
-    /* 23 Nov (prototype "object + button"): the page wants the remote's button as its OK */
-    volatile boolean pressKeys;
     ValueCallback<Uri[]> fileCallback;
     Voice voice;
     Speaker speaker;
@@ -377,17 +374,6 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
         @JavascriptInterface
         public void handsPictures(int ms) {
             try { Hands.get(a).pictures(ms); } catch (Throwable t) { Log.w(TAG, "handsPictures: " + t); }
-        }
-
-        /** 23 Nov (prototype "object + button"): the button of a Bluetooth remote (volume, media, page, enter keys) is
-         *  the patient screen's OK while on: window.__bellatrixPress(keyCode), and the volume does not change. */
-        @JavascriptInterface
-        public void handsPress(boolean on) { a.pressKeys = on; }
-
-        /** 23 Nov (prototype): follow the red heart (true) or the hand (false). */
-        @JavascriptInterface
-        public void handsHeart(boolean on) {
-            try { Hands.get(a).heart(on); } catch (Throwable t) { Log.w(TAG, "handsHeart: " + t); }
         }
 
         /** Settings for the next handsStart: {"camera":"id","backend":"cpu|gpu","rot":0|90|180|270}. */
@@ -718,27 +704,6 @@ public abstract class WebActivity extends Activity implements Hands.Sink {
         if (voice != null) voice.shutdown();
         if (speaker != null) speaker.shutdown();
         super.onDestroy();
-    }
-
-    /* 23 Nov (Rahma's prototype "object + button"): while the page asks for it (handsPress), the button of a
-     * Bluetooth remote held by the resident is the OK of the patient screen. Selfie remotes send a volume key,
-     * presentation remotes page or enter keys: one press = one window.__bellatrixPress(keyCode), nothing else. */
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent e) {
-        if (pressKeys && isPressKey(e.getKeyCode())) {
-            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && web != null)
-                web.evaluateJavascript("window.__bellatrixPress&&window.__bellatrixPress(" + e.getKeyCode() + ")", null);
-            return true;
-        }
-        return super.dispatchKeyEvent(e);
-    }
-
-    static boolean isPressKey(int k) {
-        return k == KeyEvent.KEYCODE_VOLUME_UP || k == KeyEvent.KEYCODE_VOLUME_DOWN || k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-                || k == KeyEvent.KEYCODE_HEADSETHOOK || k == KeyEvent.KEYCODE_CAMERA || k == KeyEvent.KEYCODE_ENTER
-                || k == KeyEvent.KEYCODE_NUMPAD_ENTER || k == KeyEvent.KEYCODE_SPACE || k == KeyEvent.KEYCODE_PAGE_DOWN
-                || k == KeyEvent.KEYCODE_PAGE_UP || k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_MEDIA_NEXT
-                || k == KeyEvent.KEYCODE_MEDIA_PREVIOUS;
     }
 
     @Override
